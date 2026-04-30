@@ -5,6 +5,7 @@ import { RequireAuth } from './auth/RequireAuth'
 import { HomeScreen } from './components/layout/HomeScreen'
 import { WorldShell } from './components/layout/WorldShell'
 import { LandingPage } from './pages/LandingPage'
+import { LoginPage } from './pages/LoginPage'
 import { DashboardPage } from './pages/DashboardPage'
 import { OrdersPage } from './pages/OrdersPage'
 import { ProductionPage } from './pages/ProductionPage'
@@ -103,6 +104,7 @@ export function App() {
       <Routes>
         {/* Public routes */}
         <Route path="/" element={<LandingPage />} />
+        <Route path="/login" element={<LoginPage />} />
         <Route path="/callback" element={<CallbackPage />} />
 
         {/* Protected: world home (kártyák) */}

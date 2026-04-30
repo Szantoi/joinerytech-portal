@@ -27,7 +27,7 @@ const FEATURES = [
 ]
 
 export function LandingPage() {
-  const { isAuthenticated, isLoading, login } = useAuth()
+  const { isAuthenticated, isLoading } = useAuth()
   const navigate = useNavigate()
 
   useEffect(() => {
@@ -60,7 +60,7 @@ export function LandingPage() {
           </div>
         </div>
         <button
-          onClick={login}
+          onClick={() => navigate('/login')}
           className="h-9 px-4 rounded-lg bg-teal-600 hover:bg-teal-500 text-white text-[13px] font-medium transition"
         >
           Bejelentkezés
@@ -84,7 +84,7 @@ export function LandingPage() {
 
         <div className="mt-10 flex flex-col sm:flex-row items-center gap-3">
           <button
-            onClick={login}
+            onClick={() => navigate('/login')}
             className="h-12 px-8 rounded-xl bg-teal-600 hover:bg-teal-500 text-white text-[15px] font-semibold transition shadow-lg shadow-teal-600/20 w-full sm:w-auto"
           >
             Belépés a portálra
