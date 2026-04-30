@@ -42,10 +42,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     redirect_uri: window.location.origin + '/callback',
   }), [])
   const logout = useCallback(async () => {
+    // Clear local session immediately.
     await userManager.removeUser()
-    await userManager.signoutRedirect({
-      post_logout_redirect_uri: window.location.origin + '/',
-    })
+    // For full Keycloak SSO logout, add the app origin to
+    // "Valid post logout redirect URIs" in the portal-app client config,
+    // then replace the line below with: userManager.signoutRedirect(...)
+    window.location.href = window.location.origin + '/'
   }, [])
 
   return (
