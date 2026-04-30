@@ -1,7 +1,9 @@
+import { useState } from 'react'
 import { Icon } from '../ui/Icon'
 import { WorldIcon } from './WorldIcon'
 import { ChatBubble } from '../chat/ChatBubble'
 import { WORLDS } from '../../mocks/worlds'
+import { useAuth } from '../../auth'
 import type { World, WorldScreen } from '../../types'
 
 // eslint-disable-next-line react-refresh/only-export-components
@@ -82,6 +84,50 @@ function WorldSidebar({ world, accent, screen, onScreen, onHome, lang }: WorldSi
   )
 }
 
+function UserMenu({ lang }: { lang: string }) {
+  const { user, logout } = useAuth()
+  const [open, setOpen] = useState(false)
+
+  const name = user?.profile?.name ?? user?.profile?.email ?? (lang === 'en' ? 'User' : 'Felhasználó')
+  const initials = name.split(' ').map((p: string) => p[0]).join('').slice(0, 2).toUpperCase()
+
+  return (
+    <div className="relative">
+      <button
+        onClick={() => setOpen((v) => !v)}
+        className="flex items-center gap-2 h-8 px-2 rounded-lg hover:bg-stone-50 border border-transparent hover:border-stone-200 transition"
+      >
+        <div className="w-6 h-6 rounded-full bg-gradient-to-br from-teal-400 to-teal-600 grid place-items-center text-[10px] font-semibold text-white">
+          {initials}
+        </div>
+        <span className="text-[12px] text-stone-600 max-w-[120px] truncate hidden md:block">{name}</span>
+        <Icon name="down" size={11} className="text-stone-400 hidden md:block" />
+      </button>
+
+      {open && (
+        <>
+          <div className="fixed inset-0 z-10" onClick={() => setOpen(false)} />
+          <div className="absolute right-0 top-10 z-20 w-48 bg-white border border-stone-200 rounded-xl shadow-lg py-1">
+            <div className="px-3 py-2 border-b border-stone-100 mb-1">
+              <div className="text-[12px] font-medium text-stone-900 truncate">{name}</div>
+              {user?.profile?.email && (
+                <div className="text-[11px] text-stone-400 truncate">{user.profile.email}</div>
+              )}
+            </div>
+            <button
+              onClick={() => { setOpen(false); logout() }}
+              className="w-full flex items-center gap-2.5 px-3 py-2 text-[12.5px] text-rose-600 hover:bg-rose-50 transition"
+            >
+              <Icon name="logout" size={13} />
+              {lang === 'en' ? 'Sign out' : 'Kijelentkezés'}
+            </button>
+          </div>
+        </>
+      )}
+    </div>
+  )
+}
+
 function WorldTopBar({ world, accent, screen, onHome, lang }: Omit<WorldSidebarProps, 'onScreen'>) {
   const screenObj = world.screens.find((s: WorldScreen) => s.key === screen) ?? world.screens[0]
   const screenLabel = lang === 'en' && screenObj?.en ? screenObj.en : screenObj?.hu
@@ -120,6 +166,7 @@ function WorldTopBar({ world, accent, screen, onHome, lang }: Omit<WorldSidebarP
             <Icon name="bell" size={14} />
             <span className="absolute top-1 right-1 w-1.5 h-1.5 rounded-full bg-rose-500" />
           </button>
+          <UserMenu lang={lang} />
         </div>
       </div>
       <div className="px-7 pb-4">
