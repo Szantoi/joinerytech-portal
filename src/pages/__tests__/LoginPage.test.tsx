@@ -86,9 +86,9 @@ describe('LoginPage', () => {
     expect(screen.getByText(/Visszaállító link elküldve/)).toBeInTheDocument()
   })
 
-  it('shows demo hint', () => {
+  it('shows shopfloor hint', () => {
     render(<MemoryRouter><LoginPage /></MemoryRouter>)
-    expect(screen.getByText(/Demo:/)).toBeInTheDocument()
+    expect(screen.getByText(/Shop Floor/)).toBeInTheDocument()
   })
 
   it('shows footer copyright', () => {

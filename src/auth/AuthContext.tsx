@@ -40,6 +40,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const login = useCallback(() => userManager.signinRedirect({
     redirect_uri: window.location.origin + '/callback',
+    prompt: 'login',
   }), [])
   const logout = useCallback(async () => {
     // Clear local session immediately.

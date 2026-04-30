@@ -10,8 +10,8 @@ export function LoginPage() {
   const navigate = useNavigate()
 
   const [mode, setMode] = useState<Mode>('login')
-  const [email, setEmail] = useState('anna.kovacs@joinerytech.hu')
-  const [pwd, setPwd] = useState('••••••••••')
+  const [email, setEmail] = useState('')
+  const [pwd, setPwd] = useState('')
   const [remember, setRemember] = useState(true)
   const [busy, setBusy] = useState(false)
   const [forgotSent, setForgotSent] = useState(false)
@@ -226,10 +226,9 @@ export function LoginPage() {
                   </span>
                 </div>
 
-                <div className="mt-5 p-3 rounded-lg bg-amber-50/70 border border-amber-200/60 text-[11px] text-amber-900 leading-relaxed">
-                  <span className="font-semibold">Demo:</span> bármely email + jelszó működik a
-                  folytatáshoz. Üzem (Shop Floor) belépéshez nem itt jelentkezz be — a portál Home
-                  oldalán válaszd az „Üzem" csempét, ott külön PIN-kódos bejelentkezés van.
+                <div className="mt-5 p-3 rounded-lg bg-stone-50 border border-stone-200 text-[11px] text-stone-500 leading-relaxed">
+                  Üzem (Shop Floor) belépéshez nem itt jelentkezz be — a portál Home oldalán válaszd
+                  az „Üzem" csempét, ott külön PIN-kódos bejelentkezés van.
                 </div>
               </form>
             )}
