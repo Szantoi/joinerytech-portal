@@ -10,7 +10,7 @@ export function CallbackPage() {
 
   useEffect(() => {
     userManager.signinRedirectCallback()
-      .then(() => navigate('/w/dashboard', { replace: true }))
+      .then(() => navigate('/w', { replace: true }))
       .catch(() => navigate('/', { replace: true }))
   }, [navigate])
 

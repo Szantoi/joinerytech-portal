@@ -4,6 +4,7 @@ import { CallbackPage } from './auth/CallbackPage'
 import { RequireAuth } from './auth/RequireAuth'
 import { HomeScreen } from './components/layout/HomeScreen'
 import { WorldShell } from './components/layout/WorldShell'
+import { LandingPage } from './pages/LandingPage'
 import { DashboardPage } from './pages/DashboardPage'
 import { OrdersPage } from './pages/OrdersPage'
 import { ProductionPage } from './pages/ProductionPage'
@@ -50,8 +51,15 @@ export function App() {
     <AuthProvider>
       <Routes>
         {/* Public routes */}
-        <Route path="/" element={<HomePage />} />
+        <Route path="/" element={<LandingPage />} />
         <Route path="/callback" element={<CallbackPage />} />
+
+        {/* Protected: world home (kártyák) */}
+        <Route path="/w" element={
+          <RequireAuth>
+            <HomePage />
+          </RequireAuth>
+        } />
 
         {/* Protected: shopfloor (standalone) */}
         <Route path="/w/shopfloor" element={
