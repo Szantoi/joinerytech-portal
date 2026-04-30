@@ -68,7 +68,9 @@ function ProductionWorldPage() {
       onScreen={(key) => navigate(`/w/production/${key}`)}
       onHome={() => navigate('/')}
     >
-      {renderContent()}
+      <div key={currentScreen} className="contents">
+        {renderContent()}
+      </div>
     </WorldShell>
   )
 }
