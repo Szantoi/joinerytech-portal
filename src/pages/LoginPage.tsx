@@ -10,7 +10,7 @@ export function LoginPage() {
   const navigate = useNavigate()
 
   const [mode, setMode] = useState<Mode>('login')
-  const [email, setEmail] = useState('')
+  const [username, setUsername] = useState('')
   const [pwd, setPwd] = useState('')
   const [remember, setRemember] = useState(true)
   const [busy, setBusy] = useState(false)
@@ -164,12 +164,12 @@ export function LoginPage() {
                 </div>
 
                 <label className="block mb-3">
-                  <span className="text-[11px] font-medium text-stone-700">Email</span>
+                  <span className="text-[11px] font-medium text-stone-700">Felhasználónév</span>
                   <input
-                    type="email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    autoComplete="email"
+                    type="text"
+                    value={username}
+                    onChange={(e) => setUsername(e.target.value)}
+                    autoComplete="username"
                     className="mt-1 w-full h-10 px-3 rounded-lg border border-stone-200 bg-white text-[13px] outline-none focus:border-teal-500 focus:ring-2 focus:ring-teal-500/20"
                   />
                 </label>
@@ -287,10 +287,10 @@ export function LoginPage() {
                 ) : (
                   <>
                     <label className="block mb-4">
-                      <span className="text-[11px] font-medium text-stone-700">Email</span>
+                      <span className="text-[11px] font-medium text-stone-700">Felhasználónév vagy email</span>
                       <input
-                        type="email"
-                        defaultValue={email}
+                        type="text"
+                        defaultValue={username}
                         className="mt-1 w-full h-10 px-3 rounded-lg border border-stone-200 bg-white text-[13px] outline-none focus:border-teal-500"
                       />
                     </label>

@@ -43,9 +43,9 @@ describe('LoginPage', () => {
     expect(screen.getByText('Üdv újra!')).toBeInTheDocument()
   })
 
-  it('shows email and password fields', () => {
+  it('shows username and password fields', () => {
     render(<MemoryRouter><LoginPage /></MemoryRouter>)
-    expect(screen.getByText('Email')).toBeInTheDocument()
+    expect(screen.getByText('Felhasználónév')).toBeInTheDocument()
     expect(screen.getByText('Jelszó')).toBeInTheDocument()
   })
 
