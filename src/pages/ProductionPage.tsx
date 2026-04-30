@@ -4,9 +4,9 @@ import { CUTTING_PLANS, NESTING, I18N } from '../mocks/data'
 import { NESTING_SHEETS } from '../mocks/extra2'
 import type { NestingPart, NestingSheet } from '../types'
 
-export function ProductionPage() {
+export function ProductionPage({ initialTab = 'cutting' }: { initialTab?: 'cutting' | 'machining' }) {
   const t = I18N.hu
-  const [tab, setTab] = useState<'cutting' | 'machining'>('cutting')
+  const [tab, setTab] = useState<'cutting' | 'machining'>(initialTab)
   const [selectedPlan, setSelectedPlan] = useState(CUTTING_PLANS[0].id)
   const [hoveredPart, setHoveredPart] = useState<string | null>(null)
   const [sheetIdx, setSheetIdx] = useState(0)

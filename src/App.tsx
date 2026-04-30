@@ -54,8 +54,11 @@ function ProductionWorldPage() {
   const currentScreen = screen ?? 'dash'
 
   function renderContent() {
-    if (currentScreen === 'dash') return <ProductionDashboardPage onScreen={(s) => navigate(`/w/production/${s}`)} />
-    return <ProductionPage />
+    if (currentScreen === 'dash')      return <ProductionDashboardPage onScreen={(s) => navigate(`/w/production/${s}`)} />
+    if (currentScreen === 'machining') return <ProductionPage initialTab="machining" />
+    if (currentScreen === 'workflow')  return <WorkflowPage />
+    if (currentScreen === 'analytics') return <AnalyticsPage />
+    return <ProductionPage initialTab="cutting" />
   }
 
   return (
