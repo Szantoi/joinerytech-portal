@@ -25,6 +25,7 @@ describe('DashboardPage', () => {
 
   it('renders active machines section', () => {
     render(<DashboardPage />)
-    expect(screen.getByText('gép aktív')).toBeTruthy()
+    const matches = screen.getAllByText(/gép aktív/)
+    expect(matches.length).toBeGreaterThan(0)
   })
 })

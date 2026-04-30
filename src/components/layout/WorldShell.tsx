@@ -1,5 +1,6 @@
 import { Icon } from '../ui/Icon'
 import { WorldIcon } from './WorldIcon'
+import { ChatBubble } from '../chat/ChatBubble'
 import { WORLDS } from '../../mocks/worlds'
 import type { World, WorldScreen } from '../../types'
 
@@ -142,6 +143,8 @@ export function WorldShell({ worldKey, screen, onScreen, onHome, lang = 'hu', ch
   if (!w) return null
   const accent = ACCENT_MAP[w.accent] ?? ACCENT_MAP.teal
 
+  const isShopFloor = worldKey === 'shopfloor'
+
   return (
     <div className="flex min-h-screen bg-stone-50/60">
       <WorldSidebar world={w} accent={accent} screen={screen} onScreen={onScreen} onHome={onHome} lang={lang} />
@@ -149,6 +152,7 @@ export function WorldShell({ worldKey, screen, onScreen, onHome, lang = 'hu', ch
         <WorldTopBar world={w} accent={accent} screen={screen} onHome={onHome} lang={lang} />
         <div className="flex-1">{children}</div>
       </main>
+      {!isShopFloor && <ChatBubble page={`${w.hu} / ${screen}`} />}
     </div>
   )
 }

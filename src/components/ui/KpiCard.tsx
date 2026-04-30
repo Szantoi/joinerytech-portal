@@ -6,58 +6,89 @@ import { Icon } from './Icon'
 interface KpiBreakdown {
   label: string
   value: string
+  note?: string
 }
 
 interface KpiCardProps {
-  title: string
+  /** Main label / title */
+  title?: string
+  label?: string
   value: string
+  unit?: string
   change?: string
   changeDirection?: 'up' | 'down'
+  /** Numeric delta percentage (alternative to change string) */
+  delta?: number
   spark?: number[]
+  sparkColor?: string
   breakdowns?: KpiBreakdown[]
 }
 
-export function KpiCard({ title, value, change, changeDirection, spark, breakdowns }: KpiCardProps) {
+export function KpiCard({
+  title,
+  label,
+  value,
+  unit,
+  change,
+  changeDirection,
+  delta,
+  spark,
+  sparkColor = '#0d9488',
+  breakdowns,
+}: KpiCardProps) {
   const [open, setOpen] = useState(false)
 
+  // Support both `title` (legacy) and `label` (reference)
+  const displayLabel = label ?? title ?? ''
+
+  // Derive delta display from either `delta` number or legacy `change` string
+  const hasDelta = delta !== undefined
+  const deltaPositive = hasDelta ? delta >= 0 : changeDirection === 'up'
+  const deltaText = hasDelta ? `${Math.abs(delta)}%` : change
+
   return (
-    <Card className="p-4">
-      <div className="flex items-start justify-between gap-3">
-        <div className="min-w-0 flex-1">
-          <div className="text-[11px] uppercase tracking-wide text-stone-500 font-medium">{title}</div>
-          <div className="text-[22px] font-semibold text-stone-900 leading-tight mt-1">{value}</div>
-          {change && (
-            <div className={`text-[11px] mt-1 ${changeDirection === 'up' ? 'text-emerald-600' : 'text-rose-600'}`}>
-              {change}
+    <Card className="overflow-hidden">
+      <button
+        onClick={breakdowns?.length ? () => setOpen(!open) : undefined}
+        className={`w-full text-left p-4 transition ${breakdowns?.length ? 'hover:bg-stone-50/60 cursor-pointer' : 'cursor-default'}`}
+      >
+        <div className="flex items-start justify-between gap-3">
+          <div className="min-w-0 flex-1">
+            <div className="text-[11.5px] uppercase tracking-wide text-stone-500 font-medium">{displayLabel}</div>
+            <div className="mt-1 flex items-baseline gap-1.5">
+              <span className="text-[26px] font-semibold text-stone-900 tabular-nums tracking-tight">{value}</span>
+              {unit && <span className="text-[12px] text-stone-500">{unit}</span>}
+            </div>
+            {deltaText && (
+              <div className={`mt-1.5 flex items-center gap-1 text-[11px] ${deltaPositive ? 'text-emerald-700' : 'text-rose-700'}`}>
+                <Icon name={deltaPositive ? 'up' : 'down'} size={11} />
+                {deltaText}
+              </div>
+            )}
+          </div>
+          {spark && (
+            <div className="shrink-0">
+              <Sparkline data={spark} width={88} height={36} stroke={sparkColor} fill={sparkColor} strokeWidth={1.8} />
             </div>
           )}
         </div>
-        {spark && (
-          <div className="shrink-0 text-teal-600">
-            <Sparkline data={spark} width={72} height={28} stroke="currentColor" />
+        {breakdowns && breakdowns.length > 0 && (
+          <div className="mt-2.5 flex items-center justify-between text-[11px] text-stone-400">
+            <span>{open ? 'Bezárás' : 'Részletek'}</span>
+            <Icon name={open ? 'up' : 'down'} size={13} />
           </div>
         )}
-      </div>
-      {breakdowns && breakdowns.length > 0 && (
-        <>
-          <button
-            onClick={() => setOpen(!open)}
-            className="mt-3 flex items-center gap-1 text-[10.5px] text-stone-500 hover:text-stone-700"
-          >
-            <Icon name={open ? 'up' : 'down'} size={12} />
-            {open ? 'Bezárás' : 'Részletek'}
-          </button>
-          {open && (
-            <div className="mt-2 pt-2 border-t border-stone-100 space-y-1">
-              {breakdowns.map((b) => (
-                <div key={b.label} className="flex items-center justify-between text-[11.5px]">
-                  <span className="text-stone-500">{b.label}</span>
-                  <span className="font-medium text-stone-700">{b.value}</span>
-                </div>
-              ))}
+      </button>
+      {open && breakdowns && breakdowns.length > 0 && (
+        <div className="border-t border-stone-200/80 bg-stone-50/40 p-4 grid grid-cols-3 gap-3 text-[11.5px]">
+          {breakdowns.map((b) => (
+            <div key={b.label} className="bg-white rounded-lg border border-stone-200/70 p-3">
+              <div className="text-stone-500 text-[10.5px] uppercase tracking-wide">{b.label}</div>
+              <div className="mt-1 text-[16px] font-semibold text-stone-900 tabular-nums">{b.value}</div>
+              {b.note && <div className="text-stone-500 mt-0.5 text-[10.5px]">{b.note}</div>}
             </div>
-          )}
-        </>
+          ))}
+        </div>
       )}
     </Card>
   )

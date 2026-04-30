@@ -1,4 +1,4 @@
-import { Routes, Route, Navigate, useNavigate } from 'react-router-dom'
+import { Routes, Route, Navigate, useNavigate, useParams } from 'react-router-dom'
 import { AuthProvider } from './auth/AuthContext'
 import { CallbackPage } from './auth/CallbackPage'
 import { RequireAuth } from './auth/RequireAuth'
@@ -8,6 +8,8 @@ import { LandingPage } from './pages/LandingPage'
 import { DashboardPage } from './pages/DashboardPage'
 import { OrdersPage } from './pages/OrdersPage'
 import { ProductionPage } from './pages/ProductionPage'
+import { ProductionDashboardPage } from './pages/production/ProductionDashboardPage'
+import { MovementsPage } from './pages/warehouse/MovementsPage'
 import { SalesPage } from './pages/SalesPage'
 import { DesignPage } from './pages/DesignPage'
 import { WorkflowPage } from './pages/WorkflowPage'
@@ -32,16 +34,60 @@ function HomePage() {
   )
 }
 
-function WorldPage({ worldKey, children }: { worldKey: string; children: React.ReactNode }) {
+function WorldPage({ worldKey, screen, children }: { worldKey: string; screen?: string; children: React.ReactNode }) {
   const navigate = useNavigate()
   return (
     <WorldShell
       worldKey={worldKey}
-      screen={worldKey}
+      screen={screen ?? worldKey}
       onScreen={(key) => navigate(`/w/${worldKey}/${key}`)}
       onHome={() => navigate('/')}
     >
       {children}
+    </WorldShell>
+  )
+}
+
+function ProductionWorldPage() {
+  const navigate = useNavigate()
+  const { screen } = useParams<{ screen?: string }>()
+  const currentScreen = screen ?? 'dash'
+
+  function renderContent() {
+    if (currentScreen === 'dash') return <ProductionDashboardPage onScreen={(s) => navigate(`/w/production/${s}`)} />
+    return <ProductionPage />
+  }
+
+  return (
+    <WorldShell
+      worldKey="production"
+      screen={currentScreen}
+      onScreen={(key) => navigate(`/w/production/${key}`)}
+      onHome={() => navigate('/')}
+    >
+      {renderContent()}
+    </WorldShell>
+  )
+}
+
+function WarehouseWorldPage() {
+  const navigate = useNavigate()
+  const { screen } = useParams<{ screen?: string }>()
+  const currentScreen = screen ?? 'dash'
+
+  function renderContent() {
+    if (currentScreen === 'movements') return <MovementsPage />
+    return <InventoryPage />
+  }
+
+  return (
+    <WorldShell
+      worldKey="warehouse"
+      screen={currentScreen}
+      onScreen={(key) => navigate(`/w/warehouse/${key}`)}
+      onHome={() => navigate('/')}
+    >
+      {renderContent()}
     </WorldShell>
   )
 }
@@ -71,12 +117,12 @@ export function App() {
         {/* Protected: world routes */}
         <Route path="/w/production" element={
           <RequireAuth>
-            <WorldPage worldKey="production"><DashboardPage /></WorldPage>
+            <ProductionWorldPage />
           </RequireAuth>
         } />
         <Route path="/w/production/:screen" element={
           <RequireAuth>
-            <WorldPage worldKey="production"><ProductionPage /></WorldPage>
+            <ProductionWorldPage />
           </RequireAuth>
         } />
 
@@ -104,12 +150,12 @@ export function App() {
 
         <Route path="/w/warehouse" element={
           <RequireAuth>
-            <WorldPage worldKey="warehouse"><InventoryPage /></WorldPage>
+            <WarehouseWorldPage />
           </RequireAuth>
         } />
         <Route path="/w/warehouse/:screen" element={
           <RequireAuth>
-            <WorldPage worldKey="warehouse"><InventoryPage /></WorldPage>
+            <WarehouseWorldPage />
           </RequireAuth>
         } />
 

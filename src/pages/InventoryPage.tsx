@@ -1,5 +1,7 @@
 import { useState } from 'react'
-import { Card, StatusPill, ProgressBar } from '../components/ui'
+import { Card, StatusPill } from '../components/ui'
+import { OffcutsPanel } from '../components/orders/OffcutsPanel'
+import { MovementsPage as MovementsTab } from './warehouse/MovementsPage'
 import { MATERIALS, I18N } from '../mocks/data'
 
 type InvTab = 'materials' | 'offcuts' | 'movements'
@@ -8,77 +10,98 @@ export function InventoryPage() {
   const t = I18N.hu
   const [tab, setTab] = useState<InvTab>('materials')
 
-  const tabs: Array<{ key: InvTab; label: string }> = [
-    { key: 'materials', label: t.inv.onHand },
-    { key: 'offcuts', label: t.inv.offcuts },
-    { key: 'movements', label: t.inv.movements },
+  const tabs: Array<{ key: InvTab; label: string; count: number }> = [
+    { key: 'materials', label: 'Anyagok',    count: MATERIALS.length },
+    { key: 'offcuts',   label: t.inv.offcuts, count: 8 },
+    { key: 'movements', label: t.inv.movements, count: 24 },
   ]
 
-  return (
-    <div className="p-7 space-y-5">
-      <div>
-        <h2 className="text-[18px] font-semibold text-stone-900">{t.inv.title}</h2>
-        <p className="text-[12px] text-stone-500 mt-0.5">{t.inv.sub}</p>
-      </div>
+  const alertCount = MATERIALS.filter((m) => m.trend !== 'ok').length
+  const totalValue = '8.4M Ft'
 
-      <div className="flex gap-1 bg-stone-100 rounded-lg p-1 w-fit">
+  return (
+    <div className="px-7 py-6 max-w-[1400px] mx-auto">
+      <div className="flex items-center gap-1 bg-white border border-stone-200 rounded-lg p-0.5 w-fit mb-4">
         {tabs.map((tb) => (
           <button
             key={tb.key}
             onClick={() => setTab(tb.key)}
-            className={`px-4 py-1.5 rounded-md text-[12.5px] font-medium transition ${
-              tab === tb.key ? 'bg-white text-stone-900 shadow-sm' : 'text-stone-600 hover:text-stone-900'
+            className={`px-3 h-8 rounded-md text-[12.5px] font-medium inline-flex items-center gap-1.5 transition ${
+              tab === tb.key ? 'bg-stone-900 text-white' : 'text-stone-600 hover:bg-stone-100'
             }`}
           >
             {tb.label}
+            <span className={`text-[10px] tabular-nums ${tab === tb.key ? 'text-white/60' : 'text-stone-400'}`}>
+              {tb.count}
+            </span>
           </button>
         ))}
       </div>
 
       {tab === 'materials' && (
-        <Card className="p-0 overflow-hidden">
-          <table className="w-full text-left">
-            <thead>
-              <tr className="bg-stone-50/80 border-b border-stone-200/60">
-                {['Anyag', 'Kód', 'Készlet', 'Min.', 'Egységár', 'Állapot'].map((col) => (
-                  <th key={col} className="px-5 py-3 text-[11px] uppercase tracking-wide text-stone-500 font-medium">{col}</th>
-                ))}
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-stone-100">
-              {MATERIALS.map((m) => (
-                <tr key={m.code} className="hover:bg-stone-50/50">
-                  <td className="px-5 py-3 text-[12.5px] font-medium text-stone-900">{m.name}</td>
-                  <td className="px-5 py-3 text-[12px] text-stone-500 font-mono">{m.code}</td>
-                  <td className="px-5 py-3">
-                    <div className="flex items-center gap-2">
-                      <span className="text-[12.5px] font-medium text-stone-900">{m.onHand} {m.unit}</span>
-                      <ProgressBar value={m.onHand} max={m.min * 3} tone={m.onHand < m.min ? 'rose' : 'teal'} className="w-16" />
+        <>
+          <div className="grid grid-cols-3 gap-3 mb-3">
+            {[
+              { label: 'Anyagok',       value: MATERIALS.length, sub: 'katalógusban' },
+              { label: 'Riasztások',    value: alertCount,        sub: 'alacsony / kritikus', tone: 'text-amber-700' },
+              { label: 'Becsült érték', value: totalValue,         sub: 'raktáron' },
+            ].map((x, i) => (
+              <Card key={i} className="p-4">
+                <div className="text-[10.5px] uppercase tracking-wide text-stone-500 font-medium">{x.label}</div>
+                <div className={`text-[24px] font-semibold mt-1 tabular-nums ${x.tone ?? 'text-stone-900'}`}>{x.value}</div>
+                <div className="text-[11.5px] text-stone-500">{x.sub}</div>
+              </Card>
+            ))}
+          </div>
+
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+            {MATERIALS.map((m) => {
+              const pct = Math.min(100, (m.onHand / (m.min * 2)) * 100)
+              const toneBar =
+                m.trend === 'critical' ? 'bg-rose-500' : m.trend === 'low' ? 'bg-amber-500' : 'bg-teal-600'
+              return (
+                <Card key={m.code} className="p-4">
+                  <div className="flex items-start justify-between gap-2 mb-2">
+                    <div className="min-w-0">
+                      <div className="text-[12.5px] font-semibold text-stone-900 truncate">{m.name}</div>
+                      <div className="text-[10.5px] font-mono text-stone-400">{m.code}</div>
                     </div>
-                  </td>
-                  <td className="px-5 py-3 text-[12px] text-stone-500">{m.min} {m.unit}</td>
-                  <td className="px-5 py-3 text-[12px] text-stone-700">{m.price.toLocaleString('hu-HU')} Ft</td>
-                  <td className="px-5 py-3">
                     <StatusPill status={m.trend} label={t.status[m.trend]} />
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </Card>
+                  </div>
+                  <div
+                    className="aspect-[4/2] bg-stone-100 rounded-lg mb-3 grid place-items-center text-stone-400 text-[10px]"
+                    style={{
+                      background:
+                        'repeating-linear-gradient(45deg,#f5f5f4,#f5f5f4 6px,#e7e5e4 6px,#e7e5e4 7px)',
+                    }}
+                  >
+                    <span className="font-mono">{m.unit}</span>
+                  </div>
+                  <div className="flex items-baseline gap-1.5">
+                    <span className="text-[20px] font-semibold tabular-nums text-stone-900">{m.onHand}</span>
+                    <span className="text-[11px] text-stone-500">{m.unit} {t.inv.onHand}</span>
+                  </div>
+                  <div className="mt-2 flex items-center gap-2">
+                    <div className="flex-1 h-1.5 bg-stone-100 rounded-full overflow-hidden">
+                      <div className={`h-full rounded-full ${toneBar}`} style={{ width: `${pct}%` }} />
+                    </div>
+                    <span className="text-[10.5px] text-stone-500 tabular-nums">
+                      {t.inv.reorder} {m.min}
+                    </span>
+                  </div>
+                  <div className="mt-2 text-[11px] text-stone-500 tabular-nums">
+                    {m.price.toLocaleString('hu-HU')} Ft / {m.unit}
+                  </div>
+                </Card>
+              )
+            })}
+          </div>
+        </>
       )}
 
-      {tab === 'offcuts' && (
-        <Card className="p-8 text-center">
-          <div className="text-[14px] text-stone-500">Maradék nyilvántartás hamarosan</div>
-        </Card>
-      )}
+      {tab === 'offcuts' && <OffcutsPanel />}
 
-      {tab === 'movements' && (
-        <Card className="p-8 text-center">
-          <div className="text-[14px] text-stone-500">Anyagmozgás napló hamarosan</div>
-        </Card>
-      )}
+      {tab === 'movements' && <MovementsTab />}
     </div>
   )
 }

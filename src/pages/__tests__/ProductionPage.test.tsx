@@ -3,9 +3,9 @@ import { render, screen, fireEvent } from '@testing-library/react'
 import { ProductionPage } from '../ProductionPage'
 
 describe('ProductionPage', () => {
-  it('renders title', () => {
+  it('renders cutting plans tab by default', () => {
     render(<ProductionPage />)
-    expect(screen.getByText(/Gy\u00e1rt\u00e1s/)).toBeTruthy()
+    expect(screen.getByText(/g\u00f3terv/)).toBeTruthy()
   })
 
   it('renders cutting plans in default tab', () => {
@@ -18,9 +18,15 @@ describe('ProductionPage', () => {
     expect(container.querySelector('svg')).toBeTruthy()
   })
 
-  it('switches to machining tab', () => {
+  it('switches to machining tab and shows columns', () => {
     render(<ProductionPage />)
     fireEvent.click(screen.getByText(/Megmunk/))
-    expect(screen.getByText(/CNC/)).toBeTruthy()
+    const cncMatches = screen.getAllByText(/CNC/)
+    expect(cncMatches.length).toBeGreaterThan(0)
+  })
+
+  it('renders plan selector with progress for running plan', () => {
+    render(<ProductionPage />)
+    expect(screen.getByText('CP-184-A')).toBeTruthy()
   })
 })

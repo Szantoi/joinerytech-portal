@@ -3,14 +3,15 @@ import { render, screen, fireEvent } from '@testing-library/react'
 import { SettingsPage } from '../SettingsPage'
 
 describe('SettingsPage', () => {
-  it('renders title', () => {
-    render(<SettingsPage />)
-    expect(screen.getByText(/Be\u00e1ll\u00edt\u00e1sok/)).toBeTruthy()
-  })
-
-  it('renders general tab by default', () => {
+  it('renders company tab by default', () => {
     render(<SettingsPage />)
     expect(screen.getByDisplayValue('Doorstar Hungary Zrt.')).toBeTruthy()
+  })
+
+  it('company tab has adoszam and bank fields', () => {
+    render(<SettingsPage />)
+    expect(screen.getByDisplayValue('12345678-2-13')).toBeTruthy()
+    expect(screen.getByDisplayValue('OTP · 11774012-12345678')).toBeTruthy()
   })
 
   it('switches to users tab', () => {

@@ -1,96 +1,207 @@
-import { KpiCard, Card, StatusPill } from '../components/ui'
-import { ORDERS, CUTTING_PLANS, I18N, SPARKS } from '../mocks/data'
-import { fmtHUF } from '../lib/utils'
+import { useState } from 'react'
+import { KpiCard, Card, StatusPill, Icon } from '../components/ui'
+import { MiniKanbanStrip } from '../components/layout/MiniKanbanStrip'
+import { ORDERS, I18N, SPARKS } from '../mocks/data'
 
 export function DashboardPage() {
   const t = I18N.hu
+  const [period, setPeriod] = useState(0)
 
-  const activeOrders = ORDERS.filter((o) => o.status === 'running' || o.status === 'released').length
-  const activePlans = CUTTING_PLANS.filter((p) => p.status === 'running').length
-  const avgUtil = Math.round(CUTTING_PLANS.reduce((s, p) => s + p.util, 0) / CUTTING_PLANS.length)
+  const kpis = [
+    {
+      key: 'ordersToday',
+      label: t.dash.kpi.ordersToday,
+      value: '12',
+      unit: t.common.orders,
+      delta: 8,
+      spark: SPARKS.ordersToday,
+      color: '#0d9488',
+      breakdowns: [
+        { label: t.orders.types.cabinet, value: '7', note: '58%' },
+        { label: t.orders.types.door,    value: '3', note: '25%' },
+        { label: t.orders.types.window,  value: '2', note: '17%' },
+      ],
+    },
+    {
+      key: 'inProduction',
+      label: t.dash.kpi.inProduction,
+      value: '28',
+      unit: t.common.orders,
+      delta: 12,
+      spark: SPARKS.inProduction,
+      color: '#0d9488',
+      breakdowns: [
+        { label: 'Holzma HPP380', value: '12', note: '43%' },
+        { label: 'Biesse Selco',  value: '9',  note: '32%' },
+        { label: 'Élzáró + CNC',  value: '7',  note: '25%' },
+      ],
+    },
+    {
+      key: 'stockAlerts',
+      label: t.dash.kpi.stockAlerts,
+      value: '3',
+      unit: '',
+      delta: -25,
+      spark: SPARKS.stockAlerts,
+      color: '#b45309',
+      breakdowns: [
+        { label: 'Tölgy 22mm',   value: '8 / 15',  note: t.status.low },
+        { label: 'MDF 19mm',     value: '12 / 25', note: t.status.low },
+        { label: 'Vasalat CLIP', value: '4 / 50',  note: t.status.critical },
+      ],
+    },
+    {
+      key: 'wasteRate',
+      label: t.dash.kpi.wasteRate,
+      value: '7.1',
+      unit: '%',
+      delta: -9,
+      spark: SPARKS.wasteRate,
+      color: '#0d9488',
+      breakdowns: [
+        { label: 'Bükk 18mm',  value: '6.4%' },
+        { label: 'Tölgy 40mm', value: '8.2%' },
+        { label: 'MDF 16mm',   value: '5.9%' },
+      ],
+    },
+    {
+      key: 'oee',
+      label: t.dash.kpi.oee,
+      value: '81',
+      unit: '%',
+      delta: 4,
+      spark: SPARKS.oee,
+      color: '#0d9488',
+      breakdowns: [
+        { label: 'Rendelkezés', value: '94%' },
+        { label: 'Teljesítm.',  value: '89%' },
+        { label: 'Minőség',     value: '97%' },
+      ],
+    },
+    {
+      key: 'capacity',
+      label: t.dash.kpi.capacity,
+      value: '82',
+      unit: '%',
+      delta: 7,
+      spark: SPARKS.capacity,
+      color: '#0d9488',
+      breakdowns: [
+        { label: 'Szabászat', value: '88%' },
+        { label: 'Élzárás',   value: '76%' },
+        { label: 'CNC',       value: '82%' },
+      ],
+    },
+  ]
+
+  const machines = [
+    { name: 'Holzma HPP380', load: 78, plans: 5, current: 'CP-184-A · Bükk 18mm' },
+    { name: 'Biesse Selco',  load: 64, plans: 4, current: 'CP-182-A · Tölgy 40mm' },
+    { name: 'Élzáró Homag',  load: 42, plans: 3, current: 'CP-183-A · MDF 16mm fehér' },
+  ]
 
   return (
-    <div className="p-7 space-y-6">
-      <div>
-        <h2 className="text-[22px] font-semibold tracking-tight text-stone-900">{t.dash.greeting}</h2>
-        <p className="text-[13px] text-stone-500 mt-0.5">{t.dash.sub}</p>
+    <div className="px-7 py-6 max-w-[1400px] mx-auto">
+      {/* Header */}
+      <div className="mb-5 flex items-end justify-between gap-4">
+        <div>
+          <div className="text-[20px] font-semibold text-stone-900 tracking-tight">{t.dash.greeting}</div>
+          <div className="text-[12.5px] text-stone-500 mt-0.5">{t.dash.sub}</div>
+        </div>
+        <div className="flex items-center gap-1 bg-white border border-stone-200 rounded-lg p-0.5">
+          {[t.common.today, t.common.week, t.common.month].map((label, i) => (
+            <button
+              key={i}
+              onClick={() => setPeriod(i)}
+              className={`px-2.5 h-7 rounded-md text-[12px] font-medium transition ${
+                period === i ? 'bg-stone-900 text-white' : 'text-stone-600 hover:bg-stone-100'
+              }`}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-        <KpiCard
-          title={t.dash.kpi.ordersToday}
-          value={String(activeOrders)}
-          change={`+12% ${t.dash.vsLastWeek}`}
-          changeDirection="up"
-          spark={SPARKS.ordersToday}
-          breakdowns={[
-            { label: 'Futó', value: String(ORDERS.filter((o) => o.status === 'running').length) },
-            { label: 'Kiadva', value: String(ORDERS.filter((o) => o.status === 'released').length) },
-          ]}
-        />
-        <KpiCard
-          title={t.dash.kpi.inProduction}
-          value={String(activePlans)}
-          spark={SPARKS.inProduction}
-        />
-        <KpiCard
-          title={t.dash.kpi.capacity}
-          value={`${avgUtil}%`}
-          spark={SPARKS.capacity}
-        />
+      {/* 6 KPI cards */}
+      <div className="grid grid-cols-2 lg:grid-cols-3 gap-3">
+        {kpis.map((k) => (
+          <KpiCard
+            key={k.key}
+            label={k.label}
+            value={k.value}
+            unit={k.unit}
+            delta={k.delta}
+            spark={k.spark}
+            sparkColor={k.color}
+            breakdowns={k.breakdowns}
+          />
+        ))}
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <Card className="p-0">
-          <div className="px-5 py-4 border-b border-stone-100">
-            <h3 className="text-[13px] font-semibold text-stone-900">{t.dash.todayPlan}</h3>
+      {/* MiniKanban */}
+      <div className="mt-3">
+        <MiniKanbanStrip onNav={(_key) => { /* parent handles nav */ }} />
+      </div>
+
+      {/* Today's plan + recent orders */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-3 mt-3">
+        <Card className="lg:col-span-2 p-5">
+          <div className="flex items-center justify-between mb-4">
+            <div>
+              <div className="text-[13px] font-semibold text-stone-900">{t.dash.todayPlan}</div>
+              <div className="text-[11.5px] text-stone-500 mt-0.5">
+                12 {t.dash.cuttingPlans} · 84 {t.dash.sheets} · 3 {t.dash.machinesActive}
+              </div>
+            </div>
+            <button className="text-[11.5px] text-teal-700 hover:text-teal-900 font-medium inline-flex items-center gap-1">
+              {t.common.details} <Icon name="chevron" size={12} />
+            </button>
           </div>
-          <div className="divide-y divide-stone-100">
-            {CUTTING_PLANS.slice(0, 4).map((cp) => (
-              <div key={cp.id} className="px-5 py-3 flex items-center gap-4">
-                <div className="min-w-0 flex-1">
-                  <div className="text-[12.5px] font-medium text-stone-900">{cp.id}</div>
-                  <div className="text-[11px] text-stone-500">{cp.material} &middot; {cp.machine}</div>
+          <div className="space-y-2.5">
+            {machines.map((m, i) => (
+              <div key={i} className="flex items-center gap-3 py-2 border-b border-stone-100 last:border-0">
+                <div className="w-9 h-9 rounded-lg bg-stone-100 grid place-items-center text-stone-600 shrink-0">
+                  <Icon name="factory" size={17} />
                 </div>
-                <div className="text-[11px] text-stone-500">{cp.sheets} {t.dash.sheets}</div>
-                <StatusPill status={cp.status} label={t.status[cp.status]} />
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center gap-2">
+                    <span className="text-[12.5px] font-medium text-stone-900">{m.name}</span>
+                    <span className="text-[10.5px] text-stone-500 font-mono truncate">{m.current}</span>
+                  </div>
+                  <div className="mt-1.5 flex items-center gap-2">
+                    <div className="flex-1 h-1.5 bg-stone-100 rounded-full overflow-hidden">
+                      <div className="h-full bg-teal-600 rounded-full" style={{ width: `${m.load}%` }} />
+                    </div>
+                    <span className="text-[11px] text-stone-500 tabular-nums w-9 text-right">{m.load}%</span>
+                    <span className="text-[10.5px] text-stone-400">{m.plans} {t.dash.cuttingPlans}</span>
+                  </div>
+                </div>
               </div>
             ))}
           </div>
         </Card>
 
-        <Card className="p-0">
-          <div className="px-5 py-4 border-b border-stone-100">
-            <h3 className="text-[13px] font-semibold text-stone-900">{t.dash.recentOrders}</h3>
+        <Card className="p-5">
+          <div className="flex items-center justify-between mb-3">
+            <div className="text-[13px] font-semibold text-stone-900">{t.dash.recentOrders}</div>
+            <button className="text-[11.5px] text-teal-700 hover:text-teal-900 font-medium inline-flex items-center gap-1">
+              {t.common.details} <Icon name="chevron" size={12} />
+            </button>
           </div>
-          <div className="divide-y divide-stone-100">
+          <div className="space-y-1">
             {ORDERS.slice(0, 5).map((o) => (
-              <div key={o.id} className="px-5 py-3 flex items-center gap-4">
+              <div key={o.id} className="w-full text-left py-2 px-2 -mx-2 rounded-md hover:bg-stone-50 flex items-center gap-3">
                 <div className="min-w-0 flex-1">
-                  <div className="text-[12.5px] font-medium text-stone-900">{o.id}</div>
-                  <div className="text-[11px] text-stone-500">{o.customer}</div>
+                  <div className="text-[12.5px] font-medium text-stone-900 truncate">{o.customer}</div>
+                  <div className="text-[10.5px] font-mono text-stone-400">{o.id}</div>
                 </div>
-                <div className="text-[12px] font-medium text-stone-700">{fmtHUF(o.total)}</div>
                 <StatusPill status={o.status} label={t.status[o.status]} />
               </div>
             ))}
           </div>
         </Card>
       </div>
-
-      <Card className="p-5">
-        <h3 className="text-[13px] font-semibold text-stone-900 mb-3">{t.dash.machinesActive}</h3>
-        <div className="flex gap-3 flex-wrap">
-          {CUTTING_PLANS.filter((p) => p.status === 'running').map((p) => (
-            <div key={p.id} className="flex items-center gap-2 px-3 py-2 bg-teal-50 rounded-lg">
-              <span className="w-2 h-2 rounded-full bg-teal-500 animate-pulse" />
-              <span className="text-[12px] font-medium text-teal-800">{p.machine}</span>
-              <span className="text-[11px] text-teal-600">{p.util}%</span>
-            </div>
-          ))}
-          {activePlans === 0 && <span className="text-[12px] text-stone-500">Nincs aktív gép</span>}
-        </div>
-      </Card>
     </div>
   )
 }

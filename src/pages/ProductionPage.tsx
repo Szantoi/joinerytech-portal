@@ -1,84 +1,260 @@
 import { useState } from 'react'
-import { Card, StatusPill } from '../components/ui'
+import { Card, StatusPill, GhostBtn, PrimaryBtn, Icon } from '../components/ui'
 import { CUTTING_PLANS, NESTING, I18N } from '../mocks/data'
-import type { NestingPart } from '../types'
+import { NESTING_SHEETS } from '../mocks/extra2'
+import type { NestingPart, NestingSheet } from '../types'
 
 export function ProductionPage() {
   const t = I18N.hu
   const [tab, setTab] = useState<'cutting' | 'machining'>('cutting')
+  const [selectedPlan, setSelectedPlan] = useState(CUTTING_PLANS[0].id)
   const [hoveredPart, setHoveredPart] = useState<string | null>(null)
+  const [sheetIdx, setSheetIdx] = useState(0)
 
-  const tabs = [
-    { key: 'cutting' as const, label: t.prod.tabs.cutting },
-    { key: 'machining' as const, label: t.prod.tabs.machining },
+  const plan = CUTTING_PLANS.find((p) => p.id === selectedPlan)!
+  const sheetCount = Math.max(plan.sheets, 1)
+
+  const getSheet = (i: number): { parts: NestingPart[]; util: number } => {
+    if (i === 0) return { parts: NESTING.parts, util: plan.util }
+    const sheets = NESTING_SHEETS as Array<NestingSheet | null>
+    const ext = sheets[i] ?? sheets[(i % (sheets.length - 1)) + 1]
+    return ext ?? { parts: NESTING.parts, util: plan.util }
+  }
+
+  const curSheet = getSheet(sheetIdx)
+
+  const machiningCols = [
+    {
+      title: t.prod.edgebanding,
+      count: 14,
+      items: [
+        { name: 'CP-184-A · Bükk', op: 'Nagy J.', state: 'running' as const },
+        { name: 'CP-183-A · MDF', op: 'Tóth K.', state: 'done' as const },
+        { name: 'CP-182-A · Tölgy', op: 'Kiss A.', state: 'planned' as const },
+      ],
+    },
+    {
+      title: t.prod.cnc,
+      count: 8,
+      items: [
+        { name: 'CP-184-A · furatok', op: 'Holzma CNC', state: 'running' as const },
+        { name: 'CP-180-A · marás', op: 'Biesse Rover', state: 'done' as const },
+        { name: 'CP-182-B · csaplyuk', op: 'Holzma CNC', state: 'planned' as const },
+      ],
+    },
+    {
+      title: t.prod.qc,
+      count: 5,
+      items: [
+        { name: 'JT-2426-0180', op: 'Szabó A.', state: 'running' as const },
+        { name: 'JT-2426-0179', op: 'Szabó A.', state: 'planned' as const },
+        { name: 'JT-2426-0177', op: 'Horváth É.', state: 'done' as const },
+      ],
+    },
   ]
 
   return (
-    <div className="p-7 space-y-5">
-      <div>
-        <h2 className="text-[18px] font-semibold text-stone-900">{t.prod.title}</h2>
-      </div>
-
-      <div className="flex gap-1 bg-stone-100 rounded-lg p-1 w-fit">
-        {tabs.map((tb) => (
+    <div className="px-7 py-6 max-w-[1400px] mx-auto">
+      <div className="flex items-center gap-1 bg-white border border-stone-200 rounded-lg p-0.5 w-fit mb-5">
+        {[
+          { k: 'cutting' as const, label: t.prod.tabs.cutting },
+          { k: 'machining' as const, label: t.prod.tabs.machining },
+        ].map((x) => (
           <button
-            key={tb.key}
-            onClick={() => setTab(tb.key)}
-            className={`px-4 py-1.5 rounded-md text-[12.5px] font-medium transition ${
-              tab === tb.key ? 'bg-white text-stone-900 shadow-sm' : 'text-stone-600 hover:text-stone-900'
+            key={x.k}
+            onClick={() => setTab(x.k)}
+            className={`px-3 h-8 rounded-md text-[12.5px] font-medium transition ${
+              tab === x.k ? 'bg-stone-900 text-white' : 'text-stone-600 hover:bg-stone-100'
             }`}
           >
-            {tb.label}
+            {x.label}
           </button>
         ))}
       </div>
 
       {tab === 'cutting' && (
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <Card className="p-0">
-            <div className="px-5 py-4 border-b border-stone-100">
-              <h3 className="text-[13px] font-semibold text-stone-900">{t.prod.cuttingPlans}</h3>
+        <div className="grid grid-cols-12 gap-3">
+          {/* Plan list */}
+          <Card className="col-span-4 p-0">
+            <div className="px-4 py-3 border-b border-stone-200/80 flex items-center justify-between">
+              <div className="text-[12.5px] font-semibold text-stone-900">{t.prod.cuttingPlans}</div>
+              <span className="text-[10.5px] text-stone-500 tabular-nums">{CUTTING_PLANS.length}</span>
             </div>
-            <div className="divide-y divide-stone-100">
-              {CUTTING_PLANS.map((cp) => (
-                <div key={cp.id} className="px-5 py-3 flex items-center gap-4">
-                  <div className="min-w-0 flex-1">
-                    <div className="text-[12.5px] font-medium text-stone-900">{cp.id}</div>
-                    <div className="text-[11px] text-stone-500">{cp.material} &middot; {cp.operator}</div>
-                  </div>
-                  <div className="text-[11px] text-stone-500">{cp.sheets} lap</div>
-                  <div className="text-[11px] font-medium text-teal-700">{cp.util}%</div>
-                  <StatusPill status={cp.status} label={t.status[cp.status]} />
-                </div>
-              ))}
+            <div className="max-h-[640px] overflow-auto">
+              {CUTTING_PLANS.map((p) => {
+                const active = p.id === selectedPlan
+                const seed = p.id.charCodeAt(p.id.length - 1)
+                const progress = p.status === 'running' ? 30 + (seed * 7) % 55 : p.status === 'done' ? 100 : 0
+                const runtimeMin = p.status === 'running' ? 12 + (seed * 3) % 35 : p.status === 'done' ? 38 + (seed * 2) % 22 : 0
+                const proof = p.status === 'done'
+                return (
+                  <button
+                    key={p.id}
+                    onClick={() => { setSelectedPlan(p.id); setSheetIdx(0) }}
+                    className={`w-full text-left px-4 py-3 border-b border-stone-100 last:border-0 ${
+                      active ? 'bg-teal-50/60' : 'hover:bg-stone-50'
+                    }`}
+                  >
+                    <div className="flex items-center justify-between gap-2 mb-1">
+                      <span className="text-[11.5px] font-mono text-stone-700">{p.id}</span>
+                      <span className="inline-flex items-center gap-1.5">
+                        {proof && (
+                          <span title="Bizonylat csatolva" className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[9.5px] font-medium bg-emerald-50 text-emerald-700 border border-emerald-200/70">
+                            <Icon name="check" size={9} />proof
+                          </span>
+                        )}
+                        <StatusPill status={p.status} label={t.status[p.status]} />
+                      </span>
+                    </div>
+                    <div className="text-[12.5px] font-medium text-stone-900">{p.material}</div>
+                    <div className="mt-1.5 flex items-center gap-2 text-[10.5px] text-stone-500">
+                      <span className="font-mono">{p.sheets} {t.prod.sheet}</span>
+                      <span>·</span>
+                      <span>{t.prod.utilization} {p.util}%</span>
+                      {p.status === 'running' && (
+                        <>
+                          <span>·</span>
+                          <span className="font-mono text-teal-700">{runtimeMin} perc futás</span>
+                        </>
+                      )}
+                    </div>
+                    {p.status === 'running' && (
+                      <div className="mt-2 flex items-center gap-2">
+                        <div className="flex-1 h-1 bg-stone-100 rounded-full overflow-hidden">
+                          <div
+                            className="h-full bg-teal-600 rounded-full"
+                            style={{ width: `${progress}%`, boxShadow: '0 0 6px rgba(13,148,136,.4)' }}
+                          />
+                        </div>
+                        <span className="text-[10px] tabular-nums font-mono text-teal-700 w-9 text-right">{progress}%</span>
+                      </div>
+                    )}
+                  </button>
+                )
+              })}
             </div>
           </Card>
 
-          <Card className="p-5">
-            <h3 className="text-[13px] font-semibold text-stone-900 mb-3">{t.prod.nesting}</h3>
-            <div className="text-[11px] text-stone-500 mb-2">
-              {t.prod.sheet}: {NESTING.sheet.w}&times;{NESTING.sheet.h} mm &middot; {t.prod.parts}: {NESTING.parts.length}
+          {/* Nesting viewer */}
+          <Card className="col-span-8 p-5">
+            <div className="flex items-start justify-between gap-3 mb-4">
+              <div>
+                <div className="text-[10.5px] uppercase tracking-wide text-stone-500 font-medium">{t.prod.nesting}</div>
+                <div className="text-[15px] font-semibold text-stone-900 mt-0.5">{plan.id} · {plan.material}</div>
+                <div className="text-[11.5px] text-stone-500 mt-0.5 font-mono">{plan.order} · {plan.machine} · {plan.operator}</div>
+              </div>
+              <div className="flex items-center gap-2">
+                <GhostBtn icon="settings">Beállítások</GhostBtn>
+                <PrimaryBtn icon="external">Megnyit CNC-n</PrimaryBtn>
+              </div>
             </div>
-            <NestingSVG
-              parts={NESTING.parts}
-              sheetW={NESTING.sheet.w}
-              sheetH={NESTING.sheet.h}
-              hoveredPart={hoveredPart}
-              onHover={setHoveredPart}
-            />
-            {hoveredPart && (
-              <div className="mt-2 text-[11px] text-stone-600 font-medium">
-                {NESTING.parts.find((p) => p.id === hoveredPart)?.label}
+
+            <div className="grid grid-cols-4 gap-2 mb-4">
+              {[
+                { label: t.prod.utilization, value: `${curSheet.util}%`,                       tone: 'text-teal-700' },
+                { label: t.prod.waste,       value: `${(100 - curSheet.util).toFixed(0)}%`,    tone: 'text-amber-700' },
+                { label: t.prod.parts,       value: String(curSheet.parts.length),              tone: 'text-stone-900' },
+                { label: t.prod.sheet,       value: `${sheetIdx + 1} / ${sheetCount}`,          tone: 'text-stone-900' },
+              ].map((x, i) => (
+                <div key={i} className="bg-stone-50 border border-stone-200/70 rounded-lg p-2.5">
+                  <div className="text-[10.5px] uppercase tracking-wide text-stone-500">{x.label}</div>
+                  <div className={`text-[16px] font-semibold tabular-nums ${x.tone}`}>{x.value}</div>
+                </div>
+              ))}
+            </div>
+
+            <div className="bg-stone-50/40 rounded-lg border border-stone-200/70 p-3">
+              <NestingSVG
+                parts={curSheet.parts}
+                sheetW={NESTING.sheet.w}
+                sheetH={NESTING.sheet.h}
+                hoveredPart={hoveredPart}
+                onHover={setHoveredPart}
+              />
+            </div>
+
+            {sheetCount > 1 && (
+              <div className="mt-3 flex items-center gap-2 flex-wrap">
+                <button
+                  onClick={() => setSheetIdx(Math.max(0, sheetIdx - 1))}
+                  disabled={sheetIdx === 0}
+                  className="w-7 h-7 grid place-items-center rounded-md border border-stone-200 bg-white text-stone-600 hover:bg-stone-50 disabled:opacity-30"
+                >
+                  <Icon name="chevron" size={14} className="rotate-180" />
+                </button>
+                <div className="flex items-center gap-1 flex-wrap">
+                  {Array.from({ length: sheetCount }, (_, i) => i).map((i) => {
+                    const sh = getSheet(i)
+                    const isActive = i === sheetIdx
+                    return (
+                      <button
+                        key={i}
+                        onClick={() => setSheetIdx(i)}
+                        title={`Tábla ${i + 1} · ${sh.util}% kihasználás`}
+                        className={`relative w-12 h-9 rounded-md border-2 transition overflow-hidden bg-stone-50 ${
+                          isActive ? 'border-teal-600' : 'border-stone-200 hover:border-stone-300'
+                        }`}
+                      >
+                        <span className="absolute inset-0 grid place-items-center text-[10px] font-mono text-stone-600">{i + 1}</span>
+                        <span
+                          className={`absolute bottom-0 left-0 h-0.5 ${isActive ? 'bg-teal-600' : 'bg-stone-300'}`}
+                          style={{ width: `${sh.util}%` }}
+                        />
+                      </button>
+                    )
+                  })}
+                </div>
+                <button
+                  onClick={() => setSheetIdx(Math.min(sheetCount - 1, sheetIdx + 1))}
+                  disabled={sheetIdx >= sheetCount - 1}
+                  className="w-7 h-7 grid place-items-center rounded-md border border-stone-200 bg-white text-stone-600 hover:bg-stone-50 disabled:opacity-30"
+                >
+                  <Icon name="chevron" size={14} />
+                </button>
+                <div className="text-[10.5px] text-stone-500 font-mono ml-2">
+                  Tábla {sheetIdx + 1} / {sheetCount} · {curSheet.util}% kihasználás
+                </div>
               </div>
             )}
+
+            <div className="mt-3 flex items-center gap-3 text-[10.5px] text-stone-500 flex-wrap">
+              <span className="inline-flex items-center gap-1.5">
+                <span className="w-3 h-3 rounded-sm bg-teal-300" />{t.prod.parts}
+              </span>
+              <span className="inline-flex items-center gap-1.5">
+                <span className="w-3 h-3 rounded-sm" style={{ background: 'url(#grain)', border: '1px solid #a8a29e' }} />Tábla
+              </span>
+              <span className="ml-auto font-mono">Vágási rés: 4 mm · Forgás: 90°</span>
+            </div>
           </Card>
         </div>
       )}
 
       {tab === 'machining' && (
-        <Card className="p-8 text-center">
-          <div className="text-[14px] text-stone-500">CNC megmunkálás modul hamarosan</div>
-        </Card>
+        <div className="grid grid-cols-3 gap-3">
+          {machiningCols.map((col, i) => (
+            <Card key={i} className="p-0">
+              <div className="px-4 py-3 border-b border-stone-200/80 flex items-center justify-between">
+                <div className="text-[12.5px] font-semibold text-stone-900">{col.title}</div>
+                <span className="text-[10.5px] text-stone-500 tabular-nums">{col.count}</span>
+              </div>
+              <div className="p-2 space-y-1.5">
+                {col.items.map((it, j) => (
+                  <div key={j} className="bg-stone-50/60 border border-stone-200/70 rounded-lg p-3">
+                    <div className="flex items-center justify-between gap-2 mb-1.5">
+                      <div className="text-[12px] font-mono text-stone-700">{it.name}</div>
+                      <StatusPill status={it.state} label={t.status[it.state]} />
+                    </div>
+                    <div className="flex items-center gap-2 text-[10.5px] text-stone-500">
+                      <Icon name="user" size={11} />
+                      <span>{it.op}</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </Card>
+          ))}
+        </div>
       )}
     </div>
   )
@@ -93,43 +269,55 @@ interface NestingSVGProps {
 }
 
 function NestingSVG({ parts, sheetW, sheetH, hoveredPart, onHover }: NestingSVGProps) {
-  const scale = 0.12
-  const svgW = sheetW * scale
-  const svgH = sheetH * scale
+  const SCALE = 0.18
+  const W = sheetW * SCALE
+  const H = sheetH * SCALE
+  const fills = ['#ccfbf1', '#99f6e4', '#5eead4', '#14b8a6']
 
   return (
-    <svg width="100%" viewBox={`0 0 ${svgW} ${svgH}`} className="bg-stone-100 rounded-lg">
-      <rect x="0" y="0" width={svgW} height={svgH} fill="#f5f5f4" stroke="#d6d3d1" strokeWidth="1" />
-      {parts.map((p) => {
-        const hovered = hoveredPart === p.id
-        return (
-          <g key={p.id} onMouseEnter={() => onHover(p.id)} onMouseLeave={() => onHover(null)}>
-            <rect
-              x={p.x * scale}
-              y={p.y * scale}
-              width={p.w * scale}
-              height={p.h * scale}
-              fill={hovered ? '#99f6e4' : '#ccfbf1'}
-              stroke={hovered ? '#0d9488' : '#5eead4'}
-              strokeWidth={hovered ? 1.5 : 0.8}
-              rx="1"
-            />
-            {p.w * scale > 30 && p.h * scale > 12 && (
-              <text
-                x={p.x * scale + (p.w * scale) / 2}
-                y={p.y * scale + (p.h * scale) / 2}
-                textAnchor="middle"
-                dominantBaseline="middle"
-                fontSize="6"
-                fill="#115e59"
-                className="pointer-events-none"
-              >
+    <svg viewBox={`0 0 ${W + 24} ${H + 36}`} style={{ width: '100%', height: 'auto' }} className="block">
+      <defs>
+        <pattern id="grain" x="0" y="0" width="6" height="6" patternUnits="userSpaceOnUse">
+          <rect width="6" height="6" fill="#fafaf9" />
+          <path d="M0 3 Q3 1.5 6 3" stroke="#e7e5e4" strokeWidth=".5" fill="none" />
+        </pattern>
+      </defs>
+      <g transform="translate(12,12)">
+        <rect x="0" y="0" width={W} height={H} fill="url(#grain)" stroke="#a8a29e" strokeWidth="1" />
+        <text x={W / 2} y={H + 16} textAnchor="middle" fontSize="9" fill="#78716c" fontFamily="ui-monospace,monospace">
+          {sheetW} × {sheetH} mm
+        </text>
+        {parts.map((p, i) => {
+          const x = p.x * SCALE
+          const y = p.y * SCALE
+          const w = p.w * SCALE
+          const h = p.h * SCALE
+          const fill = fills[i % fills.length]
+          const isHover = hoveredPart === p.id
+          return (
+            <g
+              key={p.id}
+              onMouseEnter={() => onHover(p.id)}
+              onMouseLeave={() => onHover(null)}
+              style={{ cursor: 'pointer' }}
+            >
+              <rect
+                x={x} y={y} width={w} height={h}
+                fill={fill}
+                fillOpacity={isHover ? 1 : 0.85}
+                stroke={isHover ? '#0f766e' : '#0d9488'}
+                strokeWidth={isHover ? 1.5 : 0.75}
+              />
+              <text x={x + w / 2} y={y + h / 2 - 2} textAnchor="middle" fontSize="8.5" fill="#134e4a" fontWeight="600">
                 {p.label}
               </text>
-            )}
-          </g>
-        )
-      })}
+              <text x={x + w / 2} y={y + h / 2 + 9} textAnchor="middle" fontSize="7.5" fill="#0f766e" fontFamily="ui-monospace,monospace">
+                {p.w}×{p.h}
+              </text>
+            </g>
+          )
+        })}
+      </g>
     </svg>
   )
 }

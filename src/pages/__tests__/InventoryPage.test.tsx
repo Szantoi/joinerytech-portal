@@ -3,15 +3,21 @@ import { render, screen, fireEvent } from '@testing-library/react'
 import { InventoryPage } from '../InventoryPage'
 
 describe('InventoryPage', () => {
-  it('renders title', () => {
+  it('renders materials tab button', () => {
     render(<InventoryPage />)
-    const matches = screen.getAllByText(/K\u00e9szlet/)
+    const matches = screen.getAllByText(/Anyagok/)
     expect(matches.length).toBeGreaterThan(0)
   })
 
-  it('renders materials table in default tab', () => {
+  it('renders summary cards in materials tab', () => {
     render(<InventoryPage />)
-    expect(screen.getByText('Anyag')).toBeTruthy()
+    expect(screen.getByText('Riasztások')).toBeTruthy()
+    expect(screen.getByText('Becsült érték')).toBeTruthy()
+  })
+
+  it('renders material cards', () => {
+    render(<InventoryPage />)
+    expect(screen.getByText('Bükk 18mm')).toBeTruthy()
   })
 
   it('switches to offcuts tab', () => {

@@ -1,5 +1,20 @@
 import type { Stage, FlowEpic, Workstation, AuditEntry } from '../types'
 
+export interface CatalogMaterial {
+  name: string
+  thicknesses: string[]
+  sizes: string
+  price: number
+  supplier: string
+}
+
+export const CATALOG_MATERIALS: CatalogMaterial[] = [
+  { name: 'Bükk tábla', thicknesses: ['18mm', '22mm'], sizes: '2440×1220', price: 18500, supplier: 'Egger' },
+  { name: 'Tölgy tábla', thicknesses: ['22mm', '40mm'], sizes: '2440×1220', price: 32400, supplier: 'Egger' },
+  { name: 'MDF fehér', thicknesses: ['16mm', '19mm'], sizes: '2800×2070', price: 8900, supplier: 'Kronospan' },
+  { name: 'Forgácsolt csendes', thicknesses: ['18mm'], sizes: '2800×2070', price: 7400, supplier: 'Falco' },
+]
+
 export const STAGES: Stage[] = [
   { key: "sales", hu: "Értékesítés", en: "Sales" },
   { key: "survey", hu: "Felmérés", en: "Survey", optional: true },

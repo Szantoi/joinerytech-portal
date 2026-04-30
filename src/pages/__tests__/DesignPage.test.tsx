@@ -22,6 +22,7 @@ describe('DesignPage', () => {
   it('switches to editor tab', () => {
     render(<DesignPage />)
     fireEvent.click(screen.getByText(/Szerkeszt/))
-    expect(screen.getByText(/Alkatr\u00e9sz/)).toBeTruthy()
+    const matches = screen.getAllByText(/Alkatr\u00e9sz/)
+    expect(matches.length).toBeGreaterThan(0)
   })
 })

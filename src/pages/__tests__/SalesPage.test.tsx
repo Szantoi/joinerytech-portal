@@ -11,18 +11,18 @@ describe('SalesPage', () => {
 
   it('renders pipeline stage headers', () => {
     render(<SalesPage />)
-    expect(screen.getByText('Piszkozat')).toBeTruthy()
+    expect(screen.getByText('Vázlat')).toBeTruthy()
   })
 
   it('switches to quotes tab', () => {
     render(<SalesPage />)
-    fireEvent.click(screen.getByText(/j\u00e1nlatok/))
+    fireEvent.click(screen.getByRole('button', { name: 'Ajánlatok' }))
     expect(screen.getByText(/Azonos/)).toBeTruthy()
   })
 
   it('switches to customers tab', () => {
     render(<SalesPage />)
-    fireEvent.click(screen.getByText(/gyfelek/))
+    fireEvent.click(screen.getByRole('button', { name: 'Ügyfelek' }))
     const ltvs = screen.getAllByText('LTV')
     expect(ltvs.length).toBeGreaterThan(0)
   })
