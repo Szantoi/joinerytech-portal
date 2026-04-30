@@ -38,10 +38,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }, [])
 
-  const login = useCallback(() => userManager.signinRedirect(), [])
+  const login = useCallback(() => userManager.signinRedirect({
+    redirect_uri: window.location.origin + '/callback',
+  }), [])
   const logout = useCallback(async () => {
     await userManager.removeUser()
-    await userManager.signoutRedirect()
+    await userManager.signoutRedirect({
+      post_logout_redirect_uri: window.location.origin + '/',
+    })
   }, [])
 
   return (
