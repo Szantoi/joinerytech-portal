@@ -1,9 +1,6 @@
 import { useEffect } from 'react'
-import { UserManager } from 'oidc-client-ts'
 import { useNavigate } from 'react-router-dom'
-import { authConfig } from './authConfig'
-
-const userManager = new UserManager(authConfig)
+import { userManager } from './AuthContext'
 
 export function CallbackPage() {
   const navigate = useNavigate()
@@ -15,8 +12,8 @@ export function CallbackPage() {
   }, [navigate])
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-stone-50">
-      <div className="text-stone-500 text-sm">Bejelentkezés...</div>
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-stone-50 via-white to-teal-50/30">
+      <div className="text-stone-400 text-sm">Bejelentkezés...</div>
     </div>
   )
 }

@@ -48,7 +48,7 @@ interface HomeScreenProps {
 }
 
 export function HomeScreen({ onEnter, lang = 'hu' }: HomeScreenProps) {
-  const { user, isAuthenticated, login } = useAuth()
+  const { user, isAuthenticated, login, logout } = useAuth()
 
   // Derive display name from OIDC profile or demo fallback
   const displayName = user?.profile?.name ?? user?.profile?.preferred_username ?? DEMO_USER.name
@@ -91,6 +91,12 @@ export function HomeScreen({ onEnter, lang = 'hu' }: HomeScreenProps) {
                 className="text-[12px] font-medium text-teal-700 hover:text-teal-900 border border-teal-200 rounded-lg px-3 py-1.5 hover:bg-teal-50 transition"
               >
                 {lang === 'en' ? 'Enter Portal' : 'Belépés a portálra'}
+              </button>
+              <button
+                onClick={logout}
+                className="text-[12px] font-medium text-stone-500 hover:text-stone-700 border border-stone-200 rounded-lg px-3 py-1.5 hover:bg-stone-50 transition"
+              >
+                Kijelentkezés
               </button>
             </>
           ) : (

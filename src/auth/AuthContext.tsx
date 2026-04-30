@@ -14,7 +14,7 @@ export interface AuthContextValue {
 
 const AuthContext = createContext<AuthContextValue | null>(null)
 
-const userManager = new UserManager(authConfig)
+export const userManager = new UserManager(authConfig)
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null)
@@ -39,7 +39,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [])
 
   const login = useCallback(() => userManager.signinRedirect(), [])
-  const logout = useCallback(() => userManager.signoutRedirect(), [])
+  const logout = useCallback(async () => {
+    await userManager.removeUser()
+    await userManager.signoutRedirect()
+  }, [])
 
   return (
     <AuthContext.Provider value={{

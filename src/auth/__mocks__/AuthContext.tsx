@@ -12,3 +12,16 @@ export const useAuth = vi.fn(() => ({
 }))
 
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => <>{children}</>
+
+export const userManager = {
+  signinRedirectCallback: vi.fn().mockResolvedValue({}),
+  signinRedirect: vi.fn(),
+  signoutRedirect: vi.fn(),
+  getUser: vi.fn().mockResolvedValue(null),
+  events: {
+    addUserLoaded: vi.fn(),
+    addUserUnloaded: vi.fn(),
+    removeUserLoaded: vi.fn(),
+    removeUserUnloaded: vi.fn(),
+  },
+}

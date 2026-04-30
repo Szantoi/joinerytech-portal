@@ -37,7 +37,7 @@ function getInitials(name: string): string {
 }
 
 export function SidebarDark({ current, onNav, t }: SidebarDarkProps) {
-  const { user } = useAuth()
+  const { user, logout } = useAuth()
   const displayName = user?.profile?.name ?? user?.profile?.preferred_username ?? DEMO_USER.name
   const displayInitials = displayName !== DEMO_USER.name ? getInitials(displayName) : DEMO_USER.initials
 
@@ -97,7 +97,7 @@ export function SidebarDark({ current, onNav, t }: SidebarDarkProps) {
           <div className="text-[12.5px] font-medium truncate">{displayName}</div>
           <div className="text-[10.5px] text-white/45 truncate">Admin &middot; Doorstar</div>
         </div>
-        <button className="hidden lg:inline-flex text-white/45 hover:text-white/80">
+        <button onClick={logout} className="hidden lg:inline-flex text-white/45 hover:text-white/80" title="Kijelentkezés">
           <Icon name="logout" size={15} />
         </button>
       </div>

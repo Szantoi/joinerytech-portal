@@ -49,4 +49,16 @@ vi.mock('./auth/AuthContext', () => ({
     token: 'mock-token',
   }),
   AuthProvider: ({ children }: { children: unknown }) => children,
+  userManager: {
+    signinRedirectCallback: vi.fn().mockResolvedValue({}),
+    signinRedirect: vi.fn(),
+    signoutRedirect: vi.fn(),
+    getUser: vi.fn().mockResolvedValue(null),
+    events: {
+      addUserLoaded: vi.fn(),
+      addUserUnloaded: vi.fn(),
+      removeUserLoaded: vi.fn(),
+      removeUserUnloaded: vi.fn(),
+    },
+  },
 }))
