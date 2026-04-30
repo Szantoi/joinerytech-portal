@@ -63,13 +63,12 @@ describe('RequireAuth', () => {
     expect(screen.queryByText('Protected Content')).toBeNull()
   })
 
-  it('calls login and redirects when not authenticated', () => {
-    const loginMock = vi.fn()
+  it('redirects to /login when not authenticated', () => {
     mockUseAuth.mockReturnValue({
       user: null,
       isAuthenticated: false,
       isLoading: false,
-      login: loginMock,
+      login: vi.fn(),
       logout: vi.fn(),
       token: null,
     })
@@ -78,7 +77,6 @@ describe('RequireAuth', () => {
         <div>Protected Content</div>
       </RequireAuth>
     )
-    expect(loginMock).toHaveBeenCalled()
     expect(screen.queryByText('Protected Content')).toBeNull()
   })
 })

@@ -2,7 +2,7 @@ import { useAuth } from './AuthContext'
 import { Navigate } from 'react-router-dom'
 
 export function RequireAuth({ children }: { children: React.ReactNode }) {
-  const { isAuthenticated, isLoading, login } = useAuth()
+  const { isAuthenticated, isLoading } = useAuth()
 
   if (isLoading) {
     return (
@@ -13,9 +13,7 @@ export function RequireAuth({ children }: { children: React.ReactNode }) {
   }
 
   if (!isAuthenticated) {
-    // Auto-redirect to Keycloak — vagy fallback navigate
-    login()
-    return <Navigate to="/" replace />
+    return <Navigate to="/login" replace />
   }
 
   return <>{children}</>
