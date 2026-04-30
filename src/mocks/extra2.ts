@@ -5,7 +5,6 @@ import type {
   PartnerTypes,
   UserRole,
   PermModule,
-  PermLevel,
   RoleMatrix,
   Template,
   NestingSheet,
