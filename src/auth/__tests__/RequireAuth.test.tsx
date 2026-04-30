@@ -1,0 +1,84 @@
+import { describe, it, expect, vi } from 'vitest'
+import { render, screen } from '@testing-library/react'
+import { MemoryRouter } from 'react-router-dom'
+import { RequireAuth } from '../RequireAuth'
+import type { AuthContextValue } from '../AuthContext'
+
+// Override the global auth mock with a controllable vi.fn()
+const mockUseAuth = vi.fn<() => AuthContextValue>(() => ({
+  user: null,
+  isAuthenticated: true,
+  isLoading: false,
+  login: vi.fn(),
+  logout: vi.fn(),
+  token: 'mock-token',
+}))
+
+vi.mock('../AuthContext', () => ({
+  useAuth: () => mockUseAuth(),
+  AuthProvider: ({ children }: { children: React.ReactNode }) => <>{children}</>,
+}))
+
+function renderWithRouter(ui: React.ReactElement) {
+  return render(
+    <MemoryRouter initialEntries={['/protected']}>
+      {ui}
+    </MemoryRouter>
+  )
+}
+
+describe('RequireAuth', () => {
+  it('renders children when authenticated', () => {
+    mockUseAuth.mockReturnValue({
+      user: null,
+      isAuthenticated: true,
+      isLoading: false,
+      login: vi.fn(),
+      logout: vi.fn(),
+      token: 'mock-token',
+    })
+    renderWithRouter(
+      <RequireAuth>
+        <div>Protected Content</div>
+      </RequireAuth>
+    )
+    expect(screen.getByText('Protected Content')).toBeTruthy()
+  })
+
+  it('shows loading state when isLoading is true', () => {
+    mockUseAuth.mockReturnValue({
+      user: null,
+      isAuthenticated: false,
+      isLoading: true,
+      login: vi.fn(),
+      logout: vi.fn(),
+      token: null,
+    })
+    renderWithRouter(
+      <RequireAuth>
+        <div>Protected Content</div>
+      </RequireAuth>
+    )
+    expect(screen.getByText('Betöltés...')).toBeTruthy()
+    expect(screen.queryByText('Protected Content')).toBeNull()
+  })
+
+  it('calls login and redirects when not authenticated', () => {
+    const loginMock = vi.fn()
+    mockUseAuth.mockReturnValue({
+      user: null,
+      isAuthenticated: false,
+      isLoading: false,
+      login: loginMock,
+      logout: vi.fn(),
+      token: null,
+    })
+    renderWithRouter(
+      <RequireAuth>
+        <div>Protected Content</div>
+      </RequireAuth>
+    )
+    expect(loginMock).toHaveBeenCalled()
+    expect(screen.queryByText('Protected Content')).toBeNull()
+  })
+})

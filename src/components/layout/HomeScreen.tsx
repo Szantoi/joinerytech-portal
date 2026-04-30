@@ -14,11 +14,11 @@ interface Notification {
 }
 
 const NOTIFICATIONS: Notification[] = [
-  { type: 'stock', when: '10 perccel ezel\u0151tt', text: 'Vasalat Blum CLIP top \u2014 k\u00e9szlet kritikus szint al\u00e1 esett (4 db)', world: 'warehouse', screen: 'inventory' },
-  { type: 'order', when: '1 \u00f3r\u00e1ja', text: '\u00daj aj\u00e1nlat elfogadva: Doorstar Hungary Zrt. \u2014 JT-2426-0182 (12.4M Ft)', world: 'sales', screen: 'orders' },
-  { type: 'machine', when: '2 \u00f3r\u00e1ja', text: 'Holzma HPP380 \u00b7 CP-184-A elk\u00e9sz\u00fclt \u00b7 proof felt\u00f6ltve', world: 'production', screen: 'cutting' },
-  { type: 'design', when: 'Tegnap', text: '\u00daj sablon publik\u00e1lva: Konyhai als\u00f3 szekr\u00e9ny (fi\u00f3kos) v2.1', world: 'design', screen: 'editor' },
-  { type: 'delivery', when: 'Tegnap', text: 'PO-2426-091 meg\u00e9rkezett \u2014 30 db T\u00f6lgy 22mm', world: 'warehouse', screen: 'procurement' },
+  { type: 'stock', when: '10 perccel ezelőtt', text: 'Vasalat Blum CLIP top — készlet kritikus szint alá esett (4 db)', world: 'warehouse', screen: 'inventory' },
+  { type: 'order', when: '1 órája', text: 'Új ajánlat elfogadva: Doorstar Hungary Zrt. — JT-2426-0182 (12.4M Ft)', world: 'sales', screen: 'orders' },
+  { type: 'machine', when: '2 órája', text: 'Holzma HPP380 · CP-184-A elkészült · proof feltöltve', world: 'production', screen: 'cutting' },
+  { type: 'design', when: 'Tegnap', text: 'Új sablon publikálva: Konyhai alsó szekrény (fiókos) v2.1', world: 'design', screen: 'editor' },
+  { type: 'delivery', when: 'Tegnap', text: 'PO-2426-091 megérkezett — 30 db Tölgy 22mm', world: 'warehouse', screen: 'procurement' },
 ]
 
 const DOT_COLORS: Record<string, string> = {
@@ -29,17 +29,37 @@ const DOT_COLORS: Record<string, string> = {
   delivery: 'bg-sky-500',
 }
 
+// Demo fallback for unauthenticated / test mode
+const DEMO_USER = { name: 'Kovács Péter', initials: 'KP' }
+
+function getInitials(name: string): string {
+  return name
+    .split(' ')
+    .filter(Boolean)
+    .map((part) => part[0])
+    .join('')
+    .toUpperCase()
+    .slice(0, 2)
+}
+
 interface HomeScreenProps {
   onEnter: (world: string, screen?: string) => void
   lang?: string
 }
 
 export function HomeScreen({ onEnter, lang = 'hu' }: HomeScreenProps) {
-  const { user } = useAuth()
-  const greeting = lang === 'en' ? 'Good morning' : 'J\u00f3 reggelt'
-  const me = user.name
-  const subtitle = lang === 'en' ? 'Choose a workspace' : 'V\u00e1lassz egy munkavil\u00e1got'
-  const recent = lang === 'en' ? 'Recent activity' : 'Legut\u00f3bbi tev\u00e9kenys\u00e9g'
+  const { user, isAuthenticated, login } = useAuth()
+
+  // Derive display name from OIDC profile or demo fallback
+  const displayName = user?.profile?.name ?? user?.profile?.preferred_username ?? DEMO_USER.name
+  const displayInitials = displayName !== DEMO_USER.name
+    ? getInitials(displayName)
+    : DEMO_USER.initials
+
+  const greeting = lang === 'en' ? 'Good morning' : 'Jó reggelt'
+  const me = displayName
+  const subtitle = lang === 'en' ? 'Choose a workspace' : 'Válassz egy munkavil\u00e1got'
+  const recent = lang === 'en' ? 'Recent activity' : 'Legutóbbi tevékenység'
   const enabledModules = WORLD_ORDER
 
   return (
@@ -53,17 +73,43 @@ export function HomeScreen({ onEnter, lang = 'hu' }: HomeScreenProps) {
             <div className="text-[14px] font-semibold tracking-tight">
               joinery<span className="text-teal-600">/</span>tech
             </div>
-            <div className="text-[10.5px] text-stone-500 -mt-0.5">port\u00e1l</div>
+            <div className="text-[10.5px] text-stone-500 -mt-0.5">portál</div>
           </div>
         </div>
         <div className="flex items-center gap-3">
-          <div className="text-right">
-            <div className="text-[11px] text-stone-500">{lang === 'en' ? 'Logged in as' : 'Bejelentkezve'}</div>
-            <div className="text-[12px] font-medium text-stone-900">{user.name} &middot; Admin</div>
-          </div>
-          <div className="w-9 h-9 rounded-full bg-gradient-to-br from-teal-400 to-teal-600 grid place-items-center text-[11px] font-semibold text-white">
-            {user.initials}
-          </div>
+          {isAuthenticated ? (
+            <>
+              <div className="text-right">
+                <div className="text-[11px] text-stone-500">{lang === 'en' ? 'Logged in as' : 'Bejelentkezve'}</div>
+                <div className="text-[12px] font-medium text-stone-900">{displayName} &middot; Admin</div>
+              </div>
+              <div className="w-9 h-9 rounded-full bg-gradient-to-br from-teal-400 to-teal-600 grid place-items-center text-[11px] font-semibold text-white">
+                {displayInitials}
+              </div>
+              <button
+                onClick={() => onEnter('dashboard')}
+                className="text-[12px] font-medium text-teal-700 hover:text-teal-900 border border-teal-200 rounded-lg px-3 py-1.5 hover:bg-teal-50 transition"
+              >
+                {lang === 'en' ? 'Enter Portal' : 'Belépés a portálra'}
+              </button>
+            </>
+          ) : (
+            <>
+              <div className="text-right">
+                <div className="text-[11px] text-stone-500">{lang === 'en' ? 'Logged in as' : 'Bejelentkezve'}</div>
+                <div className="text-[12px] font-medium text-stone-900">{DEMO_USER.name} &middot; Admin</div>
+              </div>
+              <div className="w-9 h-9 rounded-full bg-gradient-to-br from-teal-400 to-teal-600 grid place-items-center text-[11px] font-semibold text-white">
+                {DEMO_USER.initials}
+              </div>
+              <button
+                onClick={login}
+                className="text-[12px] font-medium text-teal-700 hover:text-teal-900 border border-teal-200 rounded-lg px-3 py-1.5 hover:bg-teal-50 transition"
+              >
+                {lang === 'en' ? 'Login' : 'Bejelentkezés'}
+              </button>
+            </>
+          )}
         </div>
       </header>
 

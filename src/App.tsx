@@ -1,4 +1,7 @@
 import { Routes, Route, Navigate, useNavigate } from 'react-router-dom'
+import { AuthProvider } from './auth/AuthContext'
+import { CallbackPage } from './auth/CallbackPage'
+import { RequireAuth } from './auth/RequireAuth'
 import { HomeScreen } from './components/layout/HomeScreen'
 import { WorldShell } from './components/layout/WorldShell'
 import { DashboardPage } from './pages/DashboardPage'
@@ -44,32 +47,98 @@ function WorldPage({ worldKey, children }: { worldKey: string; children: React.R
 
 export function App() {
   return (
-    <Routes>
-      <Route path="/" element={<HomePage />} />
+    <AuthProvider>
+      <Routes>
+        {/* Public routes */}
+        <Route path="/" element={<HomePage />} />
+        <Route path="/callback" element={<CallbackPage />} />
 
-      <Route path="/w/production" element={<WorldPage worldKey="production"><DashboardPage /></WorldPage>} />
-      <Route path="/w/production/:screen" element={<WorldPage worldKey="production"><ProductionPage /></WorldPage>} />
+        {/* Protected: shopfloor (standalone) */}
+        <Route path="/w/shopfloor" element={
+          <RequireAuth>
+            <ShopFloorPage />
+          </RequireAuth>
+        } />
 
-      <Route path="/w/sales" element={<WorldPage worldKey="sales"><SalesPage /></WorldPage>} />
-      <Route path="/w/sales/:screen" element={<WorldPage worldKey="sales"><SalesPage /></WorldPage>} />
+        {/* Protected: world routes */}
+        <Route path="/w/production" element={
+          <RequireAuth>
+            <WorldPage worldKey="production"><DashboardPage /></WorldPage>
+          </RequireAuth>
+        } />
+        <Route path="/w/production/:screen" element={
+          <RequireAuth>
+            <WorldPage worldKey="production"><ProductionPage /></WorldPage>
+          </RequireAuth>
+        } />
 
-      <Route path="/w/design" element={<WorldPage worldKey="design"><DesignPage /></WorldPage>} />
-      <Route path="/w/design/:screen" element={<WorldPage worldKey="design"><DesignPage /></WorldPage>} />
+        <Route path="/w/sales" element={
+          <RequireAuth>
+            <WorldPage worldKey="sales"><SalesPage /></WorldPage>
+          </RequireAuth>
+        } />
+        <Route path="/w/sales/:screen" element={
+          <RequireAuth>
+            <WorldPage worldKey="sales"><SalesPage /></WorldPage>
+          </RequireAuth>
+        } />
 
-      <Route path="/w/warehouse" element={<WorldPage worldKey="warehouse"><InventoryPage /></WorldPage>} />
-      <Route path="/w/warehouse/:screen" element={<WorldPage worldKey="warehouse"><InventoryPage /></WorldPage>} />
+        <Route path="/w/design" element={
+          <RequireAuth>
+            <WorldPage worldKey="design"><DesignPage /></WorldPage>
+          </RequireAuth>
+        } />
+        <Route path="/w/design/:screen" element={
+          <RequireAuth>
+            <WorldPage worldKey="design"><DesignPage /></WorldPage>
+          </RequireAuth>
+        } />
 
-      <Route path="/w/shopfloor" element={<ShopFloorPage />} />
+        <Route path="/w/warehouse" element={
+          <RequireAuth>
+            <WorldPage worldKey="warehouse"><InventoryPage /></WorldPage>
+          </RequireAuth>
+        } />
+        <Route path="/w/warehouse/:screen" element={
+          <RequireAuth>
+            <WorldPage worldKey="warehouse"><InventoryPage /></WorldPage>
+          </RequireAuth>
+        } />
 
-      <Route path="/w/settings" element={<WorldPage worldKey="settings"><SettingsPage /></WorldPage>} />
-      <Route path="/w/settings/:screen" element={<WorldPage worldKey="settings"><SettingsPage /></WorldPage>} />
+        <Route path="/w/settings" element={
+          <RequireAuth>
+            <WorldPage worldKey="settings"><SettingsPage /></WorldPage>
+          </RequireAuth>
+        } />
+        <Route path="/w/settings/:screen" element={
+          <RequireAuth>
+            <WorldPage worldKey="settings"><SettingsPage /></WorldPage>
+          </RequireAuth>
+        } />
 
-      <Route path="/w/orders" element={<WorldPage worldKey="production"><OrdersPage /></WorldPage>} />
-      <Route path="/w/workflow" element={<WorldPage worldKey="production"><WorkflowPage /></WorldPage>} />
-      <Route path="/w/procurement" element={<WorldPage worldKey="warehouse"><ProcurementPage /></WorldPage>} />
-      <Route path="/w/analytics" element={<WorldPage worldKey="production"><AnalyticsPage /></WorldPage>} />
+        <Route path="/w/orders" element={
+          <RequireAuth>
+            <WorldPage worldKey="production"><OrdersPage /></WorldPage>
+          </RequireAuth>
+        } />
+        <Route path="/w/workflow" element={
+          <RequireAuth>
+            <WorldPage worldKey="production"><WorkflowPage /></WorldPage>
+          </RequireAuth>
+        } />
+        <Route path="/w/procurement" element={
+          <RequireAuth>
+            <WorldPage worldKey="warehouse"><ProcurementPage /></WorldPage>
+          </RequireAuth>
+        } />
+        <Route path="/w/analytics" element={
+          <RequireAuth>
+            <WorldPage worldKey="production"><AnalyticsPage /></WorldPage>
+          </RequireAuth>
+        } />
 
-      <Route path="*" element={<Navigate to="/" replace />} />
-    </Routes>
+        <Route path="*" element={<Navigate to="/" replace />} />
+      </Routes>
+    </AuthProvider>
   )
 }
