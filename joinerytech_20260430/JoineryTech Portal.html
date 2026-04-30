@@ -1,0 +1,197 @@
+<!doctype html>
+<html lang="hu">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>JoineryTech Portal</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com?plugins=forms,typography"></script>
+  <script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+  <script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+  <script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+  <style>
+    html, body, #root { height: 100%; }
+    body { font-family: 'Inter', ui-sans-serif, system-ui, -apple-system, sans-serif;
+           color: #1c1917; background: #f7f7f5;
+           font-feature-settings: "ss01","cv11";
+           -webkit-font-smoothing: antialiased; }
+    .font-mono, code, pre { font-family: 'JetBrains Mono', ui-monospace, monospace; }
+    button { font-family: inherit; }
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+
+  <script src="data.js?v=4"></script>
+  <script src="data-extra.js?v=4"></script>
+  <script src="data-extra-2.js?v=4"></script>
+  <script src="data-worlds.js?v=4"></script>
+  <script type="text/babel" src="tweaks-panel.jsx"></script>
+  <script type="text/babel" src="ui.jsx"></script>
+  <script type="text/babel" src="page-dashboard.jsx"></script>
+  <script type="text/babel" src="page-orders.jsx"></script>
+  <script type="text/babel" src="page-production.jsx"></script>
+  <script type="text/babel" src="page-rest.jsx"></script>
+  <script type="text/babel" src="page-workflow.jsx"></script>
+  <script type="text/babel" src="page-extras.jsx"></script>
+  <script type="text/babel" src="page-extras-2.jsx"></script>
+  <script type="text/babel" src="page-flow.jsx"></script>
+  <script type="text/babel" src="page-home.jsx"></script>
+  <script type="text/babel" src="page-design.jsx"></script>
+  <script type="text/babel" src="page-sales.jsx"></script>
+  <script type="text/babel" src="page-shopfloor.jsx"></script>
+  <script type="text/babel" src="page-world-pages.jsx"></script>
+
+  <script type="text/babel" data-presets="env,react">
+    const { useState, useEffect } = React;
+
+    const TWEAK_DEFAULTS = /*EDITMODE-BEGIN*/{
+      "lang": "hu",
+      "enabledModules": [
+        "production",
+        "sales",
+        "design",
+        "warehouse",
+        "shopfloor",
+        "settings"
+      ],
+      "startWorld": "home"
+    }/*EDITMODE-END*/;
+
+    function App() {
+      const [tweaks, setTweak] = useTweaks(TWEAK_DEFAULTS);
+      const [route, setRoute] = useState({ world: tweaks.startWorld === "home" ? null : tweaks.startWorld, screen: null });
+      const lang = tweaks.lang === "en" ? "en" : "hu";
+      const i18n = I18N[lang];
+      const enabled = tweaks.enabledModules || ["production", "sales", "design", "warehouse", "shopfloor", "settings"];
+
+      const enterWorld = (worldKey, screen = null) => {
+        const w = WORLDS[worldKey];
+        const initialScreen = screen || (w.screens[0] && w.screens[0].key) || null;
+        setRoute({ world: worldKey, screen: initialScreen });
+        window.scrollTo(0, 0);
+      };
+      const goHome = () => setRoute({ world: null, screen: null });
+      const setScreen = (s) => setRoute(r => ({ ...r, screen: s }));
+
+      // ── HOME ──
+      if (!route.world) {
+        return (
+          <div data-screen-label="Home">
+            <HomeScreen enabledModules={enabled} onEnter={enterWorld} lang={lang} />
+            <ToastHost />
+            <RootTweaks tweaks={tweaks} setTweak={setTweak} />
+          </div>
+        );
+      }
+
+      // ── SHOP FLOOR — full-screen kiosk, no shell ──
+      if (route.world === "shopfloor") {
+        return (
+          <div data-screen-label="Üzem · Shop Floor">
+            <ShopFloor onExit={goHome} lang={lang} />
+            <ToastHost />
+            <RootTweaks tweaks={tweaks} setTweak={setTweak} />
+          </div>
+        );
+      }
+
+      // ── World screens content router ──
+      const screen = route.screen;
+      let content = null;
+
+      if (route.world === "production") {
+        content = (
+          screen === "dash"      ? <ProductionDashboard onScreen={setScreen} /> :
+          screen === "cutting"   ? <ProductionPage t={i18n} initialTab="cutting" /> :
+          screen === "machining" ? <ProductionPage t={i18n} initialTab="edge" /> :
+          screen === "workflow"  ? <WorkflowPage t={i18n} /> :
+          screen === "analytics" ? <AnalyticsPage t={i18n} /> :
+          <ProductionDashboard onScreen={setScreen} />
+        );
+      } else if (route.world === "sales") {
+        content = (
+          screen === "dash"      ? <SalesDashboard onScreen={setScreen} /> :
+          screen === "orders"    ? <OrdersPage t={i18n} /> :
+          screen === "quotes"    ? <SalesQuotes /> :
+          screen === "customers" ? <SalesCustomers /> :
+          <SalesDashboard onScreen={setScreen} />
+        );
+      } else if (route.world === "design") {
+        content = (
+          screen === "dash"     ? <DesignDashboard onScreen={setScreen} /> :
+          screen === "editor"   ? <TemplateEditor /> :
+          screen === "generate" ? <MaterialsGenerator /> :
+          screen === "catalog"  ? <DesignCatalog /> :
+          <DesignDashboard onScreen={setScreen} />
+        );
+      } else if (route.world === "warehouse") {
+        content = (
+          screen === "dash"        ? <InventoryPage t={i18n} initialTab="materials" /> :
+          screen === "inventory"   ? <InventoryPage t={i18n} initialTab="materials" /> :
+          screen === "procurement" ? <ProcurementPage t={i18n} /> :
+          screen === "movements"   ? <MovementsPage /> :
+          screen === "offcuts"     ? <InventoryPage t={i18n} initialTab="offcuts" /> :
+          <InventoryPage t={i18n} initialTab="materials" />
+        );
+      } else if (route.world === "settings") {
+        content = <SettingsPage t={i18n} initialTab={screen} />;
+      }
+
+      return (
+        <div data-screen-label={"Portal — " + (lang === "en" ? WORLDS[route.world].en : WORLDS[route.world].hu)}>
+          <WorldShell world={route.world} screen={screen} onScreen={setScreen} onHome={goHome} lang={lang} t={i18n}>
+            {content}
+          </WorldShell>
+          <ChatBubble page={lang === "en" ? WORLDS[route.world].en : WORLDS[route.world].hu} />
+          <ToastHost />
+          <RootTweaks tweaks={tweaks} setTweak={setTweak} />
+        </div>
+      );
+    }
+
+    function RootTweaks({ tweaks, setTweak }) {
+      const enabled = tweaks.enabledModules || [];
+      const allMods = [
+        { key: "production", label: "Gyártás" },
+        { key: "sales",      label: "Értékesítés" },
+        { key: "design",     label: "Tervezés" },
+        { key: "warehouse",  label: "Raktár" },
+        { key: "shopfloor",  label: "Üzem" },
+        { key: "settings",   label: "Beállítások" },
+      ];
+      const toggleMod = (key) => {
+        const next = enabled.includes(key) ? enabled.filter(k => k !== key) : [...enabled, key];
+        setTweak("enabledModules", next);
+      };
+      return (
+        <TweaksPanel>
+          <TweakSection label="Megjelenítés" />
+          <TweakRadio
+            label="Nyelv"
+            value={tweaks.lang}
+            options={[{ value: "hu", label: "HU" }, { value: "en", label: "EN" }]}
+            onChange={(v) => setTweak("lang", v)}
+          />
+          <TweakSection label="Engedélyezett modulok" />
+          <div style={{ display: "grid", gap: 6, padding: "0 12px 8px" }}>
+            {allMods.map(m => (
+              <label key={m.key} style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 12, cursor: "pointer", color: "#44403c" }}>
+                <input type="checkbox" checked={enabled.includes(m.key)} onChange={() => toggleMod(m.key)} />
+                <span>{m.label}</span>
+              </label>
+            ))}
+            <div style={{ fontSize: 10.5, color: "#a8a29e", marginTop: 4, lineHeight: 1.4 }}>
+              A Home-on csak az engedélyezett modulok kártyái jelennek meg.
+            </div>
+          </div>
+        </TweaksPanel>
+      );
+    }
+
+    ReactDOM.createRoot(document.getElementById("root")).render(<App />);
+  </script>
+</body>
+</html>
