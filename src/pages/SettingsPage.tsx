@@ -22,8 +22,7 @@ const TAB_LIST: Array<{ key: SettingsTab; label: string }> = [
   { key: 'integrations', label: 'Integrációk' },
   { key: 'catalog',      label: 'Katalógus' },
   { key: 'audit',        label: 'Audit napló' },
-  { key: 'roles',        label: 'Szerepkörök' },
-].filter((tab, idx, arr) => arr.findIndex((t) => t.key === tab.key) === idx)
+]
 
 export function SettingsPage() {
   const t = I18N.hu
