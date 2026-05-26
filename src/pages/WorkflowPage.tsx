@@ -1,8 +1,42 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Card, Icon, GhostBtn, PrimaryBtn } from '../components/ui'
 import { Avatar } from '../components/ui/Avatar'
 import { STAGES, FLOW_EPICS } from '../mocks/extra'
 import type { FlowEpic, FlowPriority } from '../types'
+import { useApi, API_BASE } from '../hooks/useApi'
+import { useAuth } from '../hooks/useAuth'
+
+interface ApiFlowEpic {
+  id: string
+  title: string
+  targetFacilityId: string
+  phase: 'Discovery' | 'Delivery' | 'ClosedDone'
+  isDelegated: boolean
+}
+
+interface PagedFlowEpics {
+  items: ApiFlowEpic[]
+  totalCount: number
+}
+
+function apiEpicToFe(e: ApiFlowEpic): FlowEpic {
+  const stageMap: Record<string, string> = {
+    Discovery: 'sales',
+    Delivery:  'production',
+    ClosedDone: 'delivery',
+  }
+  return {
+    id: e.id.slice(0, 13).toUpperCase(),
+    title: e.title,
+    customer: '—',
+    type: 'door',
+    stage: stageMap[e.phase] ?? 'sales',
+    due: '',
+    assignee: 'SA',
+    priority: 'med',
+    delegated: e.isDelegated,
+  }
+}
 
 const PRIORITY_TONES: Record<FlowPriority, { bg: string; fg: string; label: string }> = {
   high: { bg: 'bg-rose-100', fg: 'text-rose-700', label: 'Magas' },
@@ -20,13 +54,23 @@ const ASSIGNEES = Object.keys(ASSIGNEE_NAMES)
 const TODAY = new Date('2026-04-30')
 
 export function WorkflowPage() {
+  const { facilityId } = useAuth()
+  const url = facilityId ? `${API_BASE.kernel}/facilities/${facilityId}/flow-epics?pageSize=50` : null
+  const { data: apiData, refetch } = useApi<PagedFlowEpics>(url)
+  useEffect(() => { if (facilityId) refetch() }, [facilityId]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  const apiEpics = apiData?.items?.map(apiEpicToFe) ?? null
   const [epics, setEpics] = useState(FLOW_EPICS)
   const [selected, setSelected] = useState<FlowEpic | null>(null)
   const [search, setSearch] = useState('')
   const [filterAssignee, setFilterAssignee] = useState<string>('all')
   const [dragOver, setDragOver] = useState<string | null>(null)
 
-  const filtered = epics.filter((e) => {
+  // Replace mock data with API data when available
+  const displayEpics = apiEpics ?? epics
+  const setDisplayEpics = apiEpics ? (_fn: (prev: FlowEpic[]) => FlowEpic[]) => {} : setEpics
+
+  const filtered = displayEpics.filter((e) => {
     if (filterAssignee !== 'all' && e.assignee !== filterAssignee) return false
     if (search) {
       const q = search.toLowerCase()
@@ -38,7 +82,7 @@ export function WorkflowPage() {
   const onDrop = (stageKey: string) => (ev: React.DragEvent) => {
     ev.preventDefault()
     const id = ev.dataTransfer.getData('text/plain')
-    setEpics((prev) => prev.map((ep) => ep.id === id ? { ...ep, stage: stageKey } : ep))
+    setDisplayEpics((prev) => prev.map((ep) => ep.id === id ? { ...ep, stage: stageKey } : ep))
     setDragOver(null)
   }
 

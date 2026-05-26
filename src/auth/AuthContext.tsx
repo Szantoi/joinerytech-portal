@@ -55,7 +55,8 @@ function pickFacility(items: FacilityItem[]): FacilityItem | null {
   if (!items.length) return null
   return (
     items.find(f => f.name === 'Vác főüzem') ??
-    items.find(f => !f.name.startsWith('E2E') && !f.name.match(/^Fac\d/)) ??
+    items.find(f => f.name === 'Doorstar Üzem') ??
+    items.find(f => !f.name.startsWith('E2E') && !f.name.match(/^Fac\d/) && !f.name.match(/^Fac-/)) ??
     items[0]
   )
 }
