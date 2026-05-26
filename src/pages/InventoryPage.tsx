@@ -1,23 +1,69 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Card, StatusPill } from '../components/ui'
 import { OffcutsPanel } from '../components/orders/OffcutsPanel'
 import { MovementsPage as MovementsTab } from './warehouse/MovementsPage'
 import { MATERIALS, I18N } from '../mocks/data'
+import { fetchAll, API_BASE } from '../hooks/useApi'
+import { useAuth } from '../auth'
 
 type InvTab = 'materials' | 'offcuts' | 'movements'
+
+interface ApiStockItem {
+  materialType: string
+  fullPanelCount: number
+  widthMm: number
+  heightMm: number
+  offcutCount: number
+}
+
+// Known material types seeded in the inventory DB
+const KNOWN_MATERIAL_TYPES = [
+  'MDF 18mm', 'MDF 16mm', 'HDF 3mm', 'Forgácslap 18mm', 'ABS él 0.8mm', 'HDF', 'MDF',
+]
+
+function stockTrend(count: number): 'ok' | 'low' | 'critical' {
+  if (count <= 2) return 'critical'
+  if (count <= 8) return 'low'
+  return 'ok'
+}
 
 export function InventoryPage() {
   const t = I18N.hu
   const [tab, setTab] = useState<InvTab>('materials')
+  const { token } = useAuth()
+  const [apiStocks, setApiStocks] = useState<ApiStockItem[] | null>(null)
+
+  useEffect(() => {
+    if (!token) return
+    const urls = KNOWN_MATERIAL_TYPES.map(
+      mt => `${API_BASE.inventory}/api/inventory/stock?materialType=${encodeURIComponent(mt)}`
+    )
+    fetchAll<ApiStockItem>(urls, token).then(results => {
+      const valid = results.filter((r): r is ApiStockItem => r !== null && r.fullPanelCount !== undefined)
+      if (valid.length > 0) setApiStocks(valid)
+    })
+  }, [token])
+
+  // Build display materials from API or mock
+  const displayMaterials = apiStocks
+    ? apiStocks.map(s => ({
+        code: s.materialType.replace(/\s/g, '-').toUpperCase(),
+        name: s.materialType,
+        onHand: s.fullPanelCount,
+        unit: 'lap',
+        min: 5,
+        price: 8500,
+        trend: stockTrend(s.fullPanelCount),
+      }))
+    : MATERIALS
+
+  const alertCount = displayMaterials.filter((m) => m.trend !== 'ok').length
 
   const tabs: Array<{ key: InvTab; label: string; count: number }> = [
-    { key: 'materials', label: 'Anyagok',    count: MATERIALS.length },
+    { key: 'materials', label: 'Anyagok',    count: displayMaterials.length },
     { key: 'offcuts',   label: t.inv.offcuts, count: 8 },
     { key: 'movements', label: t.inv.movements, count: 24 },
   ]
-
-  const alertCount = MATERIALS.filter((m) => m.trend !== 'ok').length
-  const totalValue = '8.4M Ft'
 
   return (
     <div className="px-7 py-6 max-w-[1400px] mx-auto">
@@ -42,9 +88,9 @@ export function InventoryPage() {
         <>
           <div className="grid grid-cols-3 gap-3 mb-3">
             {[
-              { label: 'Anyagok',       value: MATERIALS.length, sub: 'katalógusban' },
-              { label: 'Riasztások',    value: alertCount,        sub: 'alacsony / kritikus', tone: 'text-amber-700' },
-              { label: 'Becsült érték', value: totalValue,         sub: 'raktáron' },
+              { label: 'Anyagok',       value: displayMaterials.length, sub: 'katalógusban' },
+              { label: 'Riasztások',    value: alertCount,               sub: 'alacsony / kritikus', tone: 'text-amber-700' },
+              { label: 'Becsült érték', value: '8.4M Ft',                sub: 'raktáron' },
             ].map((x, i) => (
               <Card key={i} className="p-4">
                 <div className="text-[10.5px] uppercase tracking-wide text-stone-500 font-medium">{x.label}</div>
@@ -55,7 +101,7 @@ export function InventoryPage() {
           </div>
 
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-            {MATERIALS.map((m) => {
+            {displayMaterials.map((m) => {
               const pct = Math.min(100, (m.onHand / (m.min * 2)) * 100)
               const toneBar =
                 m.trend === 'critical' ? 'bg-rose-500' : m.trend === 'low' ? 'bg-amber-500' : 'bg-teal-600'
@@ -66,7 +112,7 @@ export function InventoryPage() {
                       <div className="text-[12.5px] font-semibold text-stone-900 truncate">{m.name}</div>
                       <div className="text-[10.5px] font-mono text-stone-400">{m.code}</div>
                     </div>
-                    <StatusPill status={m.trend} label={t.status[m.trend]} />
+                    <StatusPill status={m.trend} label={t.status[m.trend as keyof typeof t.status] ?? m.trend} />
                   </div>
                   <div
                     className="aspect-[4/2] bg-stone-100 rounded-lg mb-3 grid place-items-center text-stone-400 text-[10px]"

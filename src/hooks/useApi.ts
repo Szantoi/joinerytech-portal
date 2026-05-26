@@ -70,6 +70,26 @@ export function useApi<T>(url: string | null, options?: FetchOptions): ApiResult
   return { data, isLoading, error, refetch: fetchData }
 }
 
+// Fetch multiple URLs in parallel, returning results in the same order.
+// Returns null entries for failed/missing responses.
+export async function fetchAll<T>(
+  urls: string[],
+  token: string
+): Promise<(T | null)[]> {
+  return Promise.all(
+    urls.map(url =>
+      fetch(url, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+      })
+        .then(r => (r.ok ? (r.json() as Promise<T>) : null))
+        .catch(() => null)
+    )
+  )
+}
+
 export function useMutation<T = unknown>(): MutationResult<T> {
   const { token } = useAuth()
   const [isLoading, setIsLoading] = useState(false)
