@@ -5,6 +5,35 @@ import { WORLDS, WORLD_ORDER } from '../../mocks/worlds'
 import { useAuth } from '../../hooks/useAuth'
 import type { WorldKey } from '../../types'
 
+// Worlds accessible per Keycloak role
+const ROLE_WORLDS: Record<string, WorldKey[]> = {
+  Admin:    ['production', 'sales', 'design', 'warehouse', 'shopfloor', 'settings'],
+  Designer: ['production', 'sales', 'design', 'warehouse', 'settings'],
+  Joiner:   ['shopfloor'],
+}
+
+const ROLE_LABELS: Record<string, string> = {
+  Admin:    'Adminisztrátor',
+  Designer: 'Tervező',
+  Joiner:   'Asztalos',
+}
+
+function getVisibleWorlds(roles: string[]): WorldKey[] {
+  // Highest privilege wins
+  if (roles.includes('Admin')) return ROLE_WORLDS['Admin']
+  if (roles.includes('Designer')) return ROLE_WORLDS['Designer']
+  if (roles.includes('Joiner')) return ROLE_WORLDS['Joiner']
+  // Fallback: unauthenticated / unknown role → nothing
+  return []
+}
+
+function getRoleLabel(roles: string[]): string {
+  if (roles.includes('Admin')) return ROLE_LABELS['Admin']
+  if (roles.includes('Designer')) return ROLE_LABELS['Designer']
+  if (roles.includes('Joiner')) return ROLE_LABELS['Joiner']
+  return 'Ismeretlen'
+}
+
 interface Notification {
   type: string
   when: string
@@ -48,7 +77,7 @@ interface HomeScreenProps {
 }
 
 export function HomeScreen({ onEnter, lang = 'hu' }: HomeScreenProps) {
-  const { user, isAuthenticated, login, logout } = useAuth()
+  const { user, isAuthenticated, login, logout, roles } = useAuth()
 
   // Derive display name from OIDC profile or demo fallback
   const displayName = user?.profile?.name ?? user?.profile?.preferred_username ?? DEMO_USER.name
@@ -60,7 +89,8 @@ export function HomeScreen({ onEnter, lang = 'hu' }: HomeScreenProps) {
   const me = displayName
   const subtitle = lang === 'en' ? 'Choose a workspace' : 'Válassz egy munkavil\u00e1got'
   const recent = lang === 'en' ? 'Recent activity' : 'Legutóbbi tevékenység'
-  const enabledModules = WORLD_ORDER
+  const roleLabel = isAuthenticated ? getRoleLabel(roles) : 'Admin'
+  const visibleWorlds = isAuthenticated ? getVisibleWorlds(roles) : WORLD_ORDER
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-stone-50 via-white to-teal-50/30">
@@ -81,7 +111,7 @@ export function HomeScreen({ onEnter, lang = 'hu' }: HomeScreenProps) {
             <>
               <div className="text-right">
                 <div className="text-[11px] text-stone-500">{lang === 'en' ? 'Logged in as' : 'Bejelentkezve'}</div>
-                <div className="text-[12px] font-medium text-stone-900">{displayName} &middot; Admin</div>
+                <div className="text-[12px] font-medium text-stone-900">{displayName} &middot; {roleLabel}</div>
               </div>
               <div className="w-9 h-9 rounded-full bg-gradient-to-br from-teal-400 to-teal-600 grid place-items-center text-[11px] font-semibold text-white">
                 {displayInitials}
@@ -131,7 +161,7 @@ export function HomeScreen({ onEnter, lang = 'hu' }: HomeScreenProps) {
 
       <div className="max-w-[1200px] mx-auto px-8 pb-10">
         <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-          {enabledModules.filter((k): k is WorldKey => k in WORLDS).map((key) => {
+          {visibleWorlds.filter((k): k is WorldKey => k in WORLDS).map((key) => {
             const w = WORLDS[key]
             const accent = ACCENT_MAP[w.accent] ?? ACCENT_MAP.teal
             return (

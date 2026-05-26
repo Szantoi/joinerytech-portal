@@ -47,6 +47,9 @@ vi.mock('./auth/AuthContext', () => ({
     login: vi.fn(),
     logout: vi.fn(),
     token: 'mock-token',
+    tenantId: 'a1b2c3d4-e5f6-7890-abcd-ef1234567890',
+    roles: ['Admin'],
+    enabledModules: ['door', 'cutting'],
   }),
   AuthProvider: ({ children }: { children: unknown }) => children,
   userManager: {

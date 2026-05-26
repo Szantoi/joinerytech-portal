@@ -9,6 +9,9 @@ export const useAuth = vi.fn(() => ({
   login: vi.fn(),
   logout: vi.fn(),
   token: 'mock-token-xyz',
+  tenantId: 'a1b2c3d4-e5f6-7890-abcd-ef1234567890',
+  roles: ['Admin'],
+  enabledModules: ['door', 'cutting'],
 }))
 
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => <>{children}</>

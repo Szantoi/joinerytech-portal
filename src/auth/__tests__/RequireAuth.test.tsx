@@ -4,6 +4,12 @@ import { MemoryRouter } from 'react-router-dom'
 import { RequireAuth } from '../RequireAuth'
 import type { AuthContextValue } from '../AuthContext'
 
+const AUTH_BASE = {
+  tenantId: 'a1b2c3d4-e5f6-7890-abcd-ef1234567890',
+  roles: ['Admin'] as string[],
+  enabledModules: ['door', 'cutting'] as string[],
+}
+
 // Override the global auth mock with a controllable vi.fn()
 const mockUseAuth = vi.fn<() => AuthContextValue>(() => ({
   user: null,
@@ -12,6 +18,7 @@ const mockUseAuth = vi.fn<() => AuthContextValue>(() => ({
   login: vi.fn(),
   logout: vi.fn(),
   token: 'mock-token',
+  ...AUTH_BASE,
 }))
 
 vi.mock('../AuthContext', () => ({
@@ -36,6 +43,7 @@ describe('RequireAuth', () => {
       login: vi.fn(),
       logout: vi.fn(),
       token: 'mock-token',
+      ...AUTH_BASE,
     })
     renderWithRouter(
       <RequireAuth>
@@ -53,6 +61,7 @@ describe('RequireAuth', () => {
       login: vi.fn(),
       logout: vi.fn(),
       token: null,
+      ...AUTH_BASE,
     })
     renderWithRouter(
       <RequireAuth>
@@ -71,6 +80,7 @@ describe('RequireAuth', () => {
       login: vi.fn(),
       logout: vi.fn(),
       token: null,
+      ...AUTH_BASE,
     })
     renderWithRouter(
       <RequireAuth>

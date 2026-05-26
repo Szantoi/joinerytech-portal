@@ -13,6 +13,17 @@ interface ApiResult<T> {
   refetch: () => void
 }
 
+interface MutationOptions {
+  method: 'POST' | 'PUT' | 'DELETE' | 'PATCH'
+  body?: unknown
+}
+
+interface MutationResult<T> {
+  mutate: (url: string, options: MutationOptions) => Promise<T>
+  isLoading: boolean
+  error: string | null
+}
+
 // API base URLs (nginx proxy)
 export const API_BASE = {
   kernel:       '/api',
@@ -57,4 +68,37 @@ export function useApi<T>(url: string | null, options?: FetchOptions): ApiResult
   // Use useEffect in components wrapping this hook
 
   return { data, isLoading, error, refetch: fetchData }
+}
+
+export function useMutation<T = unknown>(): MutationResult<T> {
+  const { token } = useAuth()
+  const [isLoading, setIsLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+
+  const mutate = useCallback(async (url: string, options: MutationOptions): Promise<T> => {
+    if (!token) throw new Error('Nincs bejelentkezve')
+    setIsLoading(true)
+    setError(null)
+    try {
+      const res = await fetch(url, {
+        method: options.method,
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        body: options.body !== undefined ? JSON.stringify(options.body) : undefined,
+      })
+      if (!res.ok) throw new Error(`HTTP ${res.status}`)
+      const json = await res.json() as T
+      return json
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : 'Ismeretlen hiba'
+      setError(msg)
+      throw new Error(msg)
+    } finally {
+      setIsLoading(false)
+    }
+  }, [token])
+
+  return { mutate, isLoading, error }
 }

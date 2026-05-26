@@ -10,6 +10,39 @@ export interface AuthContextValue {
   login: () => Promise<void>
   logout: () => Promise<void>
   token: string | null
+  tenantId: string | null
+  roles: string[]
+  enabledModules: string[]
+}
+
+function decodeJwtPayload(jwt: string): Record<string, unknown> {
+  try {
+    const payload = jwt.split('.')[1]
+    return JSON.parse(atob(payload.replace(/-/g, '+').replace(/_/g, '/'))) as Record<string, unknown>
+  } catch {
+    return {}
+  }
+}
+
+function parseUserClaims(user: User | null) {
+  if (!user) return { tenantId: null, roles: [], enabledModules: [] }
+
+  // Access token has realm_access.roles + custom claims
+  const at = user.access_token ? decodeJwtPayload(user.access_token) : {}
+  const realmAccess = at['realm_access'] as { roles?: string[] } | undefined
+  const roles = realmAccess?.roles?.filter(r => ['Admin', 'Designer', 'Joiner'].includes(r)) ?? []
+
+  // Custom claims present in both ID token (profile) and access token
+  const profile = user.profile as Record<string, unknown>
+  const tidSource = (at['tid'] ?? profile['tid']) as string | undefined
+  const tenantId = tidSource ?? null
+
+  const rawModules = (at['enabled_modules'] ?? profile['enabled_modules'])
+  const enabledModules: string[] = Array.isArray(rawModules)
+    ? (rawModules as unknown[]).map(String)
+    : rawModules ? [String(rawModules)] : []
+
+  return { tenantId, roles, enabledModules }
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null)
@@ -51,6 +84,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     window.location.href = window.location.origin + '/'
   }, [])
 
+  const { tenantId, roles, enabledModules } = parseUserClaims(user)
+
   return (
     <AuthContext.Provider value={{
       user,
@@ -59,6 +94,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       login,
       logout,
       token: user?.access_token ?? null,
+      tenantId,
+      roles,
+      enabledModules,
     }}>
       {children}
     </AuthContext.Provider>
