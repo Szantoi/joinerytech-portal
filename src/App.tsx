@@ -7,12 +7,11 @@ import { WorldShell } from './components/layout/WorldShell'
 import { LandingPage } from './pages/LandingPage'
 import { LoginPage } from './pages/LoginPage'
 import { DashboardPage } from './pages/DashboardPage'
-import { OrdersPage } from './pages/OrdersPage'
 import { ProductionPage } from './pages/ProductionPage'
 import { ProductionDashboardPage } from './pages/production/ProductionDashboardPage'
 import { MovementsPage } from './pages/warehouse/MovementsPage'
 import { SalesWorldPage } from './pages/SalesPage'
-import { DesignPage } from './pages/DesignPage'
+import { DesignWorldPage } from './pages/DesignPage'
 import { WorkflowPage } from './pages/WorkflowPage'
 import { InventoryPage } from './pages/InventoryPage'
 import { ProcurementPage } from './pages/ProcurementPage'
@@ -76,13 +75,38 @@ function ProductionWorldPage() {
   )
 }
 
+function SettingsWorldPage() {
+  const navigate = useNavigate()
+  const { screen } = useParams<{ screen?: string }>()
+  const currentScreen = screen ?? 'company'
+
+  return (
+    <WorldShell
+      worldKey="settings"
+      screen={currentScreen}
+      onScreen={(key) => navigate(`/w/settings/${key}`)}
+      onHome={() => navigate('/')}
+    >
+      <div key={currentScreen} className="contents">
+        <SettingsPage
+          initialTab={currentScreen}
+          onTabChange={(tab) => navigate(`/w/settings/${tab}`)}
+        />
+      </div>
+    </WorldShell>
+  )
+}
+
 function WarehouseWorldPage() {
   const navigate = useNavigate()
   const { screen } = useParams<{ screen?: string }>()
   const currentScreen = screen ?? 'dash'
 
   function renderContent() {
-    if (currentScreen === 'movements') return <MovementsPage />
+    if (currentScreen === 'dash')        return <InventoryPage />
+    if (currentScreen === 'inventory')   return <InventoryPage />
+    if (currentScreen === 'procurement') return <ProcurementPage />
+    if (currentScreen === 'movements')   return <MovementsPage />
     return <InventoryPage />
   }
 
@@ -93,7 +117,7 @@ function WarehouseWorldPage() {
       onScreen={(key) => navigate(`/w/warehouse/${key}`)}
       onHome={() => navigate('/')}
     >
-      {renderContent()}
+      <div key={currentScreen} className="contents">{renderContent()}</div>
     </WorldShell>
   )
 }
@@ -146,12 +170,12 @@ export function App() {
 
         <Route path="/w/design" element={
           <RequireAuth>
-            <WorldPage worldKey="design"><DesignPage /></WorldPage>
+            <DesignWorldPage />
           </RequireAuth>
         } />
         <Route path="/w/design/:screen" element={
           <RequireAuth>
-            <WorldPage worldKey="design"><DesignPage /></WorldPage>
+            <DesignWorldPage />
           </RequireAuth>
         } />
 
@@ -168,33 +192,12 @@ export function App() {
 
         <Route path="/w/settings" element={
           <RequireAuth>
-            <WorldPage worldKey="settings"><SettingsPage /></WorldPage>
+            <SettingsWorldPage />
           </RequireAuth>
         } />
         <Route path="/w/settings/:screen" element={
           <RequireAuth>
-            <WorldPage worldKey="settings"><SettingsPage /></WorldPage>
-          </RequireAuth>
-        } />
-
-        <Route path="/w/orders" element={
-          <RequireAuth>
-            <WorldPage worldKey="production"><OrdersPage /></WorldPage>
-          </RequireAuth>
-        } />
-        <Route path="/w/workflow" element={
-          <RequireAuth>
-            <WorldPage worldKey="production"><WorkflowPage /></WorldPage>
-          </RequireAuth>
-        } />
-        <Route path="/w/procurement" element={
-          <RequireAuth>
-            <WorldPage worldKey="warehouse"><ProcurementPage /></WorldPage>
-          </RequireAuth>
-        } />
-        <Route path="/w/analytics" element={
-          <RequireAuth>
-            <WorldPage worldKey="production"><AnalyticsPage /></WorldPage>
+            <SettingsWorldPage />
           </RequireAuth>
         } />
 

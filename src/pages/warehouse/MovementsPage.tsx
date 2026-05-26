@@ -26,7 +26,11 @@ const MOV_TONE: Record<string, { bg: string; fg: string; dot: string }> = {
 
 type FilterKey = 'all' | 'Bevét' | 'Kivét' | 'Maradék' | 'Korr.'
 
-export function MovementsPage() {
+interface MovementsPageProps {
+  embedded?: boolean
+}
+
+export function MovementsPage({ embedded = false }: MovementsPageProps) {
   const [filter, setFilter] = useState<FilterKey>('all')
   const [range, setRange] = useState('week')
   const [search, setSearch] = useState('')
@@ -58,22 +62,24 @@ export function MovementsPage() {
   }
 
   return (
-    <div className="px-7 py-6 space-y-4">
-      {/* Summary cards */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-        {[
-          { label: 'Bevétek', value: totals.in, sub: 'e héten', tone: 'text-emerald-700' },
-          { label: 'Kivétek', value: totals.out, sub: 'gyártásba', tone: 'text-stone-900' },
-          { label: 'Maradékok', value: totals.off, sub: 'raktárba', tone: 'text-sky-700' },
-          { label: 'Korrekciók', value: totals.adj, sub: 'leltárból', tone: 'text-amber-700' },
-        ].map((s) => (
-          <Card key={s.label} className="p-4">
-            <div className="text-[10.5px] uppercase tracking-wide text-stone-500 font-medium">{s.label}</div>
-            <div className={`text-[28px] font-semibold tracking-tight mt-1 tabular-nums ${s.tone}`}>{s.value}</div>
-            <div className="text-[10.5px] text-stone-500 mt-1">{s.sub}</div>
-          </Card>
-        ))}
-      </div>
+    <div className={embedded ? 'space-y-4' : 'px-7 py-6 space-y-4'}>
+      {/* Summary cards — csak standalone módban */}
+      {!embedded && (
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+          {[
+            { label: 'Bevétek', value: totals.in, sub: 'e héten', tone: 'text-emerald-700' },
+            { label: 'Kivétek', value: totals.out, sub: 'gyártásba', tone: 'text-stone-900' },
+            { label: 'Maradékok', value: totals.off, sub: 'raktárba', tone: 'text-sky-700' },
+            { label: 'Korrekciók', value: totals.adj, sub: 'leltárból', tone: 'text-amber-700' },
+          ].map((s) => (
+            <Card key={s.label} className="p-4">
+              <div className="text-[10.5px] uppercase tracking-wide text-stone-500 font-medium">{s.label}</div>
+              <div className={`text-[28px] font-semibold tracking-tight mt-1 tabular-nums ${s.tone}`}>{s.value}</div>
+              <div className="text-[10.5px] text-stone-500 mt-1">{s.sub}</div>
+            </Card>
+          ))}
+        </div>
+      )}
 
       {/* Filter bar */}
       <div className="flex items-center gap-2 flex-wrap">

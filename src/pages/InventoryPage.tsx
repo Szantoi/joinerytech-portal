@@ -101,7 +101,7 @@ export function InventoryPage() {
 
       {tab === 'offcuts' && <OffcutsPanel />}
 
-      {tab === 'movements' && <MovementsTab />}
+      {tab === 'movements' && <MovementsTab embedded />}
     </div>
   )
 }

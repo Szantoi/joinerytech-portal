@@ -5,7 +5,7 @@ export function ProcurementPage() {
   const t = I18N.hu
 
   return (
-    <div className="px-7 py-6 max-w-[1400px] mx-auto">
+    <div className="w-full px-7 py-6 max-w-[1400px] mx-auto">
       <div className="grid grid-cols-12 gap-3">
         <Card className="col-span-8 p-0">
           <div className="px-5 py-3 border-b border-stone-200/80 flex items-center justify-between">

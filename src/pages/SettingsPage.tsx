@@ -24,9 +24,19 @@ const TAB_LIST: Array<{ key: SettingsTab; label: string }> = [
   { key: 'audit',        label: 'Audit napló' },
 ]
 
-export function SettingsPage() {
+interface SettingsPageProps {
+  initialTab?: string
+  onTabChange?: (tab: string) => void
+}
+
+export function SettingsPage({ initialTab = 'company', onTabChange }: SettingsPageProps = {}) {
   const t = I18N.hu
-  const [tab, setTab] = useState<SettingsTab>('company')
+  const [tab, setTab] = useState<SettingsTab>((initialTab as SettingsTab) ?? 'company')
+
+  function handleTabChange(newTab: SettingsTab) {
+    setTab(newTab)
+    onTabChange?.(newTab)
+  }
 
   return (
     <div className="px-7 py-6 max-w-[1400px] mx-auto">
@@ -34,7 +44,7 @@ export function SettingsPage() {
         {TAB_LIST.map((tb) => (
           <button
             key={tb.key}
-            onClick={() => setTab(tb.key)}
+            onClick={() => handleTabChange(tb.key)}
             className={`px-3 h-9 text-[12.5px] font-medium border-b-2 whitespace-nowrap transition ${
               tab === tb.key
                 ? 'border-teal-600 text-stone-900'

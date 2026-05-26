@@ -19,7 +19,7 @@ describe('App Router', () => {
 
   it('renders shopfloor at /w/shopfloor', () => {
     renderApp('/w/shopfloor')
-    expect(screen.getByText('Shopfloor')).toBeTruthy()
+    expect(screen.getByText('Bejelentkezés')).toBeTruthy()
   })
 
   it('redirects unknown routes to home', () => {
@@ -37,5 +37,21 @@ describe('App Router', () => {
     renderApp('/w/settings')
     const matches = screen.getAllByText(/Be\u00e1ll\u00edt\u00e1sok/)
     expect(matches.length).toBeGreaterThan(0)
+  })
+
+  it('renders warehouse overview', () => {
+    renderApp('/w/warehouse')
+    const matches = screen.getAllByText(/Rakt\u00e1r/)
+    expect(matches.length).toBeGreaterThan(0)
+  })
+
+  it('renders warehouse procurement screen', () => {
+    renderApp('/w/warehouse/procurement')
+    expect(screen.getByText('Akt\u00edv megrendel\u00e9sek')).toBeTruthy()
+  })
+
+  it('renders warehouse movements screen', () => {
+    renderApp('/w/warehouse/movements')
+    expect(screen.getByText('Anyagmozg\u00e1s napl\u00f3')).toBeTruthy()
   })
 })

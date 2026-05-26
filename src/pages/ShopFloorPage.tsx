@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { Icon } from '../components/ui/Icon'
 import { SHOPFLOOR_MACHINES, SHOPFLOOR_QUEUE, SHOPFLOOR_OPERATORS } from '../mocks/worlds'
 import type { ShopFloorOperator, ShopFloorTask, Machine } from '../types'
@@ -6,6 +7,7 @@ import type { ShopFloorOperator, ShopFloorTask, Machine } from '../types'
 type Stage = 'pin' | 'machine' | 'task' | 'problem'
 
 export function ShopFloorPage() {
+  const navigate = useNavigate()
   const [stage, setStage] = useState<Stage>('pin')
   const [operator, setOperator] = useState<ShopFloorOperator | null>(null)
   const [machineId, setMachineId] = useState<string | null>(null)
@@ -42,8 +44,8 @@ export function ShopFloorPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#0a0f1a] text-stone-100 flex flex-col">
-      <header className="bg-stone-900 border-b border-stone-800 px-5 py-3 flex items-center justify-between">
+    <div className="min-h-screen bg-stone-900 text-stone-100 flex flex-col">
+      <header className="bg-stone-800 border-b border-stone-700 px-5 py-3 flex items-center justify-between">
         <div className="flex items-center gap-3">
           <div className="w-9 h-9 rounded-lg bg-emerald-600 grid place-items-center">
             <Icon name="wrench" size={18} className="text-white" />
@@ -57,14 +59,20 @@ export function ShopFloorPage() {
             </div>
           </div>
         </div>
-        {operator && (
-          <button
-            onClick={handleLogout}
-            className="h-9 px-3 rounded-lg bg-stone-800 hover:bg-stone-700 text-[11.5px] inline-flex items-center gap-1.5"
-          >
-            <Icon name="logout" size={13} />Kijelentkezés
+        <div className="flex items-center gap-2">
+          {operator && (
+            <button
+              onClick={handleLogout}
+              className="h-9 px-3 rounded-lg bg-stone-700 hover:bg-stone-600 text-[11.5px] inline-flex items-center gap-1.5"
+            >
+              <Icon name="logout" size={13} />Kijelentkezés
+            </button>
+          )}
+          <button onClick={() => navigate('/')}
+            className="h-9 px-3 rounded-lg bg-stone-700 hover:bg-stone-600 text-[11.5px]">
+            Vissza a portálra
           </button>
-        )}
+        </div>
       </header>
 
       <div className="flex-1 flex">
@@ -127,7 +135,7 @@ function PinStage({ onLogin }: { onLogin: (op: ShopFloorOperator) => void }) {
           <div className="w-16 h-16 rounded-2xl bg-emerald-600 grid place-items-center mx-auto mb-4">
             <Icon name="user" size={32} className="text-white" />
           </div>
-          <h1 className="text-[28px] font-semibold tracking-tight">Shopfloor</h1>
+          <h1 className="text-[28px] font-semibold tracking-tight">Bejelentkezés</h1>
           <p className="text-[13px] text-stone-400 mt-1">Add meg a 4 jegyű PIN-kódodat</p>
         </div>
 
@@ -164,9 +172,9 @@ function PinStage({ onLogin }: { onLogin: (op: ShopFloorOperator) => void }) {
           ))}
           <button
             onClick={() => { setPin(''); setError('') }}
-            className="h-16 rounded-xl bg-stone-800 hover:bg-stone-700 text-[16px] font-semibold text-stone-400 border border-stone-700"
+            className="h-16 rounded-xl bg-stone-800 hover:bg-stone-700 text-[12px] uppercase tracking-wide text-stone-400 border border-stone-700"
           >
-            C
+            Töröl
           </button>
           <button
             onClick={() => press('0')}
