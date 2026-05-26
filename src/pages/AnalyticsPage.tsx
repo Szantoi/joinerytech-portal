@@ -1,13 +1,29 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Card, Sparkline, GhostBtn, Icon } from '../components/ui'
 import { I18N, SPARKS } from '../mocks/data'
+import { useApi, API_BASE } from '../hooks/useApi'
+
+interface WasteReport {
+  totalWasteAreaCm2: number
+  averageWastePerExecution: number
+  executionCount: number
+}
 
 export function AnalyticsPage() {
   const t = I18N.hu
   const [period, setPeriod] = useState(1)
 
+  const { data: wasteData, refetch: fetchWaste } = useApi<WasteReport>(
+    `${API_BASE.cutting}/api/cutting/waste`
+  )
+  useEffect(() => { fetchWaste() }, []) // eslint-disable-line react-hooks/exhaustive-deps
+
+  const wasteValue = wasteData && wasteData.executionCount > 0
+    ? `${(wasteData.averageWastePerExecution * 100).toFixed(1)}%`
+    : '7.1%'
+
   const cards = [
-    { label: t.ana.waste,    value: '7.1%',  delta: -9,  color: '#0d9488', spark: SPARKS.wasteRate },
+    { label: t.ana.waste,    value: wasteValue, delta: -9,  color: '#0d9488', spark: SPARKS.wasteRate },
     { label: t.ana.capacity, value: '82%',   delta:  7,  color: '#0d9488', spark: SPARKS.capacity },
     { label: t.ana.oee,      value: '81%',   delta:  4,  color: '#0d9488', spark: SPARKS.oee },
     { label: t.ana.daily,    value: '284',   unit: t.common.pieces, delta: 12, color: '#b45309', spark: [240, 252, 261, 268, 274, 279, 284] },

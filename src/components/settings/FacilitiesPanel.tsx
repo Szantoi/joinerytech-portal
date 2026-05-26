@@ -1,26 +1,60 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Icon } from '../ui/Icon'
 import { SlideOver } from '../ui/SlideOver'
 import { PrimaryBtn, GhostBtn } from '../ui/Button'
 import { FACILITIES } from '../../mocks/extra2'
+import { useApi, API_BASE } from '../../hooks/useApi'
+import { useAuth } from '../../auth'
 import type { Facility } from '../../types'
+
+interface ApiFacility {
+  id: string
+  name: string
+  tenantId: string
+}
+
+interface FacilitiesPage {
+  items: ApiFacility[]
+  totalCount: number
+}
+
+function isRealFacility(name: string): boolean {
+  return !name.startsWith('E2E') && !name.match(/^Fac\d/) && !name.match(/^Fac-/)
+}
 
 export function FacilitiesPanel() {
   const [openId, setOpenId] = useState<string | null>(null)
-  const facility: Facility | undefined = FACILITIES.find((f) => f.id === openId)
+  const { tenantId } = useAuth()
+
+  const { data: apiPage, refetch } = useApi<FacilitiesPage>(
+    tenantId ? `${API_BASE.kernel}/tenants/${tenantId}/facilities?pageSize=100` : null
+  )
+  useEffect(() => { if (tenantId) refetch() }, [tenantId]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  const realApiFacilities = apiPage?.items.filter(f => isRealFacility(f.name)) ?? null
+
+  // Merge: API provides real facility list; mock provides rich details
+  const displayFacilities = realApiFacilities && realApiFacilities.length > 0
+    ? realApiFacilities.map(f => {
+        const mock = FACILITIES.find(m => m.name === f.name) ?? FACILITIES[0]
+        return { ...mock, id: f.id, name: f.name }
+      })
+    : FACILITIES
+
+  const facility: Facility | undefined = displayFacilities.find((f) => f.id === openId) as Facility | undefined
 
   return (
     <div>
       <div className="flex items-center justify-between mb-3">
         <div className="text-[12.5px] text-stone-500">
-          {FACILITIES.length} részleg ·{' '}
-          {FACILITIES.reduce((a, f) => a + f.machines, 0)} gép ·{' '}
-          {FACILITIES.reduce((a, f) => a + f.workers, 0)} dolgozó
+          {displayFacilities.length} részleg ·{' '}
+          {displayFacilities.reduce((a, f) => a + f.machines, 0)} gép ·{' '}
+          {displayFacilities.reduce((a, f) => a + f.workers, 0)} dolgozó
         </div>
         <PrimaryBtn icon="plus">Új részleg</PrimaryBtn>
       </div>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-        {FACILITIES.map((f) => (
+        {displayFacilities.map((f) => (
           <button
             key={f.id}
             onClick={() => setOpenId(f.id)}
