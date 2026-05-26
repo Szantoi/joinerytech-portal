@@ -3,6 +3,7 @@ import { KpiCard, Card, StatusPill, Icon } from '../components/ui'
 import { MiniKanbanStrip } from '../components/layout/MiniKanbanStrip'
 import { ORDERS, I18N, SPARKS } from '../mocks/data'
 import { useApi, API_BASE } from '../hooks/useApi'
+import type { Order, OrderStatus } from '../types'
 
 interface DashboardStats {
   tenantCount: number
@@ -13,6 +14,44 @@ interface DashboardStats {
   auditEventCount: number
 }
 
+interface ApiDoorOrder {
+  id: string
+  projectId: string
+  projectName: string
+  status: string
+  itemCount: number
+  deliveryDate: string | null
+  createdAt: string
+}
+
+interface ApiOrdersPage {
+  items: ApiDoorOrder[]
+  totalCount: number
+}
+
+const ORDER_STATUS_MAP: Record<string, OrderStatus> = {
+  Draft:             'draft',
+  Submitted:         'calc',
+  Calculating:       'calc',
+  Calculated:        'ready',
+  CalculationFailed: 'draft',
+  InProduction:      'released',
+  Completed:         'released',
+  Cancelled:         'draft',
+}
+
+function apiOrderToFe(o: ApiDoorOrder): Order {
+  return {
+    id:       o.projectId || o.id.slice(0, 12).toUpperCase(),
+    customer: o.projectName,
+    type:     'door' as const,
+    date:     o.deliveryDate?.slice(0, 10) ?? '—',
+    status:   ORDER_STATUS_MAP[o.status] ?? 'draft',
+    total:    0,
+    items:    o.itemCount,
+  }
+}
+
 export function DashboardPage() {
   const t = I18N.hu
   const [period, setPeriod] = useState(0)
@@ -20,7 +59,14 @@ export function DashboardPage() {
   const { data: stats, refetch: fetchStats } = useApi<DashboardStats>(
     `${API_BASE.kernel}/dashboard/stats`
   )
-  useEffect(() => { fetchStats() }, []) // eslint-disable-line react-hooks/exhaustive-deps
+  const { data: apiOrdersPage, refetch: fetchOrders } = useApi<ApiOrdersPage>(
+    `${API_BASE.joinery}/api/orders?pageSize=5`
+  )
+  useEffect(() => { fetchStats(); fetchOrders() }, []) // eslint-disable-line react-hooks/exhaustive-deps
+
+  const recentOrders: Order[] = apiOrdersPage?.items?.length
+    ? apiOrdersPage.items.map(apiOrderToFe)
+    : ORDERS.slice(0, 5)
 
   const kpis = [
     {
@@ -205,7 +251,7 @@ export function DashboardPage() {
             </button>
           </div>
           <div className="space-y-1">
-            {ORDERS.slice(0, 5).map((o) => (
+            {recentOrders.map((o) => (
               <div key={o.id} className="w-full text-left py-2 px-2 -mx-2 rounded-md hover:bg-stone-50 flex items-center gap-3">
                 <div className="min-w-0 flex-1">
                   <div className="text-[12.5px] font-medium text-stone-900 truncate">{o.customer}</div>
