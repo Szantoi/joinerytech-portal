@@ -1,8 +1,23 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Card, StatusPill, GhostBtn, PrimaryBtn, Icon } from '../components/ui'
 import { CUTTING_PLANS, NESTING, I18N } from '../mocks/data'
 import { NESTING_SHEETS } from '../mocks/extra2'
 import type { NestingPart, NestingSheet } from '../types'
+import { useApi, API_BASE } from '../hooks/useApi'
+
+interface ApiCuttingPlan {
+  id: string
+  name: string
+  date: string
+  status: string
+}
+
+const PLAN_STATUS_MAP: Record<string, string> = {
+  Draft:     'draft',
+  Planned:   'planned',
+  Running:   'running',
+  Done:      'done',
+}
 
 export function ProductionPage({ initialTab = 'cutting' }: { initialTab?: 'cutting' | 'machining' }) {
   const t = I18N.hu
@@ -11,8 +26,41 @@ export function ProductionPage({ initialTab = 'cutting' }: { initialTab?: 'cutti
   const [hoveredPart, setHoveredPart] = useState<string | null>(null)
   const [sheetIdx, setSheetIdx] = useState(0)
 
-  const plan = CUTTING_PLANS.find((p) => p.id === selectedPlan)!
-  const sheetCount = Math.max(plan.sheets, 1)
+  const { data: apiPlans, refetch: fetchPlans } = useApi<ApiCuttingPlan[]>(
+    `${API_BASE.cutting}/api/cutting/plans`
+  )
+  useEffect(() => { fetchPlans() }, []) // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Use API plans if available, else fall back to mock
+  const displayPlans = apiPlans && apiPlans.length > 0
+    ? apiPlans.map(p => ({
+        id: p.id,
+        displayId: p.name || p.id.slice(0, 12).toUpperCase(),
+        material: p.date,
+        sheets: 1,
+        util: 0,
+        status: PLAN_STATUS_MAP[p.status] ?? 'draft',
+        order: '—',
+        machine: '—',
+        operator: '—',
+        isApiPlan: true,
+      }))
+    : CUTTING_PLANS.map(p => ({ ...p, displayId: p.id, isApiPlan: false }))
+
+  const selectedFromApi = apiPlans && apiPlans.length > 0
+  const currentPlanData = selectedFromApi
+    ? (displayPlans.find(p => p.id === selectedPlan) ?? displayPlans[0])
+    : (CUTTING_PLANS.find(p => p.id === selectedPlan) ?? CUTTING_PLANS[0])
+
+  // Always use mock nesting data — no per-plan nesting available from API yet
+  const mockPlan = CUTTING_PLANS[0]
+  const sheetCount = Math.max(
+    selectedFromApi ? 1 : (CUTTING_PLANS.find(p => p.id === selectedPlan)?.sheets ?? 1),
+    1
+  )
+
+  // Keep backward compat: plan variable for nesting display
+  const plan = CUTTING_PLANS.find(p => p.id === selectedPlan) ?? mockPlan
 
   const getSheet = (i: number): { parts: NestingPart[]; util: number } => {
     if (i === 0) return { parts: NESTING.parts, util: plan.util }
@@ -78,12 +126,12 @@ export function ProductionPage({ initialTab = 'cutting' }: { initialTab?: 'cutti
           <Card className="col-span-4 p-0">
             <div className="px-4 py-3 border-b border-stone-200/80 flex items-center justify-between">
               <div className="text-[12.5px] font-semibold text-stone-900">{t.prod.cuttingPlans}</div>
-              <span className="text-[10.5px] text-stone-500 tabular-nums">{CUTTING_PLANS.length}</span>
+              <span className="text-[10.5px] text-stone-500 tabular-nums">{displayPlans.length}</span>
             </div>
             <div className="max-h-[640px] overflow-auto">
-              {CUTTING_PLANS.map((p) => {
+              {displayPlans.map((p) => {
                 const active = p.id === selectedPlan
-                const seed = p.id.charCodeAt(p.id.length - 1)
+                const seed = p.displayId.charCodeAt(p.displayId.length - 1)
                 const progress = p.status === 'running' ? 30 + (seed * 7) % 55 : p.status === 'done' ? 100 : 0
                 const runtimeMin = p.status === 'running' ? 12 + (seed * 3) % 35 : p.status === 'done' ? 38 + (seed * 2) % 22 : 0
                 const proof = p.status === 'done'
@@ -96,21 +144,20 @@ export function ProductionPage({ initialTab = 'cutting' }: { initialTab?: 'cutti
                     }`}
                   >
                     <div className="flex items-center justify-between gap-2 mb-1">
-                      <span className="text-[11.5px] font-mono text-stone-700">{p.id}</span>
+                      <span className="text-[11.5px] font-mono text-stone-700">{p.displayId}</span>
                       <span className="inline-flex items-center gap-1.5">
                         {proof && (
                           <span title="Bizonylat csatolva" className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[9.5px] font-medium bg-emerald-50 text-emerald-700 border border-emerald-200/70">
                             <Icon name="check" size={9} />proof
                           </span>
                         )}
-                        <StatusPill status={p.status} label={t.status[p.status]} />
+                        <StatusPill status={p.status} label={t.status[p.status as keyof typeof t.status] ?? p.status} />
                       </span>
                     </div>
                     <div className="text-[12.5px] font-medium text-stone-900">{p.material}</div>
                     <div className="mt-1.5 flex items-center gap-2 text-[10.5px] text-stone-500">
-                      <span className="font-mono">{p.sheets} {t.prod.sheet}</span>
-                      <span>·</span>
-                      <span>{t.prod.utilization} {p.util}%</span>
+                      {!p.isApiPlan && <><span className="font-mono">{p.sheets} {t.prod.sheet}</span><span>·</span></>}
+                      {!p.isApiPlan && <span>{t.prod.utilization} {p.util}%</span>}
                       {p.status === 'running' && (
                         <>
                           <span>·</span>
@@ -140,8 +187,12 @@ export function ProductionPage({ initialTab = 'cutting' }: { initialTab?: 'cutti
             <div className="flex items-start justify-between gap-3 mb-4">
               <div>
                 <div className="text-[10.5px] uppercase tracking-wide text-stone-500 font-medium">{t.prod.nesting}</div>
-                <div className="text-[15px] font-semibold text-stone-900 mt-0.5">{plan.id} · {plan.material}</div>
-                <div className="text-[11.5px] text-stone-500 mt-0.5 font-mono">{plan.order} · {plan.machine} · {plan.operator}</div>
+                <div className="text-[15px] font-semibold text-stone-900 mt-0.5">
+                  {currentPlanData.displayId} · {currentPlanData.material}
+                </div>
+                <div className="text-[11.5px] text-stone-500 mt-0.5 font-mono">
+                  {currentPlanData.order} · {currentPlanData.machine} · {currentPlanData.operator}
+                </div>
               </div>
               <div className="flex items-center gap-2">
                 <GhostBtn icon="settings">Beállítások</GhostBtn>

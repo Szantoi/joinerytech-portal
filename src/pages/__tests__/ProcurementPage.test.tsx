@@ -21,7 +21,7 @@ describe('ProcurementPage', () => {
   it('renders PO table headers', () => {
     render(<ProcurementPage />)
     expect(screen.getByText('Sz\u00e1ll\u00edt\u00f3')).toBeTruthy()
-    expect(screen.getByText('Anyag')).toBeTruthy()
+    expect(screen.getByText('\u00d6sszeg')).toBeTruthy()
   })
 
   it('renders supplier ratings', () => {
