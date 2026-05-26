@@ -1,16 +1,48 @@
+import { useEffect } from 'react'
 import { Card } from '../ui/Card'
 import { Icon } from '../ui/Icon'
 import { STAGES, FLOW_EPICS } from '../../mocks/extra'
+import { useApi, API_BASE } from '../../hooks/useApi'
+import { useAuth } from '../../auth'
+
+interface ApiFlowEpic {
+  id: string
+  phase: 'Discovery' | 'Delivery' | 'ClosedDone'
+}
+
+interface PagedFlowEpics {
+  items: ApiFlowEpic[]
+  totalCount: number
+}
+
+const PHASE_TO_STAGE: Record<string, string> = {
+  Discovery:  'sales',
+  Delivery:   'production',
+  ClosedDone: 'delivery',
+}
 
 interface MiniKanbanStripProps {
   onNav: (key: string) => void
 }
 
 export function MiniKanbanStrip({ onNav }: MiniKanbanStripProps) {
+  const { facilityId } = useAuth()
+
+  const { data: apiData, refetch } = useApi<PagedFlowEpics>(
+    facilityId ? `${API_BASE.kernel}/facilities/${facilityId}/flow-epics?pageSize=200` : null
+  )
+  useEffect(() => { if (facilityId) refetch() }, [facilityId]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  const epics = apiData?.items ?? null
+
   const counts = STAGES.map((s) => ({
     ...s,
-    count: FLOW_EPICS.filter((e) => e.stage === s.key).length,
+    count: epics
+      ? epics.filter((e) => PHASE_TO_STAGE[e.phase] === s.key).length
+      : FLOW_EPICS.filter((e) => e.stage === s.key).length,
   }))
+
+  const total = epics ? epics.length : FLOW_EPICS.length
 
   return (
     <Card className="p-4 mb-3">
@@ -18,7 +50,7 @@ export function MiniKanbanStrip({ onNav }: MiniKanbanStripProps) {
         <div>
           <div className="text-[12.5px] font-semibold text-stone-900">Munkafolyamat áttekintés</div>
           <div className="text-[11px] text-stone-500">
-            Doorstar StageChain · {FLOW_EPICS.length} aktív feladat
+            Doorstar StageChain · {total} aktív feladat
           </div>
         </div>
         <button
