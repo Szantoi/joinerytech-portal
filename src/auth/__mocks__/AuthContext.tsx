@@ -12,6 +12,8 @@ export const useAuth = vi.fn(() => ({
   tenantId: 'a1b2c3d4-e5f6-7890-abcd-ef1234567890',
   roles: ['Admin'],
   enabledModules: ['door', 'cutting'],
+  facilityId: '5716546d-94d9-4b4b-ad79-2a1afc79e730',
+  facilityName: 'Vác főüzem',
 }))
 
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => <>{children}</>

@@ -13,6 +13,8 @@ export interface AuthContextValue {
   tenantId: string | null
   roles: string[]
   enabledModules: string[]
+  facilityId: string | null
+  facilityName: string | null
 }
 
 function decodeJwtPayload(jwt: string): Record<string, unknown> {
@@ -45,6 +47,19 @@ function parseUserClaims(user: User | null) {
   return { tenantId, roles, enabledModules }
 }
 
+interface FacilityItem { id: string; name: string }
+interface FacilitiesResponse { items: FacilityItem[] }
+
+// Prefer a named "real" facility over E2E/auto-generated ones
+function pickFacility(items: FacilityItem[]): FacilityItem | null {
+  if (!items.length) return null
+  return (
+    items.find(f => f.name === 'Vác főüzem') ??
+    items.find(f => !f.name.startsWith('E2E') && !f.name.match(/^Fac\d/)) ??
+    items[0]
+  )
+}
+
 const AuthContext = createContext<AuthContextValue | null>(null)
 
 export const userManager = new UserManager(authConfig)
@@ -52,6 +67,8 @@ export const userManager = new UserManager(authConfig)
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null)
   const [isLoading, setIsLoading] = useState(true)
+  const [facilityId, setFacilityId] = useState<string | null>(null)
+  const [facilityName, setFacilityName] = useState<string | null>(null)
 
   useEffect(() => {
     userManager.getUser().then((u) => {
@@ -71,16 +88,39 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }, [])
 
+  // Bootstrap facilityId after user loads
+  useEffect(() => {
+    if (!user || user.expired) {
+      setFacilityId(null)
+      setFacilityName(null)
+      return
+    }
+    const { tenantId } = parseUserClaims(user)
+    if (!tenantId) return
+
+    fetch(`/api/tenants/${tenantId}/facilities?pageSize=100`, {
+      headers: { Authorization: `Bearer ${user.access_token}` },
+    })
+      .then(r => (r.ok ? r.json() : null))
+      .then((res: FacilitiesResponse | null) => {
+        const facility = pickFacility(res?.items ?? [])
+        if (facility) {
+          setFacilityId(facility.id)
+          setFacilityName(facility.name)
+        }
+      })
+      .catch(() => { /* silent — facilityId remains null */ })
+  }, [user])
+
   const login = useCallback(() => userManager.signinRedirect({
     redirect_uri: window.location.origin + '/callback',
     prompt: 'login',
   }), [])
+
   const logout = useCallback(async () => {
-    // Clear local session immediately.
     await userManager.removeUser()
-    // For full Keycloak SSO logout, add the app origin to
-    // "Valid post logout redirect URIs" in the portal-app client config,
-    // then replace the line below with: userManager.signoutRedirect(...)
+    setFacilityId(null)
+    setFacilityName(null)
     window.location.href = window.location.origin + '/'
   }, [])
 
@@ -97,6 +137,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       tenantId,
       roles,
       enabledModules,
+      facilityId,
+      facilityName,
     }}>
       {children}
     </AuthContext.Provider>

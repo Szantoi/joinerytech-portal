@@ -1,25 +1,40 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { KpiCard, Card, StatusPill, Icon } from '../components/ui'
 import { MiniKanbanStrip } from '../components/layout/MiniKanbanStrip'
 import { ORDERS, I18N, SPARKS } from '../mocks/data'
+import { useApi, API_BASE } from '../hooks/useApi'
+
+interface DashboardStats {
+  tenantCount: number
+  facilityCount: number
+  workStationCount: number
+  activeWorkStationCount: number
+  flowEpicCount: number
+  auditEventCount: number
+}
 
 export function DashboardPage() {
   const t = I18N.hu
   const [period, setPeriod] = useState(0)
 
+  const { data: stats, refetch: fetchStats } = useApi<DashboardStats>(
+    `${API_BASE.kernel}/dashboard/stats`
+  )
+  useEffect(() => { fetchStats() }, []) // eslint-disable-line react-hooks/exhaustive-deps
+
   const kpis = [
     {
-      key: 'ordersToday',
-      label: t.dash.kpi.ordersToday,
-      value: '12',
-      unit: t.common.orders,
-      delta: 8,
+      key: 'flowEpics',
+      label: 'Aktív projektek',
+      value: stats ? String(stats.flowEpicCount) : '—',
+      unit: 'projekt',
+      delta: 0,
       spark: SPARKS.ordersToday,
       color: '#0d9488',
       breakdowns: [
-        { label: t.orders.types.cabinet, value: '7', note: '58%' },
-        { label: t.orders.types.door,    value: '3', note: '25%' },
-        { label: t.orders.types.window,  value: '2', note: '17%' },
+        { label: 'Telephely', value: stats ? String(stats.facilityCount) : '—', note: 'db' },
+        { label: 'Munkahely', value: stats ? String(stats.workStationCount) : '—', note: 'össz' },
+        { label: 'Aktív gép', value: stats ? String(stats.activeWorkStationCount) : '—', note: 'fut' },
       ],
     },
     {

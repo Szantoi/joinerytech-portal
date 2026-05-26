@@ -10,7 +10,7 @@ describe('DashboardPage', () => {
 
   it('renders KPI cards', () => {
     render(<DashboardPage />)
-    expect(screen.getByText('Mai rendelések')).toBeTruthy()
+    expect(screen.getByText('Aktív projektek')).toBeTruthy()
   })
 
   it('renders today plan section', () => {
