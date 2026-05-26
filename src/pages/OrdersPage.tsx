@@ -1,9 +1,50 @@
-import { useState, useMemo } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { Card, StatusPill, PrimaryBtn, GhostBtn, Icon } from '../components/ui'
 import { NewOrderDrawer } from '../components/orders/NewOrderDrawer'
 import { ORDERS, I18N } from '../mocks/data'
 import { fmtHUF } from '../lib/utils'
+import { useApi, API_BASE } from '../hooks/useApi'
 import type { Order, OrderStatus } from '../types'
+
+interface ApiDoorOrder {
+  id: string
+  projectId: string
+  projectName: string
+  status: string
+  itemCount: number
+  deliveryDate: string | null
+  createdAt: string
+}
+
+interface ApiOrdersPage {
+  items: ApiDoorOrder[]
+  totalCount: number
+}
+
+const ORDER_STATUS_MAP: Record<string, OrderStatus> = {
+  Draft:             'draft',
+  Submitted:         'calc',
+  Calculating:       'calc',
+  Calculated:        'ready',
+  CalculationFailed: 'draft',
+  InProduction:      'released',
+  Completed:         'released',
+  Cancelled:         'draft',
+}
+
+function apiOrderToFe(o: ApiDoorOrder): Order {
+  const date = o.deliveryDate?.slice(0, 10)
+    ?? (o.createdAt && !o.createdAt.startsWith('0001') ? o.createdAt.slice(0, 10) : '—')
+  return {
+    id: o.projectId || o.id.slice(0, 12).toUpperCase(),
+    customer: o.projectName,
+    type: 'door' as const,
+    date,
+    status: ORDER_STATUS_MAP[o.status] ?? 'draft',
+    total: 0,
+    items: o.itemCount,
+  }
+}
 
 type FilterKey = 'all' | 'draft' | 'calc' | 'ready' | 'released'
 
@@ -15,13 +56,22 @@ export function OrdersPage() {
   // Local calc/release simulation state: orderId → 'calculating' | 'ready' | 'released'
   const [orderFlow, setOrderFlow] = useState<Record<string, OrderStatus>>({})
 
-  const counts = useMemo(() => {
-    const c: Record<string, number> = { all: ORDERS.length }
-    ORDERS.forEach((o) => { c[o.status] = (c[o.status] ?? 0) + 1 })
-    return c
-  }, [])
+  const { data: apiPage, refetch } = useApi<ApiOrdersPage>(
+    `${API_BASE.joinery}/api/orders?pageSize=50`
+  )
+  useEffect(() => { refetch() }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
-  const filtered = filter === 'all' ? ORDERS : ORDERS.filter((o) => {
+  const displayOrders: Order[] = apiPage?.items?.length
+    ? apiPage.items.map(apiOrderToFe)
+    : ORDERS
+
+  const counts = useMemo(() => {
+    const c: Record<string, number> = { all: displayOrders.length }
+    displayOrders.forEach((o) => { c[o.status] = (c[o.status] ?? 0) + 1 })
+    return c
+  }, [displayOrders])
+
+  const filtered = filter === 'all' ? displayOrders : displayOrders.filter((o) => {
     const liveStatus = orderFlow[o.id] ?? o.status
     return liveStatus === filter
   })
@@ -127,7 +177,9 @@ function OrderRow({ order, t, liveStatus, expanded, onToggle, onCalc, onRelease 
             <span className="w-3 h-3 rounded-full border-2 border-teal-500 border-t-transparent animate-spin block" />
           )}
         </div>
-        <div className="text-[12.5px] font-medium text-stone-900 text-right tabular-nums">{fmtHUF(order.total)}</div>
+        <div className="text-[12.5px] font-medium text-stone-900 text-right tabular-nums">
+          {order.total > 0 ? fmtHUF(order.total) : '—'}
+        </div>
         <div className={`text-stone-400 transition-transform ${expanded ? 'rotate-90' : ''}`}>
           <Icon name="chevron" size={14} />
         </div>
