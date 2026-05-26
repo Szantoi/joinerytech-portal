@@ -1,20 +1,66 @@
+import { useEffect } from 'react'
 import { Card } from '../ui/Card'
 import { StatusPill } from '../ui/StatusPill'
 import { PrimaryBtn } from '../ui/Button'
 import { Avatar } from '../ui/Avatar'
 import { WORKSTATIONS } from '../../mocks/extra'
+import { useApi, API_BASE } from '../../hooks/useApi'
+import type { Workstation } from '../../types'
+
+interface ApiWorkstation {
+  id: string
+  name: string
+  status: string
+  facilityId: string
+}
+
+interface ApiWorkstationsPage {
+  items: ApiWorkstation[]
+  totalCount: number
+}
+
+const WS_STATUS_MAP: Record<string, string> = {
+  Active:      'ok',
+  Running:     'ok',
+  Idle:        'ok',
+  Maintenance: 'low',
+  Offline:     'critical',
+  Disabled:    'critical',
+  Fault:       'critical',
+}
+
+function apiWsToFe(w: ApiWorkstation): Workstation {
+  return {
+    name:        w.name,
+    type:        '—',
+    category:    'cnc',
+    status:      WS_STATUS_MAP[w.status] ?? 'ok',
+    capacity:    0,
+    lastService: '—',
+    operators:   [],
+  }
+}
 
 export function MachineParkPanel() {
+  const { data: apiPage, refetch } = useApi<ApiWorkstationsPage>(
+    `${API_BASE.kernel}/tools/workstations?page=1&pageSize=50`
+  )
+  useEffect(() => { refetch() }, []) // eslint-disable-line react-hooks/exhaustive-deps
+
+  const workstations: Workstation[] = apiPage?.items?.length
+    ? apiPage.items.map(apiWsToFe)
+    : WORKSTATIONS
+
   return (
     <div>
       <div className="flex items-center justify-between mb-3">
         <div className="text-[12.5px] text-stone-500">
-          {WORKSTATIONS.length} gép · {WORKSTATIONS.filter((w) => w.status === 'ok').length} aktív
+          {workstations.length} gép · {workstations.filter((w) => w.status === 'ok').length} aktív
         </div>
         <PrimaryBtn icon="plus">Gép hozzáadása</PrimaryBtn>
       </div>
       <div className="grid grid-cols-2 lg:grid-cols-3 gap-3">
-        {WORKSTATIONS.map((w) => {
+        {workstations.map((w) => {
           const label =
             w.status === 'ok' ? 'Aktív' : w.status === 'low' ? 'Karbantartás' : 'Leállítva'
           const barColor =

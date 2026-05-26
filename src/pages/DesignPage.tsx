@@ -3,6 +3,15 @@ import { useNavigate, useParams } from 'react-router-dom'
 import { Card, Icon } from '../components/ui'
 import { PARAM_TEMPLATES, CATALOG_LOOKUP } from '../mocks/worlds'
 import { WorldShell } from '../components/layout/WorldShell'
+import { useApi, API_BASE } from '../hooks/useApi'
+
+interface ApiTemplate {
+  id: string
+  name: string
+  tradeType: string
+  version: number
+  isActive: boolean
+}
 
 // ─── Formula resolver ─────────────────────────────────────────────────────────
 function resolveFormula(expr: number | string | undefined, ctx: Record<string, number | string>): number | string {
@@ -112,11 +121,20 @@ function FreeVarControl({ v, value, onChange, mode }: { v: ParamVar; value: numb
 
 // ─── Design Dashboard ─────────────────────────────────────────────────────────
 function DesignDashboard({ onScreen }: { onScreen: (s: string) => void }) {
+  const { data: apiTemplates, refetch } = useApi<ApiTemplate[]>(
+    `${API_BASE.abstractions}/api/modules/templates?pageSize=50`
+  )
+  useEffect(() => { refetch() }, []) // eslint-disable-line react-hooks/exhaustive-deps
+
+  const templateCount = apiTemplates && apiTemplates.length > 0
+    ? apiTemplates.length
+    : PARAM_TEMPLATES.length
+
   const stats = [
-    { label: 'Aktív sablonok',       value: 24,       delta: '+3 e hónapban' },
-    { label: 'Generált anyaglisták', value: 142,      delta: '+18 e héten' },
-    { label: 'Aktív projektek',      value: 2,        delta: 'Doorstar, Bognár' },
-    { label: 'Sablon átlag rating',  value: '4.6 ★',  delta: '76 értékelés' },
+    { label: 'Aktív sablonok',       value: templateCount, delta: '+3 e hónapban' },
+    { label: 'Generált anyaglisták', value: 142,           delta: '+18 e héten' },
+    { label: 'Aktív projektek',      value: 2,             delta: 'Doorstar, Bognár' },
+    { label: 'Sablon átlag rating',  value: '4.6 ★',       delta: '76 értékelés' },
   ]
 
   return (
