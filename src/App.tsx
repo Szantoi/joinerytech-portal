@@ -11,7 +11,7 @@ import { OrdersPage } from './pages/OrdersPage'
 import { ProductionPage } from './pages/ProductionPage'
 import { ProductionDashboardPage } from './pages/production/ProductionDashboardPage'
 import { MovementsPage } from './pages/warehouse/MovementsPage'
-import { SalesPage } from './pages/SalesPage'
+import { SalesWorldPage } from './pages/SalesPage'
 import { DesignPage } from './pages/DesignPage'
 import { WorkflowPage } from './pages/WorkflowPage'
 import { InventoryPage } from './pages/InventoryPage'
@@ -135,12 +135,12 @@ export function App() {
 
         <Route path="/w/sales" element={
           <RequireAuth>
-            <WorldPage worldKey="sales"><SalesPage /></WorldPage>
+            <SalesWorldPage />
           </RequireAuth>
         } />
         <Route path="/w/sales/:screen" element={
           <RequireAuth>
-            <WorldPage worldKey="sales"><SalesPage /></WorldPage>
+            <SalesWorldPage />
           </RequireAuth>
         } />
 
