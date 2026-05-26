@@ -21,6 +21,7 @@ export interface Order {
 
 export interface CuttingPlan {
   id: string
+  displayId: string
   order: string
   material: string
   sheets: number

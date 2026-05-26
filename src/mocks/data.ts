@@ -152,12 +152,12 @@ export const ORDERS: Order[] = [
 ]
 
 export const CUTTING_PLANS: CuttingPlan[] = [
-  { id: "CP-184-A", order: "JT-2426-0184", material: "Bükk 18mm", sheets: 8, util: 87, status: "running", machine: "Holzma HPP380", operator: "Nagy J." },
-  { id: "CP-184-B", order: "JT-2426-0184", material: "Tölgy 22mm", sheets: 4, util: 79, status: "planned", machine: "Holzma HPP380", operator: "Nagy J." },
-  { id: "CP-183-A", order: "JT-2426-0183", material: "MDF 16mm fehér", sheets: 3, util: 91, status: "done", machine: "Biesse Selco", operator: "Tóth K." },
-  { id: "CP-182-A", order: "JT-2426-0182", material: "Tölgy 40mm", sheets: 22, util: 84, status: "running", machine: "Biesse Selco", operator: "Tóth K." },
-  { id: "CP-182-B", order: "JT-2426-0182", material: "MDF 19mm", sheets: 12, util: 88, status: "planned", machine: "Holzma HPP380", operator: "Kiss A." },
-  { id: "CP-180-A", order: "JT-2426-0180", material: "Bükk 18mm", sheets: 5, util: 82, status: "done", machine: "Holzma HPP380", operator: "Nagy J." },
+  { id: "CP-184-A", displayId: "CP-184-A", order: "JT-2426-0184", material: "Bükk 18mm", sheets: 8, util: 87, status: "running", machine: "Holzma HPP380", operator: "Nagy J." },
+  { id: "CP-184-B", displayId: "CP-184-B", order: "JT-2426-0184", material: "Tölgy 22mm", sheets: 4, util: 79, status: "planned", machine: "Holzma HPP380", operator: "Nagy J." },
+  { id: "CP-183-A", displayId: "CP-183-A", order: "JT-2426-0183", material: "MDF 16mm fehér", sheets: 3, util: 91, status: "done", machine: "Biesse Selco", operator: "Tóth K." },
+  { id: "CP-182-A", displayId: "CP-182-A", order: "JT-2426-0182", material: "Tölgy 40mm", sheets: 22, util: 84, status: "running", machine: "Biesse Selco", operator: "Tóth K." },
+  { id: "CP-182-B", displayId: "CP-182-B", order: "JT-2426-0182", material: "MDF 19mm", sheets: 12, util: 88, status: "planned", machine: "Holzma HPP380", operator: "Kiss A." },
+  { id: "CP-180-A", displayId: "CP-180-A", order: "JT-2426-0180", material: "Bükk 18mm", sheets: 5, util: 82, status: "done", machine: "Holzma HPP380", operator: "Nagy J." },
 ]
 
 export const MATERIALS: Material[] = [
