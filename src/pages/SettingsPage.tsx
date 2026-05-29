@@ -8,7 +8,8 @@ import { PartnersPanel } from '../components/settings/PartnersPanel'
 import { RolesPanel } from '../components/settings/RolesPanel'
 import { StageChainEditor } from '../components/settings/StageChainEditor'
 import { UsersPanel } from '../components/settings/UsersPanel'
-type SettingsTab = 'company' | 'users' | 'facilities' | 'machines' | 'partners' | 'workflow' | 'integrations' | 'catalog' | 'audit' | 'roles'
+import { TemplatesPanel } from '../components/settings/TemplatesPanel'
+type SettingsTab = 'company' | 'users' | 'facilities' | 'machines' | 'partners' | 'workflow' | 'integrations' | 'catalog' | 'audit' | 'roles' | 'templates'
 
 const TAB_LIST: Array<{ key: SettingsTab; label: string }> = [
   { key: 'company',      label: 'Cég' },
@@ -20,6 +21,7 @@ const TAB_LIST: Array<{ key: SettingsTab; label: string }> = [
   { key: 'workflow',     label: 'Munkafolyamat' },
   { key: 'integrations', label: 'Integrációk' },
   { key: 'catalog',      label: 'Katalógus' },
+  { key: 'templates',    label: 'Sablonok' },
   { key: 'audit',        label: 'Audit napló' },
 ]
 
@@ -63,6 +65,7 @@ export function SettingsPage({ initialTab = 'company', onTabChange }: SettingsPa
       {tab === 'audit' && <AuditPanel />}
       {tab === 'catalog' && <CatalogPanel />}
       {tab === 'workflow' && <StageChainEditor />}
+      {tab === 'templates' && <TemplatesPanel />}
       {tab === 'integrations' && (
         <Card className="p-8 text-center">
           <div className="text-[13px] font-medium text-stone-700">Integrációk</div>

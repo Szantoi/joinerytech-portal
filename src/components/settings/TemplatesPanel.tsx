@@ -1,199 +1,273 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { SlideOver } from '../ui/SlideOver'
 import { PrimaryBtn, GhostBtn } from '../ui/Button'
-import { TEMPLATES } from '../../mocks/extra2'
-import type { Template } from '../../types'
+import { Icon } from '../ui/Icon'
+import { Card } from '../ui/Card'
+import { useApi, API_BASE } from '../../hooks/useApi'
 
-const TPL_TYPE_TONE: Record<string, string> = {
-  door: 'bg-amber-50 text-amber-700',
-  cabinet: 'bg-teal-50 text-teal-700',
-  window: 'bg-sky-50 text-sky-700',
+// ── Types ────────────────────────────────────────────────────────────────────
+
+export interface TemplateDto {
+  id: string
+  name: string
+  tradeType: string
+  parameterCount: number
+  slotCount: number
+  isActive: boolean
 }
 
-const TPL_TYPE_LABELS: Record<string, string> = {
-  door: 'Ajtó',
+export interface TemplateParamDto {
+  key: string
+  value: string
+  description: string
+}
+
+export interface TemplateDetailDto extends TemplateDto {
+  parameters: TemplateParamDto[]
+  graphJson?: string
+}
+
+interface PagedTemplates {
+  items: TemplateDto[]
+  totalCount: number
+}
+
+// ── Fallback mock data ────────────────────────────────────────────────────────
+
+export const TEMPLATES_FALLBACK: TemplateDto[] = [
+  { id: 'tpl-001', name: 'Standard ajtó sablon', tradeType: 'door',    parameterCount: 14, slotCount: 3, isActive: true },
+  { id: 'tpl-002', name: 'Toló ajtó sablon',     tradeType: 'door',    parameterCount: 10, slotCount: 2, isActive: true },
+  { id: 'tpl-003', name: 'Konyhai szekrény',      tradeType: 'cabinet', parameterCount: 18, slotCount: 5, isActive: true },
+  { id: 'tpl-004', name: 'Gardrób alap',          tradeType: 'cabinet', parameterCount: 12, slotCount: 4, isActive: false },
+  { id: 'tpl-005', name: 'Nyílászáró sablon',     tradeType: 'window',  parameterCount: 8,  slotCount: 2, isActive: true },
+]
+
+const DETAIL_FALLBACK: Record<string, TemplateDetailDto> = {
+  'tpl-001': {
+    id: 'tpl-001', name: 'Standard ajtó sablon', tradeType: 'door',
+    parameterCount: 14, slotCount: 3, isActive: true,
+    parameters: [
+      { key: 'width_mm',     value: '900',       description: 'Ajtólap szélessége mm-ben' },
+      { key: 'height_mm',    value: '2100',      description: 'Ajtólap magassága mm-ben' },
+      { key: 'thickness_mm', value: '40',        description: 'Ajtólap vastagsága mm-ben' },
+      { key: 'material',     value: 'MDF',       description: 'Alapanyag típusa' },
+      { key: 'finish',       value: 'Lakkozott', description: 'Felületkezelés' },
+    ],
+    graphJson: '{"nodes":[{"id":"door","type":"parametric","params":{"w":900,"h":2100}}],"edges":[]}',
+  },
+  'tpl-002': {
+    id: 'tpl-002', name: 'Toló ajtó sablon', tradeType: 'door',
+    parameterCount: 10, slotCount: 2, isActive: true,
+    parameters: [
+      { key: 'panel_width',  value: '800',  description: 'Tolólap szélessége' },
+      { key: 'panel_height', value: '2000', description: 'Tolólap magassága' },
+      { key: 'track_type',   value: 'top',  description: 'Sínrendszer típusa (top/bottom/both)' },
+    ],
+    graphJson: '{"nodes":[{"id":"slide","type":"sliding"}],"edges":[]}',
+  },
+}
+
+function getFallbackDetail(id: string): TemplateDetailDto {
+  return DETAIL_FALLBACK[id] ?? {
+    ...(TEMPLATES_FALLBACK.find((t) => t.id === id) ?? TEMPLATES_FALLBACK[0]),
+    parameters: [
+      { key: 'param_1', value: 'érték_1', description: 'Paraméter leírása' },
+      { key: 'param_2', value: 'érték_2', description: 'Paraméter leírása' },
+    ],
+  }
+}
+
+// ── Helpers ───────────────────────────────────────────────────────────────────
+
+const TRADE_LABEL: Record<string, string> = {
+  door:    'Ajtó',
   cabinet: 'Szekrény',
-  window: 'Ablak',
+  window:  'Ablak',
+  custom:  'Egyedi',
 }
 
-function TemplatePreviewSVG({ type }: { type: string }) {
-  const common = {
-    width: '100%' as const,
-    height: '100%' as const,
-    viewBox: '0 0 120 90',
-    preserveAspectRatio: 'xMidYMid meet',
-  }
-
-  if (type === 'door') {
-    return (
-      <svg {...common}>
-        <rect x="40" y="10" width="40" height="70" rx="2" fill="#f5f5f4" stroke="#a8a29e" />
-        <rect x="46" y="16" width="28" height="28" rx="1" fill="#fff" stroke="#a8a29e" strokeWidth={0.5} />
-        <rect x="46" y="48" width="28" height="28" rx="1" fill="#fff" stroke="#a8a29e" strokeWidth={0.5} />
-        <circle cx="71" cy="45" r="1.5" fill="#0d9488" />
-      </svg>
-    )
-  }
-  if (type === 'window') {
-    return (
-      <svg {...common}>
-        <rect x="22" y="20" width="76" height="50" rx="1" fill="#e0f2fe" stroke="#0369a1" />
-        <line x1="60" y1="20" x2="60" y2="70" stroke="#0369a1" />
-        <line x1="22" y1="45" x2="98" y2="45" stroke="#0369a1" />
-      </svg>
-    )
-  }
-  return (
-    <svg {...common}>
-      <rect x="20" y="15" width="80" height="60" rx="1.5" fill="#f5f5f4" stroke="#a8a29e" />
-      <rect x="24" y="19" width="36" height="52" fill="#fff" stroke="#a8a29e" strokeWidth={0.5} />
-      <rect x="62" y="19" width="34" height="25" fill="#fff" stroke="#a8a29e" strokeWidth={0.5} />
-      <rect x="62" y="46" width="34" height="25" fill="#fff" stroke="#a8a29e" strokeWidth={0.5} />
-      <circle cx="42" cy="45" r="1.2" fill="#0d9488" />
-      <circle cx="92" cy="32" r="1.2" fill="#0d9488" />
-      <circle cx="92" cy="58" r="1.2" fill="#0d9488" />
-    </svg>
-  )
+const TRADE_BADGE: Record<string, string> = {
+  door:    'bg-amber-50 text-amber-700',
+  cabinet: 'bg-teal-50 text-teal-700',
+  window:  'bg-sky-50 text-sky-700',
+  custom:  'bg-stone-100 text-stone-600',
 }
 
-function TemplateCard({ t, onOpen }: { t: Template; onOpen: (id: string) => void }) {
+function tradeBadgeCls(tradeType: string) {
+  return TRADE_BADGE[tradeType] ?? TRADE_BADGE.custom
+}
+
+// ── Detail SlideOver ──────────────────────────────────────────────────────────
+
+function TemplateDetailSlideOver({ templateId, onClose }: { templateId: string | null; onClose: () => void }) {
+  const url = templateId ? `${API_BASE.abstractions}/api/modules/templates/${templateId}` : null
+  const { data: apiDetail, refetch } = useApi<TemplateDetailDto>(url)
+
+  useEffect(() => { if (templateId) refetch() }, [templateId]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  if (!templateId) return null
+
+  const detail = apiDetail ?? getFallbackDetail(templateId)
+
   return (
-    <button
-      onClick={() => onOpen(t.id)}
-      className="text-left bg-white border border-stone-200/80 hover:border-stone-300 rounded-xl overflow-hidden transition group"
+    <SlideOver
+      open={true}
+      onClose={onClose}
+      title={detail.name}
+      subtitle={`${TRADE_LABEL[detail.tradeType] ?? detail.tradeType} · ${detail.parameterCount} paraméter · ${detail.slotCount} slot`}
+      width={520}
+      footer={
+        <>
+          <GhostBtn onClick={onClose}>Bezárás</GhostBtn>
+          <PrimaryBtn icon="sparkle">Példányosítás</PrimaryBtn>
+        </>
+      }
     >
-      <div className="aspect-[4/2.6] bg-stone-50 border-b border-stone-100 grid place-items-center p-3">
-        <div className="w-full h-full">
-          <TemplatePreviewSVG type={t.type} />
-        </div>
-      </div>
-      <div className="p-3.5">
-        <div className="flex items-start justify-between gap-2">
-          <div className="text-[12.5px] font-semibold text-stone-900 truncate flex-1">{t.name}</div>
-          <span
-            className={`text-[10px] px-1.5 py-0.5 rounded font-medium shrink-0 ${TPL_TYPE_TONE[t.type] ?? 'bg-stone-100 text-stone-600'}`}
-          >
-            {TPL_TYPE_LABELS[t.type] ?? t.type}
+      <div className="px-5 py-4 space-y-5">
+        {/* Status badges */}
+        <div className="flex items-center gap-2">
+          <span className={`text-[10.5px] px-2 py-0.5 rounded-full font-medium ${
+            detail.isActive ? 'bg-teal-100 text-teal-700' : 'bg-stone-100 text-stone-500'
+          }`}>
+            {detail.isActive ? 'Aktív' : 'Inaktív'}
           </span>
+          <span className={`text-[10.5px] px-2 py-0.5 rounded-full font-medium ${tradeBadgeCls(detail.tradeType)}`}>
+            {TRADE_LABEL[detail.tradeType] ?? detail.tradeType}
+          </span>
+          <span className="text-[10.5px] font-mono text-stone-400">{detail.id}</span>
         </div>
-        <div className="mt-1.5 flex items-center gap-2.5 text-[10.5px] text-stone-500">
-          <span className="font-mono">{t.paramCount} param</span>
-          <span>·</span>
-          <span className="text-amber-600">★ {t.rating}</span>
-          {t.community && (
-            <>
-              <span>·</span>
-              <span className="font-mono">{t.downloads} ↓</span>
-            </>
-          )}
+
+        {/* Params table */}
+        <div>
+          <div className="text-[10.5px] uppercase tracking-wide text-stone-500 font-medium mb-2">
+            Paraméterek ({detail.parameters.length})
+          </div>
+          <div className="border border-stone-200 rounded-lg overflow-hidden">
+            <table className="w-full text-[12px]">
+              <thead>
+                <tr className="bg-stone-50 border-b border-stone-200">
+                  <th className="px-3 py-2 text-left text-[10.5px] uppercase tracking-wide text-stone-500 font-medium">Kulcs</th>
+                  <th className="px-3 py-2 text-left text-[10.5px] uppercase tracking-wide text-stone-500 font-medium">Érték</th>
+                  <th className="px-3 py-2 text-left text-[10.5px] uppercase tracking-wide text-stone-500 font-medium">Leírás</th>
+                </tr>
+              </thead>
+              <tbody>
+                {detail.parameters.map((p, i) => (
+                  <tr key={i} className="border-b border-stone-100 last:border-0">
+                    <td className="px-3 py-2 font-mono text-stone-700">{p.key}</td>
+                    <td className="px-3 py-2 font-mono text-teal-700">{p.value}</td>
+                    <td className="px-3 py-2 text-stone-500">{p.description}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        {/* Graph JSON */}
+        {detail.graphJson && (
+          <div>
+            <div className="text-[10.5px] uppercase tracking-wide text-stone-500 font-medium mb-2">
+              Graph JSON előnézet
+            </div>
+            <pre className="bg-stone-900 text-stone-100 rounded-lg p-3 font-mono text-[10.5px] leading-relaxed overflow-x-auto whitespace-pre-wrap break-all">
+              {detail.graphJson}
+            </pre>
+          </div>
+        )}
+
+        {/* Stats */}
+        <div className="grid grid-cols-2 gap-2">
+          <div className="bg-stone-50 border border-stone-200/70 rounded-lg p-3">
+            <div className="text-[10.5px] uppercase tracking-wide text-stone-500">Paraméterszám</div>
+            <div className="text-[17px] font-semibold text-stone-900 mt-0.5">{detail.parameterCount}</div>
+          </div>
+          <div className="bg-stone-50 border border-stone-200/70 rounded-lg p-3">
+            <div className="text-[10.5px] uppercase tracking-wide text-stone-500">Slotok száma</div>
+            <div className="text-[17px] font-semibold text-stone-900 mt-0.5">{detail.slotCount}</div>
+          </div>
         </div>
       </div>
-    </button>
+    </SlideOver>
   )
 }
+
+// ── TemplatesPanel ────────────────────────────────────────────────────────────
 
 export function TemplatesPanel() {
-  const [openId, setOpenId] = useState<string | null>(null)
-  const tpl = TEMPLATES.find((t) => t.id === openId) ?? null
+  const { data: apiData, refetch } = useApi<PagedTemplates | TemplateDto[]>(
+    `${API_BASE.abstractions}/api/modules/templates`
+  )
+  const [selectedId, setSelectedId] = useState<string | null>(null)
 
-  const own = TEMPLATES.filter((t) => !t.community)
-  const community = TEMPLATES.filter((t) => t.community)
+  useEffect(() => { refetch() }, []) // eslint-disable-line react-hooks/exhaustive-deps
+
+  const raw = apiData
+    ? Array.isArray(apiData) ? apiData : (apiData as PagedTemplates).items
+    : null
+  const templates = raw ?? TEMPLATES_FALLBACK
 
   return (
-    <div className="space-y-5">
-      <div>
-        <div className="flex items-center justify-between mb-3">
-          <div>
-            <div className="text-[12.5px] font-semibold text-stone-900">Saját parametrikus sablonok</div>
-            <div className="text-[10.5px] text-stone-500">Cabinet 0.3 specifikáció · CNC deriválás támogatva</div>
+    <>
+      <Card className="p-0">
+        <div className="px-5 py-3 border-b border-stone-200/80 flex items-center justify-between">
+          <div className="text-[12.5px] font-semibold text-stone-900">
+            Parametrikus sablonok
+            <span className="ml-2 text-[11px] text-stone-400 font-normal">({templates.length})</span>
           </div>
           <PrimaryBtn icon="plus">Új sablon</PrimaryBtn>
         </div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-          {own.map((t) => (
-            <TemplateCard key={t.id} t={t} onOpen={setOpenId} />
-          ))}
-        </div>
-      </div>
 
-      <div>
-        <div className="flex items-center justify-between mb-3">
-          <div>
-            <div className="text-[12.5px] font-semibold text-stone-900 inline-flex items-center gap-2">
-              Community katalógus{' '}
-              <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-violet-50 text-violet-700">béta</span>
-            </div>
-            <div className="text-[10.5px] text-stone-500">Megosztott sablonok más JoineryTech felhasználóktól</div>
-          </div>
-          <GhostBtn icon="external">Tallózás</GhostBtn>
-        </div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-          {community.map((t) => (
-            <TemplateCard key={t.id} t={t} onOpen={setOpenId} />
-          ))}
-        </div>
-      </div>
+        <table className="w-full text-[12.5px]">
+          <thead>
+            <tr className="border-b border-stone-100 bg-stone-50/60">
+              <th className="px-5 py-2.5 text-left text-[10.5px] uppercase tracking-wide text-stone-500 font-medium">Név</th>
+              <th className="px-4 py-2.5 text-left text-[10.5px] uppercase tracking-wide text-stone-500 font-medium">Típus</th>
+              <th className="px-4 py-2.5 text-right text-[10.5px] uppercase tracking-wide text-stone-500 font-medium">Paraméterek</th>
+              <th className="px-4 py-2.5 text-right text-[10.5px] uppercase tracking-wide text-stone-500 font-medium">Slotok</th>
+              <th className="px-5 py-2.5 text-left text-[10.5px] uppercase tracking-wide text-stone-500 font-medium">Státusz</th>
+              <th className="w-8" />
+            </tr>
+          </thead>
+          <tbody>
+            {templates.map((t) => (
+              <tr
+                key={t.id}
+                onClick={() => setSelectedId(t.id)}
+                className="border-b border-stone-100 last:border-0 hover:bg-stone-50/60 cursor-pointer"
+              >
+                <td className="px-5 py-3 font-medium text-stone-900">{t.name}</td>
+                <td className="px-4 py-3">
+                  <span className={`text-[10.5px] px-2 py-0.5 rounded font-medium ${tradeBadgeCls(t.tradeType)}`}>
+                    {TRADE_LABEL[t.tradeType] ?? t.tradeType}
+                  </span>
+                </td>
+                <td className="px-4 py-3 text-right font-mono text-stone-600">{t.parameterCount}</td>
+                <td className="px-4 py-3 text-right font-mono text-stone-600">{t.slotCount}</td>
+                <td className="px-5 py-3">
+                  <span className={`text-[10.5px] px-2 py-0.5 rounded-full font-medium ${
+                    t.isActive ? 'bg-teal-100 text-teal-700' : 'bg-stone-100 text-stone-500'
+                  }`}>
+                    {t.isActive ? 'Aktív' : 'Inaktív'}
+                  </span>
+                </td>
+                <td className="pr-3">
+                  <Icon name="chevron" size={14} className="text-stone-400" />
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
 
-      <SlideOver
-        open={!!tpl}
-        onClose={() => setOpenId(null)}
-        title={tpl?.name ?? ''}
-        subtitle={tpl ? `${TPL_TYPE_LABELS[tpl.type] ?? tpl.type} · ${tpl.paramCount} paraméter` : undefined}
-        width={500}
-        footer={
-          <>
-            <GhostBtn onClick={() => setOpenId(null)}>Bezár</GhostBtn>
-            <PrimaryBtn icon="sparkle">Példányosítás</PrimaryBtn>
-          </>
-        }
-      >
-        {tpl && (
-          <div className="px-5 py-4 space-y-4">
-            <div className="aspect-[4/2.4] bg-stone-50 border border-stone-200 rounded-lg p-6 grid place-items-center">
-              <div className="w-full h-full max-w-[280px]">
-                <TemplatePreviewSVG type={tpl.type} />
-              </div>
-            </div>
-            <div>
-              <div className="text-[10.5px] uppercase tracking-wide text-stone-500 font-medium mb-2">Paraméterek</div>
-              {tpl.params ? (
-                <div className="space-y-1">
-                  {tpl.params.map((p, i) => (
-                    <div
-                      key={i}
-                      className="grid grid-cols-[1fr_120px_60px] gap-2 items-center px-3 py-1.5 rounded-md bg-stone-50 border border-stone-100"
-                    >
-                      <div className="text-[12px] text-stone-800">{p.name}</div>
-                      <input
-                        defaultValue={String(p.val)}
-                        className="h-7 px-2 rounded border border-stone-200 text-[11.5px] font-mono bg-white"
-                      />
-                      <div className="text-[10.5px] text-stone-500 font-mono">{p.unit}</div>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <div className="text-[12px] text-stone-400 italic">
-                  Paraméterek a példányosítás során válnak elérhetővé
-                </div>
-              )}
-            </div>
-            <div>
-              <div className="text-[10.5px] uppercase tracking-wide text-stone-500 font-medium mb-2">
-                CNC deriválás előnézet
-              </div>
-              <div className="bg-stone-900 rounded-lg p-3 text-[10.5px] font-mono text-teal-300 leading-relaxed">
-                <div className="text-stone-400">{'// Generált G-kód kivonat'}</div>
-                <div>G21 G90 G94 ; mm, abs, mm/min</div>
-                <div>T1 M6 ; D=8mm fúró</div>
-                <div>G0 X32 Y96 Z5</div>
-                <div>G1 Z-13 F600</div>
-                <div className="text-stone-400">; ... +84 sor</div>
-              </div>
-            </div>
-          </div>
+        {templates.length === 0 && (
+          <div className="px-5 py-8 text-center text-[12px] text-stone-500">Nincs sablon</div>
         )}
-      </SlideOver>
-    </div>
+      </Card>
+
+      <TemplateDetailSlideOver
+        templateId={selectedId}
+        onClose={() => setSelectedId(null)}
+      />
+    </>
   )
 }
