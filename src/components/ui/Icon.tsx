@@ -294,6 +294,12 @@ export function Icon({ name, size = 18, className = '' }: IconProps) {
           <path d="M13 2 4 14h7l-1 8 9-12h-7z" />
         </svg>
       )
+    case 'menu':
+      return (
+        <svg {...common}>
+          <path d="M4 6h16M4 12h16M4 18h16" />
+        </svg>
+      )
     default:
       return null
   }

@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Icon } from '../ui/Icon'
 import { WorldIcon } from './WorldIcon'
 import { ChatBubble } from '../chat/ChatBubble'
@@ -128,20 +128,28 @@ function UserMenu({ lang }: { lang: string }) {
   )
 }
 
-function WorldTopBar({ world, accent, screen, onHome, lang }: Omit<WorldSidebarProps, 'onScreen'>) {
+interface WorldTopBarProps extends Omit<WorldSidebarProps, 'onScreen'> {
+  onMenu: () => void
+}
+
+function WorldTopBar({ world, accent, screen, onHome, lang, onMenu }: WorldTopBarProps) {
   const screenObj = world.screens.find((s: WorldScreen) => s.key === screen) ?? world.screens[0]
   const screenLabel = lang === 'en' && screenObj?.en ? screenObj.en : screenObj?.hu
 
   return (
     <header className="bg-white border-b border-stone-200/70">
-      <div className="px-7 py-4 flex items-center gap-4">
+      <div className="px-4 md:px-7 py-4 flex items-center gap-3 md:gap-4">
         <button
-          onClick={onHome}
-          className="md:hidden inline-flex items-center gap-1.5 text-[11.5px] text-stone-600 hover:text-stone-900"
+          onClick={onMenu}
+          aria-label="Menü"
+          className="md:hidden w-9 h-9 -ml-1 grid place-items-center rounded-lg text-stone-600 hover:bg-stone-100 shrink-0"
         >
-          <Icon name="chevron" size={14} className="rotate-180" />
-          Home
+          <Icon name="menu" size={20} />
         </button>
+        <div className="md:hidden min-w-0 flex-1">
+          <div className={`text-[10px] font-medium ${accent.fg} truncate`}>{lang === 'en' ? world.en : world.hu}</div>
+          <div className="text-[14px] font-semibold tracking-tight text-stone-900 leading-tight truncate">{screenLabel}</div>
+        </div>
         <div className="hidden md:flex items-center gap-2 text-[11.5px] text-stone-500">
           <button onClick={onHome} className="hover:text-stone-900">Home</button>
           <Icon name="chevron" size={11} className="text-stone-300" />
@@ -169,10 +177,90 @@ function WorldTopBar({ world, accent, screen, onHome, lang }: Omit<WorldSidebarP
           <UserMenu lang={lang} />
         </div>
       </div>
-      <div className="px-7 pb-4">
+      <div className="hidden md:block px-7 pb-4">
         <h1 className="text-[22px] font-semibold tracking-tight text-stone-900">{screenLabel}</h1>
       </div>
     </header>
+  )
+}
+
+interface WorldMobileDrawerProps extends WorldSidebarProps {
+  open: boolean
+  onClose: () => void
+}
+
+function WorldMobileDrawer({ open, onClose, world, accent, screen, onScreen, onHome, lang }: WorldMobileDrawerProps) {
+  return (
+    <div
+      className={`md:hidden fixed inset-0 z-50 ${open ? '' : 'pointer-events-none'}`}
+      aria-hidden={!open}
+    >
+      <div
+        onClick={onClose}
+        className={`absolute inset-0 bg-stone-900/40 backdrop-blur-[1px] transition-opacity duration-200 ${open ? 'opacity-100' : 'opacity-0'}`}
+      />
+      <aside
+        className={`absolute inset-y-0 left-0 w-[280px] max-w-[82%] bg-white shadow-2xl flex flex-col transition-transform duration-200 ease-out ${open ? 'translate-x-0' : '-translate-x-full'}`}
+      >
+        <div className="px-4 py-4 border-b border-stone-200/70 flex items-center gap-2.5">
+          <div className="w-8 h-8 rounded-lg bg-stone-900 grid place-items-center text-white shrink-0">
+            <span className="text-[13px] font-bold tracking-tighter">jt</span>
+          </div>
+          <div className="min-w-0 flex-1">
+            <div className="text-[12.5px] font-semibold tracking-tight text-stone-900 leading-tight">
+              joinery<span className="text-teal-600">/</span>tech
+            </div>
+            <div className="text-[10px] text-stone-500 truncate">portál</div>
+          </div>
+          <button
+            onClick={onClose}
+            className="w-9 h-9 grid place-items-center rounded-lg text-stone-500 hover:bg-stone-100 -mr-1"
+          >
+            <Icon name="x" size={18} />
+          </button>
+        </div>
+
+        <button
+          onClick={() => { onHome(); onClose() }}
+          className="px-4 py-3 border-b border-stone-200/70 flex items-center gap-2 text-[12px] text-stone-600 hover:bg-stone-50 text-left"
+        >
+          <Icon name="chevron" size={14} className="rotate-180" />
+          {lang === 'en' ? 'All workspaces' : 'Vissza a Home-ra'}
+        </button>
+
+        <div className={`px-4 py-3 border-b border-stone-200/70 ${accent.sideBg}`}>
+          <div className="flex items-center gap-2.5">
+            <div className={`w-8 h-8 rounded-lg ${accent.iconBg} ${accent.iconFg} grid place-items-center`}>
+              <WorldIcon name={world.icon} size={18} />
+            </div>
+            <div className="min-w-0">
+              <div className="text-[12.5px] font-semibold text-stone-900">{lang === 'en' ? world.en : world.hu}</div>
+              <div className="text-[10px] text-stone-500">{lang === 'en' ? 'Workspace' : 'Munkavil\u00e1g'}</div>
+            </div>
+          </div>
+        </div>
+
+        <nav className="flex-1 px-2 py-3 space-y-0.5 overflow-y-auto">
+          {world.screens.map((s: WorldScreen) => {
+            const active = screen === s.key
+            return (
+              <button
+                key={s.key}
+                onClick={() => { onScreen(s.key); onClose() }}
+                className={`w-full flex items-center gap-2.5 px-2.5 h-11 rounded-lg text-[13.5px] text-left transition ${
+                  active ? 'bg-stone-100 text-stone-900 font-medium' : 'text-stone-600 hover:bg-stone-50'
+                }`}
+              >
+                <span className={`w-1 h-4 rounded-full ${active ? accent.sideAccent.replace('border-', 'bg-') : 'bg-transparent'}`} />
+                <span className="flex-1 truncate">{lang === 'en' && s.en ? s.en : s.hu}</span>
+              </button>
+            )
+          })}
+        </nav>
+
+        <div className="px-3 py-3 border-t border-stone-200/70 text-[10.5px] text-stone-400 font-mono">v3.2.1</div>
+      </aside>
+    </div>
   )
 }
 
@@ -191,14 +279,38 @@ export function WorldShell({ worldKey, screen, onScreen, onHome, lang = 'hu', ch
   const accent = ACCENT_MAP[w.accent] ?? ACCENT_MAP.teal
 
   const isShopFloor = worldKey === 'shopfloor'
+  const [menuOpen, setMenuOpen] = useState(false)
+
+  // Close drawer on navigation
+  useEffect(() => { setMenuOpen(false) }, [screen, worldKey])
+
+  // Lock body scroll + Esc to close while drawer is open
+  useEffect(() => {
+    if (!menuOpen) return
+    const prev = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') setMenuOpen(false) }
+    window.addEventListener('keydown', onKey)
+    return () => { document.body.style.overflow = prev; window.removeEventListener('keydown', onKey) }
+  }, [menuOpen])
 
   return (
     <div className="flex min-h-screen bg-stone-50/60">
       <WorldSidebar world={w} accent={accent} screen={screen} onScreen={onScreen} onHome={onHome} lang={lang} />
       <main className="flex-1 min-w-0 flex flex-col">
-        <WorldTopBar world={w} accent={accent} screen={screen} onHome={onHome} lang={lang} />
+        <WorldTopBar world={w} accent={accent} screen={screen} onHome={onHome} lang={lang} onMenu={() => setMenuOpen(true)} />
         <div className="flex-1">{children}</div>
       </main>
+      <WorldMobileDrawer
+        open={menuOpen}
+        onClose={() => setMenuOpen(false)}
+        world={w}
+        accent={accent}
+        screen={screen}
+        onScreen={onScreen}
+        onHome={onHome}
+        lang={lang}
+      />
       {!isShopFloor && <ChatBubble page={`${w.hu} / ${screen}`} />}
     </div>
   )
