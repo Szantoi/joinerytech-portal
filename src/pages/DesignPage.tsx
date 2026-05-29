@@ -3,7 +3,8 @@ import { useNavigate, useParams } from 'react-router-dom'
 import { Card, Icon } from '../components/ui'
 import { PARAM_TEMPLATES, CATALOG_LOOKUP } from '../mocks/worlds'
 import { WorldShell } from '../components/layout/WorldShell'
-import { useApi, API_BASE } from '../hooks/useApi'
+import { useApi, useMutation, API_BASE } from '../hooks/useApi'
+import { useAuth } from '../auth'
 
 interface ApiTemplate {
   id: string
@@ -11,6 +12,23 @@ interface ApiTemplate {
   tradeType: string
   version: number
   isActive: boolean
+}
+
+interface ApiTemplateDetail {
+  id: string
+  name: string
+  tradeType: string
+  version: number
+  isActive: boolean
+  parameters?: Record<string, number>
+  graphJson?: string | null
+  slots?: Array<{ name: string; type: string }>
+}
+
+interface CalculateResult {
+  parts?: Array<{ name?: string; width?: number; height?: number; thickness?: number; quantity?: number }>
+  summary?: Record<string, unknown>
+  [key: string]: unknown
 }
 
 // ─── Formula resolver ─────────────────────────────────────────────────────────
@@ -208,8 +226,200 @@ function DesignDashboard({ onScreen }: { onScreen: (s: string) => void }) {
   )
 }
 
+// ─── API Parameter Wizard ─────────────────────────────────────────────────────
+function ApiParamWizard({ templateId, templateName }: { templateId: string; templateName: string }) {
+  const { token } = useAuth()
+  const { mutate } = useMutation<unknown>()
+  const { data: detail, isLoading, error, refetch } = useApi<ApiTemplateDetail>(
+    `${API_BASE.abstractions}/api/modules/templates/${templateId}`
+  )
+  useEffect(() => { refetch() }, [templateId]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  const [params, setParams] = useState<Record<string, number>>({})
+  const [saving, setSaving] = useState<string | null>(null)
+  const [calcResult, setCalcResult] = useState<CalculateResult | null>(null)
+  const [cuttingList, setCuttingList] = useState<unknown[] | null>(null)
+  const [calculating, setCalculating] = useState(false)
+  const [loadingCutting, setLoadingCutting] = useState(false)
+
+  useEffect(() => {
+    if (detail?.parameters) setParams(detail.parameters)
+    setCalcResult(null)
+    setCuttingList(null)
+  }, [detail])
+
+  async function saveParam(key: string, value: number) {
+    setSaving(key)
+    try {
+      await mutate(
+        `${API_BASE.abstractions}/api/modules/templates/${templateId}/parameters/${key}`,
+        { method: 'PUT', body: value }
+      )
+    } catch { /* ignore */ } finally {
+      setSaving(null)
+    }
+  }
+
+  async function calculate() {
+    setCalculating(true)
+    try {
+      const res = await mutate(
+        `${API_BASE.abstractions}/api/modules/templates/${templateId}/calculate`,
+        { method: 'POST', body: params }
+      )
+      setCalcResult(res as CalculateResult)
+    } catch { /* ignore */ } finally {
+      setCalculating(false)
+    }
+  }
+
+  async function loadCuttingList() {
+    if (!token) return
+    setLoadingCutting(true)
+    try {
+      const res = await fetch(
+        `${API_BASE.abstractions}/api/modules/templates/${templateId}/cutting-list`,
+        { headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' } }
+      )
+      if (res.ok) {
+        const data = await res.json() as unknown
+        setCuttingList(Array.isArray(data) ? data : ((data as { items?: unknown[] }).items ?? []))
+      }
+    } catch { /* ignore */ } finally {
+      setLoadingCutting(false)
+    }
+  }
+
+  if (isLoading) return <Card className="p-8 text-center text-[12px] text-stone-500">Sablon betöltése...</Card>
+  if (error || !detail) return <Card className="p-8 text-center text-[12px] text-rose-500">A sablon nem töltődött be: {templateName}</Card>
+
+  const paramEntries = Object.entries(params)
+
+  return (
+    <div className="space-y-4">
+      <div className="flex items-center gap-3">
+        <TemplateThumb kind="cabinet" size={48} />
+        <div>
+          <div className="text-[14px] font-semibold text-stone-900">{detail.name}</div>
+          <div className="text-[11px] text-stone-500">{detail.tradeType} · v{detail.version} · {detail.isActive ? 'Aktív' : 'Inaktív'}</div>
+        </div>
+      </div>
+
+      <Card className="p-5">
+        <div className="text-[13px] font-semibold text-stone-900 mb-4">Paraméterek</div>
+        {paramEntries.length === 0 ? (
+          <div className="text-[12px] text-stone-500">Nincs szerkeszthető paraméter.</div>
+        ) : (
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+            {paramEntries.map(([key, val]) => (
+              <div key={key}>
+                <div className="flex items-center justify-between mb-1">
+                  <div className="text-[10.5px] uppercase tracking-wide text-stone-500 font-medium font-mono">{key}</div>
+                  {saving === key && <span className="text-[9.5px] text-amber-600">Mentés...</span>}
+                </div>
+                <input
+                  type="number"
+                  value={val}
+                  onChange={(e) => setParams((p) => ({ ...p, [key]: Number(e.target.value) }))}
+                  onBlur={() => saveParam(key, params[key])}
+                  className="w-full h-9 px-3 rounded-lg border border-stone-200 text-[12px] bg-white font-mono focus:border-amber-400 outline-none"
+                />
+              </div>
+            ))}
+          </div>
+        )}
+      </Card>
+
+      <div className="flex justify-end">
+        <button
+          onClick={calculate}
+          disabled={calculating}
+          className="h-9 px-5 bg-amber-600 text-white text-[12px] font-medium rounded-lg hover:bg-amber-700 disabled:opacity-50 inline-flex items-center gap-1.5"
+        >
+          <Icon name="bolt" size={12} />
+          {calculating ? 'Számítás...' : 'Számítás indítása'}
+        </button>
+      </div>
+
+      {calcResult && (
+        <Card className="p-5">
+          <div className="text-[13px] font-semibold text-stone-900 mb-3">Számítás eredménye</div>
+          {calcResult.parts && calcResult.parts.length > 0 ? (
+            <div className="overflow-x-auto">
+              <table className="w-full text-[12px]">
+                <thead>
+                  <tr className="text-left border-b border-stone-100 bg-stone-50/50">
+                    {['Alkatrész', 'Szélesség', 'Magasság', 'Vastagság', 'Db'].map((h) => (
+                      <th key={h} className="px-4 py-2 text-[10.5px] uppercase tracking-wide text-stone-500 font-medium">{h}</th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {calcResult.parts.map((p, i) => (
+                    <tr key={i} className="border-b border-stone-50 last:border-0 hover:bg-stone-50/40">
+                      <td className="px-4 py-2 font-medium text-stone-900">{p.name ?? `Alkatrész ${i + 1}`}</td>
+                      <td className="px-4 py-2 font-mono text-stone-700">{p.width ?? '—'}mm</td>
+                      <td className="px-4 py-2 font-mono text-stone-700">{p.height ?? '—'}mm</td>
+                      <td className="px-4 py-2 font-mono text-stone-700">{p.thickness ?? '—'}mm</td>
+                      <td className="px-4 py-2 font-semibold text-stone-900">{p.quantity ?? '—'}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          ) : (
+            <pre className="text-[11px] font-mono bg-stone-900 text-emerald-300 p-3 rounded-lg overflow-x-auto">
+              {JSON.stringify(calcResult, null, 2)}
+            </pre>
+          )}
+          {!cuttingList && (
+            <div className="mt-3 flex justify-end">
+              <button
+                onClick={loadCuttingList}
+                disabled={loadingCutting}
+                className="h-8 px-3 rounded-lg border border-stone-200 text-[11.5px] font-medium text-stone-700 hover:bg-stone-50 disabled:opacity-50"
+              >
+                {loadingCutting ? 'Betöltés...' : 'Vágólista előnézet →'}
+              </button>
+            </div>
+          )}
+        </Card>
+      )}
+
+      {cuttingList && (
+        <Card className="p-5">
+          <div className="text-[13px] font-semibold text-stone-900 mb-3">Vágólista előnézet</div>
+          {cuttingList.length === 0 ? (
+            <div className="text-[12px] text-stone-500">Nincs vágólista adat.</div>
+          ) : (
+            <pre className="text-[11px] font-mono bg-stone-900 text-emerald-300 p-3 rounded-lg overflow-x-auto max-h-64">
+              {JSON.stringify(cuttingList, null, 2)}
+            </pre>
+          )}
+        </Card>
+      )}
+    </div>
+  )
+}
+
 // ─── Template Editor ──────────────────────────────────────────────────────────
 function TemplateEditor() {
+  // API template list
+  const { data: apiTemplatesRaw, refetch: refetchApiTpls } = useApi<ApiTemplate[] | { items: ApiTemplate[]; totalCount: number }>(
+    `${API_BASE.abstractions}/api/modules/templates?pageSize=50`
+  )
+  useEffect(() => { refetchApiTpls() }, []) // eslint-disable-line react-hooks/exhaustive-deps
+
+  const apiTemplates: ApiTemplate[] = useMemo(() => {
+    if (!apiTemplatesRaw) return []
+    if (Array.isArray(apiTemplatesRaw)) return apiTemplatesRaw
+    return (apiTemplatesRaw as { items: ApiTemplate[] }).items ?? []
+  }, [apiTemplatesRaw])
+
+  // Selected: either mock or API template
+  const [selectedApiTplId, setSelectedApiTplId] = useState<string | null>(null)
+
+  // Mock editor state (used only when no API template selected)
   const [tplId, setTplId] = useState(PARAM_TEMPLATES[0].id)
   const tpl = PARAM_TEMPLATES.find((t) => t.id === tplId) ?? PARAM_TEMPLATES[0]
   const [mode, setMode] = useState<'simple' | 'advanced'>('simple')
@@ -245,28 +455,51 @@ function TemplateEditor() {
 
   const allOk = constraintResults.every((c) => c.ok)
 
+  const selectedApiTpl = apiTemplates.find((t) => t.id === selectedApiTplId) ?? null
+
   return (
     <div className="px-7 py-6">
       <div className="space-y-4">
         {/* Template picker */}
         <div className="flex items-center gap-2 flex-wrap">
           <div className="text-[10.5px] uppercase tracking-wide text-stone-500 font-medium mr-2">Sablon:</div>
-          {PARAM_TEMPLATES.map((t) => (
-            <button key={t.id} onClick={() => setTplId(t.id)}
+          {/* API templates (shown when loaded) */}
+          {apiTemplates.map((t) => (
+            <button key={`api-${t.id}`} onClick={() => { setSelectedApiTplId(t.id) }}
               className={`px-3 h-8 rounded-lg text-[11.5px] font-medium border transition ${
-                tplId === t.id ? 'bg-amber-50 border-amber-300 text-amber-800' : 'bg-white border-stone-200 text-stone-700 hover:border-stone-300'
+                selectedApiTplId === t.id ? 'bg-teal-50 border-teal-300 text-teal-800' : 'bg-white border-stone-200 text-stone-700 hover:border-stone-300'
+              }`}>
+              {t.name}
+              <span className="ml-1 text-[9.5px] text-teal-500 font-mono">API</span>
+            </button>
+          ))}
+          {/* Mock templates (fallback when API unavailable, always visible) */}
+          {PARAM_TEMPLATES.map((t) => (
+            <button key={`mock-${t.id}`} onClick={() => { setSelectedApiTplId(null); setTplId(t.id) }}
+              className={`px-3 h-8 rounded-lg text-[11.5px] font-medium border transition ${
+                selectedApiTplId === null && tplId === t.id ? 'bg-amber-50 border-amber-300 text-amber-800' : 'bg-white border-stone-200 text-stone-700 hover:border-stone-300'
               }`}>
               {t.name}
             </button>
           ))}
           <span className="flex-1" />
-          <div className="inline-flex p-0.5 bg-stone-100 rounded-lg">
-            <button onClick={() => setMode('simple')}
-              className={`px-2.5 h-7 text-[11px] rounded-md ${mode === 'simple' ? 'bg-white shadow-sm font-medium text-stone-900' : 'text-stone-600'}`}>Egyszerű</button>
-            <button onClick={() => setMode('advanced')}
-              className={`px-2.5 h-7 text-[11px] rounded-md ${mode === 'advanced' ? 'bg-white shadow-sm font-medium text-stone-900' : 'text-stone-600'}`}>Haladó <span className="text-amber-600">fx</span></button>
-          </div>
+          {selectedApiTplId === null && (
+            <div className="inline-flex p-0.5 bg-stone-100 rounded-lg">
+              <button onClick={() => setMode('simple')}
+                className={`px-2.5 h-7 text-[11px] rounded-md ${mode === 'simple' ? 'bg-white shadow-sm font-medium text-stone-900' : 'text-stone-600'}`}>Egyszerű</button>
+              <button onClick={() => setMode('advanced')}
+                className={`px-2.5 h-7 text-[11px] rounded-md ${mode === 'advanced' ? 'bg-white shadow-sm font-medium text-stone-900' : 'text-stone-600'}`}>Haladó <span className="text-amber-600">fx</span></button>
+            </div>
+          )}
         </div>
+
+        {/* API wizard */}
+        {selectedApiTpl && (
+          <ApiParamWizard templateId={selectedApiTpl.id} templateName={selectedApiTpl.name} />
+        )}
+
+        {/* Mock editor body — shown when no API template selected */}
+        {!selectedApiTpl && (<>
 
         {/* Free variables */}
         <Card className="p-4">
@@ -433,6 +666,7 @@ function TemplateEditor() {
             </table>
           </div>
         </Card>
+        </>)}
       </div>
     </div>
   )

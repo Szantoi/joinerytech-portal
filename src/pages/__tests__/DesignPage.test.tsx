@@ -1,5 +1,5 @@
-import { describe, it, expect, vi } from 'vitest'
-import { render, screen, fireEvent } from '@testing-library/react'
+import { describe, it, expect, vi, afterEach } from 'vitest'
+import { render, screen, fireEvent, waitFor } from '@testing-library/react'
 import { MemoryRouter, Route, Routes } from 'react-router-dom'
 import { DesignWorldPage } from '../DesignPage'
 
@@ -13,6 +13,31 @@ vi.mock('../../auth', () => ({
     user: { profile: { name: 'Test User' } },
   })),
 }))
+
+afterEach(() => { vi.unstubAllGlobals() })
+
+function mockFetch503() {
+  vi.stubGlobal('fetch', vi.fn(() => Promise.resolve({ ok: false, status: 503 })))
+}
+
+function mockFetchApiTemplates(templates: object[]) {
+  vi.stubGlobal('fetch', vi.fn((url: string) => {
+    if (url.includes('/api/modules/templates/') && url.match(/\/templates\/[^/]+$/)) {
+      // detail endpoint
+      return Promise.resolve({
+        ok: true,
+        json: () => Promise.resolve({
+          id: 'API-01', name: 'API Ajtó sablon', tradeType: 'Ajtó', version: 2, isActive: true,
+          parameters: { width_mm: 900, height_mm: 2100, thickness_mm: 40 },
+        }),
+      })
+    }
+    if (url.includes('/api/modules/templates')) {
+      return Promise.resolve({ ok: true, json: () => Promise.resolve(templates) })
+    }
+    return Promise.resolve({ ok: false, status: 503 })
+  }))
+}
 
 function renderDesign(screen = '') {
   const path = screen ? `/w/design/${screen}` : '/w/design'
@@ -93,5 +118,144 @@ describe('DesignPage', () => {
     renderDesign('catalog')
     expect(screen.getByText('Élzáró')).toBeTruthy()
     expect(screen.getByText('Új tétel')).toBeTruthy()
+  })
+
+  // ─── FE-044: API template picker & ApiParamWizard ─────────────────────────
+
+  it('editor shows mock templates when API unavailable (fallback)', async () => {
+    mockFetch503()
+    renderDesign('editor')
+    await waitFor(() => expect(screen.getByText('Polcos szekrény (2 polcos)')).toBeTruthy())
+  })
+
+  it('editor shows API templates in picker when API returns list', async () => {
+    mockFetchApiTemplates([
+      { id: 'API-01', name: 'API Ajtó sablon', tradeType: 'Ajtó', version: 2, isActive: true },
+    ])
+    renderDesign('editor')
+    await waitFor(() => expect(screen.getByText('API Ajtó sablon')).toBeTruthy())
+  })
+
+  it('editor shows API badge next to API template', async () => {
+    mockFetchApiTemplates([
+      { id: 'API-01', name: 'API Ajtó sablon', tradeType: 'Ajtó', version: 2, isActive: true },
+    ])
+    renderDesign('editor')
+    await waitFor(() => expect(screen.getByText('API')).toBeTruthy())
+  })
+
+  it('clicking API template shows ApiParamWizard with loaded params', async () => {
+    mockFetchApiTemplates([
+      { id: 'API-01', name: 'API Ajtó sablon', tradeType: 'Ajtó', version: 2, isActive: true },
+    ])
+    renderDesign('editor')
+    await waitFor(() => screen.getByText('API Ajtó sablon'))
+    fireEvent.click(screen.getByText('API Ajtó sablon'))
+    await waitFor(() => expect(screen.getByText('Paraméterek')).toBeTruthy())
+  })
+
+  it('ApiParamWizard shows param keys from API response', async () => {
+    mockFetchApiTemplates([
+      { id: 'API-01', name: 'API Ajtó sablon', tradeType: 'Ajtó', version: 2, isActive: true },
+    ])
+    renderDesign('editor')
+    await waitFor(() => screen.getByText('API Ajtó sablon'))
+    fireEvent.click(screen.getByText('API Ajtó sablon'))
+    await waitFor(() => expect(screen.getByText('width_mm')).toBeTruthy())
+    expect(screen.getByText('height_mm')).toBeTruthy()
+    expect(screen.getByText('thickness_mm')).toBeTruthy()
+  })
+
+  it('ApiParamWizard shows Számítás indítása button', async () => {
+    mockFetchApiTemplates([
+      { id: 'API-01', name: 'API Ajtó sablon', tradeType: 'Ajtó', version: 2, isActive: true },
+    ])
+    renderDesign('editor')
+    await waitFor(() => screen.getByText('API Ajtó sablon'))
+    fireEvent.click(screen.getByText('API Ajtó sablon'))
+    await waitFor(() => expect(screen.getByText('Számítás indítása')).toBeTruthy())
+  })
+
+  it('ApiParamWizard shows error state when detail fails', async () => {
+    vi.stubGlobal('fetch', vi.fn((url: string) => {
+      // detail URL has an ID segment after /templates/
+      if (/\/api\/modules\/templates\/[^?]+$/.test(url)) {
+        return Promise.resolve({ ok: false, status: 503 })
+      }
+      if (url.includes('/api/modules/templates')) {
+        return Promise.resolve({
+          ok: true,
+          json: () => Promise.resolve([
+            { id: 'API-01', name: 'API Ajtó sablon', tradeType: 'Ajtó', version: 2, isActive: true },
+          ]),
+        })
+      }
+      return Promise.resolve({ ok: false, status: 503 })
+    }))
+    renderDesign('editor')
+    await waitFor(() => screen.getByText('API Ajtó sablon'))
+    fireEvent.click(screen.getByText('API Ajtó sablon'))
+    await waitFor(() => expect(screen.getByText(/nem töltődött be/)).toBeTruthy())
+  })
+
+  it('switching back to mock template hides ApiParamWizard', async () => {
+    mockFetchApiTemplates([
+      { id: 'API-01', name: 'API Ajtó sablon', tradeType: 'Ajtó', version: 2, isActive: true },
+    ])
+    renderDesign('editor')
+    await waitFor(() => screen.getByText('API Ajtó sablon'))
+    fireEvent.click(screen.getByText('API Ajtó sablon'))
+    await waitFor(() => screen.getByText('Számítás indítása'))
+    fireEvent.click(screen.getByText('Polcos szekrény (2 polcos)'))
+    await waitFor(() => expect(screen.queryByText('Számítás indítása')).toBeNull())
+    expect(screen.getByText('Szabad változók')).toBeTruthy()
+  })
+
+  it('ApiParamWizard shows template name and tradeType in header', async () => {
+    mockFetchApiTemplates([
+      { id: 'API-01', name: 'API Ajtó sablon', tradeType: 'Ajtó', version: 2, isActive: true },
+    ])
+    renderDesign('editor')
+    await waitFor(() => screen.getByText('API Ajtó sablon'))
+    fireEvent.click(screen.getByText('API Ajtó sablon'))
+    await waitFor(() => expect(screen.getAllByText('API Ajtó sablon').length).toBeGreaterThan(0))
+    expect(screen.getByText(/Ajtó · v2 · Aktív/)).toBeTruthy()
+  })
+
+  it('ApiParamWizard calculate button triggers POST and shows result', async () => {
+    const fetchMock = vi.fn((url: string) => {
+      if (url.includes('/calculate')) {
+        return Promise.resolve({
+          ok: true,
+          json: () => Promise.resolve({ parts: [{ name: 'Ajtólap', width: 900, height: 2100, thickness: 40, quantity: 1 }] }),
+        })
+      }
+      if (url.match(/\/templates\/[^/]+$/) && !url.includes('cutting')) {
+        return Promise.resolve({
+          ok: true,
+          json: () => Promise.resolve({
+            id: 'API-01', name: 'API Ajtó sablon', tradeType: 'Ajtó', version: 2, isActive: true,
+            parameters: { width_mm: 900 },
+          }),
+        })
+      }
+      if (url.includes('/api/modules/templates')) {
+        return Promise.resolve({
+          ok: true,
+          json: () => Promise.resolve([
+            { id: 'API-01', name: 'API Ajtó sablon', tradeType: 'Ajtó', version: 2, isActive: true },
+          ]),
+        })
+      }
+      return Promise.resolve({ ok: false, status: 503 })
+    })
+    vi.stubGlobal('fetch', fetchMock)
+    renderDesign('editor')
+    await waitFor(() => screen.getByText('API Ajtó sablon'))
+    fireEvent.click(screen.getByText('API Ajtó sablon'))
+    await waitFor(() => screen.getByText('Számítás indítása'))
+    fireEvent.click(screen.getByText('Számítás indítása'))
+    await waitFor(() => expect(screen.getByText('Számítás eredménye')).toBeTruthy())
+    expect(screen.getByText('Ajtólap')).toBeTruthy()
   })
 })
