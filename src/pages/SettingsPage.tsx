@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Card, PrimaryBtn, Icon } from '../components/ui'
+import { Card, PrimaryBtn } from '../components/ui'
 import { MachineParkPanel } from '../components/settings/MachineParkPanel'
 import { CatalogPanel } from '../components/settings/CatalogPanel'
 import { AuditPanel } from '../components/settings/AuditPanel'
@@ -7,8 +7,7 @@ import { FacilitiesPanel } from '../components/settings/FacilitiesPanel'
 import { PartnersPanel } from '../components/settings/PartnersPanel'
 import { RolesPanel } from '../components/settings/RolesPanel'
 import { StageChainEditor } from '../components/settings/StageChainEditor'
-import { USERS, I18N } from '../mocks/data'
-
+import { UsersPanel } from '../components/settings/UsersPanel'
 type SettingsTab = 'company' | 'users' | 'facilities' | 'machines' | 'partners' | 'workflow' | 'integrations' | 'catalog' | 'audit' | 'roles'
 
 const TAB_LIST: Array<{ key: SettingsTab; label: string }> = [
@@ -30,7 +29,6 @@ interface SettingsPageProps {
 }
 
 export function SettingsPage({ initialTab = 'company', onTabChange }: SettingsPageProps = {}) {
-  const t = I18N.hu
   const [tab, setTab] = useState<SettingsTab>((initialTab as SettingsTab) ?? 'company')
 
   function handleTabChange(newTab: SettingsTab) {
@@ -57,7 +55,7 @@ export function SettingsPage({ initialTab = 'company', onTabChange }: SettingsPa
       </div>
 
       {tab === 'company' && <CompanyTab />}
-      {tab === 'users' && <UsersTab t={t} />}
+      {tab === 'users' && <UsersPanel />}
       {tab === 'roles' && <RolesPanel />}
       {tab === 'facilities' && <FacilitiesPanel />}
       {tab === 'machines' && <MachineParkPanel />}
@@ -103,30 +101,3 @@ function CompanyTab() {
   )
 }
 
-function UsersTab({ t }: { t: typeof I18N.hu }) {
-  return (
-    <Card className="p-0">
-      <div className="px-5 py-3 border-b border-stone-200/80 flex items-center justify-between">
-        <div className="text-[12.5px] font-semibold text-stone-900">{USERS.length} felhasználó</div>
-        <PrimaryBtn icon="plus">{t.set.inviteUser}</PrimaryBtn>
-      </div>
-      {USERS.map((u) => (
-        <div key={u.email} className="px-5 py-3 border-b border-stone-100 last:border-0 flex items-center gap-3 hover:bg-stone-50/60">
-          <div className="w-9 h-9 rounded-full bg-gradient-to-br from-teal-400 to-teal-600 grid place-items-center text-[11px] font-semibold text-white shrink-0">
-            {u.initials}
-          </div>
-          <div className="min-w-0 flex-1">
-            <div className="text-[12.5px] font-medium text-stone-900">{u.name}</div>
-            <div className="text-[11px] text-stone-500 font-mono">{u.email}</div>
-          </div>
-          <span className="text-[11px] px-2 py-0.5 rounded-full bg-stone-100 text-stone-700 font-medium">
-            {t.set.role[u.role]}
-          </span>
-          <button className="text-stone-400 hover:text-stone-700">
-            <Icon name="chevron" size={14} />
-          </button>
-        </div>
-      ))}
-    </Card>
-  )
-}

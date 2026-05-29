@@ -5,6 +5,7 @@ import { STAGES, FLOW_EPICS } from '../mocks/extra'
 import type { FlowEpic, FlowPriority } from '../types'
 import { useApi, API_BASE } from '../hooks/useApi'
 import { useAuth } from '../hooks/useAuth'
+import { NewOrderDrawer } from '../components/orders/NewOrderDrawer'
 
 interface ApiFlowEpic {
   id: string
@@ -65,6 +66,8 @@ export function WorkflowPage() {
   const [search, setSearch] = useState('')
   const [filterAssignee, setFilterAssignee] = useState<string>('all')
   const [dragOver, setDragOver] = useState<string | null>(null)
+  const [orderDrawerOpen, setOrderDrawerOpen] = useState(false)
+  const [epicForOrder, setEpicForOrder] = useState<FlowEpic | null>(null)
 
   // Replace mock data with API data when available
   const displayEpics = apiEpics ?? epics
@@ -160,7 +163,23 @@ export function WorkflowPage() {
         })}
       </div>
 
-      <DetailPanel epic={selected} onClose={() => setSelected(null)} />
+      <DetailPanel
+        epic={selected}
+        onClose={() => setSelected(null)}
+        onStartOrder={(epic) => {
+          setEpicForOrder(epic)
+          setOrderDrawerOpen(true)
+        }}
+      />
+
+      <NewOrderDrawer
+        open={orderDrawerOpen}
+        onClose={() => setOrderDrawerOpen(false)}
+        flowEpicId={epicForOrder?.id}
+        onSuccess={() => {
+          setOrderDrawerOpen(false)
+        }}
+      />
     </div>
   )
 }
@@ -203,7 +222,7 @@ function FlowCard({ epic, onOpen }: { epic: FlowEpic; onOpen: (e: FlowEpic) => v
   )
 }
 
-function DetailPanel({ epic, onClose }: { epic: FlowEpic | null; onClose: () => void }) {
+function DetailPanel({ epic, onClose, onStartOrder }: { epic: FlowEpic | null; onClose: () => void; onStartOrder: (epic: FlowEpic) => void }) {
   if (!epic) return null
   const stageIdx = STAGES.findIndex((s) => s.key === epic.stage)
 
@@ -301,6 +320,7 @@ function DetailPanel({ epic, onClose }: { epic: FlowEpic | null; onClose: () => 
 
           <div className="flex flex-wrap gap-2 pt-2 border-t border-stone-200">
             <PrimaryBtn icon="check">Következő stage</PrimaryBtn>
+            <PrimaryBtn icon="plus" onClick={() => onStartOrder(epic)}>Rendelés indítása</PrimaryBtn>
             <GhostBtn icon="external">Átadás partnernek</GhostBtn>
             <GhostBtn icon="settings">Lépés átugrása</GhostBtn>
           </div>

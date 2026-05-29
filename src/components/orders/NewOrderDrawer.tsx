@@ -3,6 +3,7 @@ import { SlideOver } from '../ui/SlideOver'
 import { PrimaryBtn, GhostBtn } from '../ui/Button'
 import { Icon } from '../ui/Icon'
 import { CATALOG_MATERIALS, type CatalogMaterial } from '../../mocks/extra'
+import { useMutation, API_BASE } from '../../hooks/useApi'
 
 const CUSTOMERS = [
   'Bognár Bútor Kft.',
@@ -22,9 +23,34 @@ const ORDER_TYPES = [
 interface NewOrderDrawerProps {
   open: boolean
   onClose: () => void
+  flowEpicId?: string
+  onSuccess?: (orderId: string) => void
 }
 
-export function NewOrderDrawer({ open, onClose }: NewOrderDrawerProps) {
+interface CreateOrderResponse {
+  id: string
+}
+
+function tomorrow(): string {
+  const d = new Date()
+  d.setDate(d.getDate() + 1)
+  return d.toISOString().slice(0, 10)
+}
+
+export function NewOrderDrawer({ open, onClose, flowEpicId, onSuccess }: NewOrderDrawerProps) {
+  const { mutate, isLoading: posting } = useMutation<CreateOrderResponse>()
+
+  // Project fields (POST mode)
+  const [projectName, setProjectName] = useState('')
+  const [projectId, setProjectId] = useState('')
+  const [clientName, setClientName] = useState('')
+  const [clientAddress, setClientAddress] = useState('')
+  const [clientPhone, setClientPhone] = useState('')
+  const [deliveryDate, setDeliveryDate] = useState('')
+  const [errors, setErrors] = useState<{ projectName?: string; projectId?: string }>({})
+  const [toast, setToast] = useState<string | null>(null)
+
+  // Mock / legacy fields
   const [customer, setCustomer] = useState('')
   const [type, setType] = useState('cabinet')
   const [dims, setDims] = useState('')
@@ -40,6 +66,128 @@ export function NewOrderDrawer({ open, onClose }: NewOrderDrawerProps) {
     customer.length === 0
       ? CUSTOMERS.slice(0, 4)
       : CUSTOMERS.filter((c) => c.toLowerCase().includes(customer.toLowerCase()))
+
+  async function handlePost() {
+    const errs: { projectName?: string; projectId?: string } = {}
+    if (!projectName.trim()) errs.projectName = 'Kötelező mező'
+    if (!projectId.trim()) errs.projectId = 'Kötelező mező'
+    setErrors(errs)
+    if (Object.keys(errs).length > 0) return
+
+    try {
+      const body: Record<string, string> = {
+        flowEpicId: flowEpicId!,
+        projectId: projectId.trim(),
+        projectName: projectName.trim(),
+      }
+      if (clientName.trim()) body.clientName = clientName.trim()
+      if (clientAddress.trim()) body.clientAddress = clientAddress.trim()
+      if (clientPhone.trim()) body.clientPhone = clientPhone.trim()
+      if (deliveryDate) body.deliveryDate = deliveryDate
+
+      const res = await mutate(`${API_BASE.joinery}/api/orders`, { method: 'POST', body })
+      setToast('Rendelés létrehozva')
+      onSuccess?.(res.id)
+    } catch {
+      // error shown via useMutation error state
+    }
+  }
+
+  if (flowEpicId) {
+    return (
+      <SlideOver
+        open={open}
+        onClose={onClose}
+        title="Rendelés indítása"
+        subtitle={`Flow Epic: ${flowEpicId}`}
+        width={560}
+        footer={
+          <>
+            <GhostBtn onClick={onClose}>Mégse</GhostBtn>
+            <PrimaryBtn icon="plus" onClick={handlePost}>
+              {posting ? 'Mentés…' : 'Rendelés létrehozása →'}
+            </PrimaryBtn>
+          </>
+        }
+      >
+        {toast && (
+          <div className="mx-5 mt-4 px-4 py-2.5 bg-teal-50 border border-teal-200 rounded-lg text-[12.5px] text-teal-800">
+            {toast}
+          </div>
+        )}
+        <div className="px-5 py-4 space-y-4">
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <div className="text-[10.5px] uppercase tracking-wide text-stone-500 font-medium mb-1.5">
+                Projektnév <span className="text-rose-500">*</span>
+              </div>
+              <input
+                value={projectName}
+                onChange={(e) => { setProjectName(e.target.value); setErrors((p) => ({ ...p, projectName: undefined })) }}
+                placeholder="pl. Bognár konyha"
+                className="w-full h-10 px-3 rounded-lg border border-stone-200 text-[12.5px] focus:border-teal-500 focus:ring-1 focus:ring-teal-500 outline-none"
+              />
+              {errors.projectName && <div className="text-[10.5px] text-rose-600 mt-0.5">{errors.projectName}</div>}
+            </div>
+            <div>
+              <div className="text-[10.5px] uppercase tracking-wide text-stone-500 font-medium mb-1.5">
+                Projektazonosító <span className="text-rose-500">*</span>
+              </div>
+              <input
+                value={projectId}
+                onChange={(e) => { setProjectId(e.target.value); setErrors((p) => ({ ...p, projectId: undefined })) }}
+                placeholder="pl. DOOR-2026-001"
+                className="w-full h-10 px-3 rounded-lg border border-stone-200 text-[12.5px] font-mono focus:border-teal-500 focus:ring-1 focus:ring-teal-500 outline-none"
+              />
+              {errors.projectId && <div className="text-[10.5px] text-rose-600 mt-0.5">{errors.projectId}</div>}
+            </div>
+          </div>
+
+          <div>
+            <div className="text-[10.5px] uppercase tracking-wide text-stone-500 font-medium mb-1.5">Ügyfél neve</div>
+            <input
+              value={clientName}
+              onChange={(e) => setClientName(e.target.value)}
+              placeholder="pl. Bognár Gábor"
+              className="w-full h-10 px-3 rounded-lg border border-stone-200 text-[12.5px] focus:border-teal-500 focus:ring-1 focus:ring-teal-500 outline-none"
+            />
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <div className="text-[10.5px] uppercase tracking-wide text-stone-500 font-medium mb-1.5">Ügyfél cím</div>
+              <input
+                value={clientAddress}
+                onChange={(e) => setClientAddress(e.target.value)}
+                placeholder="pl. 1011 Budapest, Fő u. 1."
+                className="w-full h-10 px-3 rounded-lg border border-stone-200 text-[12.5px] focus:border-teal-500 focus:ring-1 focus:ring-teal-500 outline-none"
+              />
+            </div>
+            <div>
+              <div className="text-[10.5px] uppercase tracking-wide text-stone-500 font-medium mb-1.5">Ügyfél telefon</div>
+              <input
+                value={clientPhone}
+                onChange={(e) => setClientPhone(e.target.value)}
+                placeholder="+36 30 123 4567"
+                className="w-full h-10 px-3 rounded-lg border border-stone-200 text-[12.5px] font-mono focus:border-teal-500 focus:ring-1 focus:ring-teal-500 outline-none"
+              />
+            </div>
+          </div>
+
+          <div>
+            <div className="text-[10.5px] uppercase tracking-wide text-stone-500 font-medium mb-1.5">Határidő</div>
+            <input
+              type="date"
+              value={deliveryDate}
+              min={tomorrow()}
+              onChange={(e) => setDeliveryDate(e.target.value)}
+              className="w-full h-10 px-3 rounded-lg border border-stone-200 text-[12.5px] font-mono focus:border-teal-500 focus:ring-1 focus:ring-teal-500 outline-none"
+            />
+          </div>
+        </div>
+      </SlideOver>
+    )
+  }
 
   return (
     <SlideOver

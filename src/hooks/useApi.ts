@@ -33,6 +33,8 @@ export const API_BASE = {
   procurement:  '/procurement',
   abstractions: '/abstractions',
   ai:           '/ai',
+  identity:     '/identity',
+  sales:        '/sales',
 } as const
 
 export function useApi<T>(url: string | null, options?: FetchOptions): ApiResult<T> {
