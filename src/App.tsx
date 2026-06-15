@@ -27,6 +27,10 @@ import { SupervisorWorldPage } from './pages/SupervisorPage'
 import { MasterdataWorldPage } from './pages/MasterdataPage'
 import { TradeWorldPage } from './pages/TradePage'
 import { InteriorWorldPage } from './pages/InteriorPage'
+import { MaintenanceWorldPage } from './pages/MaintenancePage'
+import { QualityWorldPage } from './pages/QualityPage'
+import { EhsWorldPage } from './pages/EhsPage'
+import { AttendanceWorldPage } from './pages/AttendancePage'
 
 function HomePage() {
   const navigate = useNavigate()
@@ -306,6 +310,50 @@ export function App() {
         <Route path="/w/interior/:screen" element={
           <RequireAuth>
             <InteriorWorldPage />
+          </RequireAuth>
+        } />
+
+        <Route path="/w/maintenance" element={
+          <RequireAuth>
+            <MaintenanceWorldPage />
+          </RequireAuth>
+        } />
+        <Route path="/w/maintenance/:screen" element={
+          <RequireAuth>
+            <MaintenanceWorldPage />
+          </RequireAuth>
+        } />
+
+        <Route path="/w/quality" element={
+          <RequireAuth>
+            <QualityWorldPage />
+          </RequireAuth>
+        } />
+        <Route path="/w/quality/:screen" element={
+          <RequireAuth>
+            <QualityWorldPage />
+          </RequireAuth>
+        } />
+
+        <Route path="/w/ehs" element={
+          <RequireAuth>
+            <EhsWorldPage />
+          </RequireAuth>
+        } />
+        <Route path="/w/ehs/:screen" element={
+          <RequireAuth>
+            <EhsWorldPage />
+          </RequireAuth>
+        } />
+
+        <Route path="/w/attendance" element={
+          <RequireAuth>
+            <AttendanceWorldPage />
+          </RequireAuth>
+        } />
+        <Route path="/w/attendance/:screen" element={
+          <RequireAuth>
+            <AttendanceWorldPage />
           </RequireAuth>
         } />
 

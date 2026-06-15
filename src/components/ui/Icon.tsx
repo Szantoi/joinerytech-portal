@@ -395,6 +395,18 @@ export function Icon({ name, size = 18, className = '' }: IconProps) {
           <path d="M9 21v-6h6v6" />
         </svg>
       )
+    case 'shield':
+      return (
+        <svg {...common}>
+          <path d="M12 3 4 7v6c0 5 4 9 8 11 4-2 8-6 8-11V7l-8-4z"/>
+        </svg>
+      )
+    case 'clock':
+      return (
+        <svg {...common}>
+          <circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/>
+        </svg>
+      )
     default:
       return null
   }

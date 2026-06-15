@@ -178,9 +178,57 @@ export const WORLDS: Record<string, World> = {
     ],
     badge: "4 szoba",
   },
+  maintenance: {
+    key: "maintenance", hu: "Karbantartás", en: "Maintenance",
+    sub: "Gépek, karbantartási jegyek, ütemezés",
+    icon: "wrench", accent: "amber",
+    screens: [
+      { key: "dash", hu: "Áttekintés" },
+      { key: "assets", hu: "Eszközök" },
+      { key: "tickets", hu: "Jegyek" },
+      { key: "schedule", hu: "Ütemterv" },
+    ],
+    badge: "2 jegy",
+  },
+  quality: {
+    key: "quality", hu: "Minőség", en: "Quality",
+    sub: "NCR-ek, ellenőrzőlisták, auditok",
+    icon: "check", accent: "emerald",
+    screens: [
+      { key: "dash", hu: "Áttekintés" },
+      { key: "ncr", hu: "NCR-ek" },
+      { key: "templates", hu: "Sablonok" },
+      { key: "audits", hu: "Auditok" },
+    ],
+    badge: "3 nyitott",
+  },
+  ehs: {
+    key: "ehs", hu: "EHS", en: "EHS",
+    sub: "Munkavédelem, balesetek, kockázatok",
+    icon: "shield", accent: "rose",
+    screens: [
+      { key: "dash", hu: "Áttekintés" },
+      { key: "incidents", hu: "Események" },
+      { key: "risks", hu: "Kockázatok" },
+      { key: "actions", hu: "Intézkedések" },
+    ],
+    badge: "1 nyitott",
+  },
+  attendance: {
+    key: "attendance", hu: "Jelenlét", en: "Attendance",
+    sub: "Be/kilépések, műszakok, kivételek",
+    icon: "calendar", accent: "sky",
+    screens: [
+      { key: "dash", hu: "Áttekintés" },
+      { key: "today", hu: "Mai műszak" },
+      { key: "history", hu: "Előzmények" },
+      { key: "exceptions", hu: "Kivételek" },
+    ],
+    badge: "1 késő",
+  },
 }
 
-export const WORLD_ORDER: WorldKey[] = ["production", "sales", "design", "warehouse", "shopfloor", "crm", "finance", "projects", "logistics", "mfgprep", "supervisor", "masterdata", "trade", "interior", "settings"]
+export const WORLD_ORDER: WorldKey[] = ["production", "sales", "design", "warehouse", "shopfloor", "crm", "finance", "projects", "logistics", "mfgprep", "supervisor", "masterdata", "trade", "interior", "maintenance", "quality", "ehs", "attendance", "settings"]
 
 export const PARAM_TEMPLATES: ParamTemplate[] = [
   {
