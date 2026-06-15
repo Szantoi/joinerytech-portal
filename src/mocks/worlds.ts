@@ -99,9 +99,31 @@ export const WORLDS: Record<string, World> = {
     ],
     badge: "3 lejárt",
   },
+  projects: {
+    key: "projects", hu: "Projektek", en: "Projects",
+    sub: "Bútor projektek, szakág-koordináció, beépítési ütemezés",
+    icon: "folder", accent: "violet",
+    screens: [
+      { key: "dash", hu: "Áttekintés", en: "Overview" },
+      { key: "list", hu: "Projektlista", en: "Projects" },
+      { key: "kanban", hu: "Kanban", en: "Kanban" },
+    ],
+    badge: "2 aktív",
+  },
+  logistics: {
+    key: "logistics", hu: "Logisztika", en: "Logistics",
+    sub: "Kiszállítások, telepítések, felmérések, beszállítások",
+    icon: "truck", accent: "cyan",
+    screens: [
+      { key: "dash", hu: "Áttekintés", en: "Overview" },
+      { key: "outgoing", hu: "Kiszállítások", en: "Outgoing" },
+      { key: "incoming", hu: "Beszállítások", en: "Incoming" },
+    ],
+    badge: "2 úton",
+  },
 }
 
-export const WORLD_ORDER: WorldKey[] = ["production", "sales", "design", "warehouse", "shopfloor", "crm", "finance", "settings"]
+export const WORLD_ORDER: WorldKey[] = ["production", "sales", "design", "warehouse", "shopfloor", "crm", "finance", "projects", "logistics", "settings"]
 
 export const PARAM_TEMPLATES: ParamTemplate[] = [
   {

@@ -20,6 +20,8 @@ import { SettingsPage } from './pages/SettingsPage'
 import { ShopFloorPage } from './pages/ShopFloorPage'
 import { CrmWorldPage } from './pages/CrmPage'
 import { FinanceWorldPage } from './pages/FinancePage'
+import { ProjectsWorldPage } from './pages/ProjectsPage'
+import { LogisticsWorldPage } from './pages/LogisticsPage'
 
 function HomePage() {
   const navigate = useNavigate()
@@ -222,6 +224,28 @@ export function App() {
         <Route path="/w/finance/:screen" element={
           <RequireAuth>
             <FinanceWorldPage />
+          </RequireAuth>
+        } />
+
+        <Route path="/w/projects" element={
+          <RequireAuth>
+            <ProjectsWorldPage />
+          </RequireAuth>
+        } />
+        <Route path="/w/projects/:screen" element={
+          <RequireAuth>
+            <ProjectsWorldPage />
+          </RequireAuth>
+        } />
+
+        <Route path="/w/logistics" element={
+          <RequireAuth>
+            <LogisticsWorldPage />
+          </RequireAuth>
+        } />
+        <Route path="/w/logistics/:screen" element={
+          <RequireAuth>
+            <LogisticsWorldPage />
           </RequireAuth>
         } />
 

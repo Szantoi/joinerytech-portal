@@ -342,6 +342,29 @@ export function Icon({ name, size = 18, className = '' }: IconProps) {
           <path d="M5 22V12h14v10M9 22v-6h6v6" />
         </svg>
       )
+    case 'folder':
+      return (
+        <svg {...common}>
+          <path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7z" />
+        </svg>
+      )
+    case 'truck':
+      return (
+        <svg {...common}>
+          <rect x="1" y="3" width="15" height="13" rx="1.5" />
+          <path d="M16 8h4l3 3v5h-7V8z" />
+          <circle cx="5.5" cy="18.5" r="2.5" />
+          <circle cx="18.5" cy="18.5" r="2.5" />
+        </svg>
+      )
+    case 'route':
+      return (
+        <svg {...common}>
+          <circle cx="6" cy="19" r="3" />
+          <path d="M9 19h2a2 2 0 0 0 2-2V7a2 2 0 0 1 2-2h2" />
+          <circle cx="18" cy="5" r="3" />
+        </svg>
+      )
     default:
       return null
   }
