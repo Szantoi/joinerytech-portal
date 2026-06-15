@@ -74,9 +74,34 @@ export const WORLDS: Record<string, World> = {
       { key: "roles", hu: "Jogosultságok" },
     ],
   },
+  crm: {
+    key: "crm", hu: "CRM", en: "CRM",
+    sub: "Lead pipeline, lehetőségek, ügyféljárás",
+    icon: "briefcase", accent: "indigo",
+    screens: [
+      { key: "dash", hu: "Áttekintés", en: "Overview" },
+      { key: "pipeline", hu: "Pipeline", en: "Pipeline" },
+      { key: "leads", hu: "Leadek", en: "Leads" },
+      { key: "opps", hu: "Lehetőségek", en: "Opportunities" },
+      { key: "forecast", hu: "Forecast", en: "Forecast" },
+    ],
+    badge: "4 nyitott",
+  },
+  finance: {
+    key: "finance", hu: "Pénzügy", en: "Finance",
+    sub: "Számlák, kifizetések, kintlévőségek",
+    icon: "receipt", accent: "emerald",
+    screens: [
+      { key: "dash", hu: "Áttekintés", en: "Overview" },
+      { key: "outgoing", hu: "Kimenő számlák", en: "Outgoing" },
+      { key: "incoming", hu: "Bejövő számlák", en: "Incoming" },
+      { key: "payments", hu: "Kifizetések", en: "Payments" },
+    ],
+    badge: "3 lejárt",
+  },
 }
 
-export const WORLD_ORDER: WorldKey[] = ["production", "sales", "design", "warehouse", "shopfloor", "settings"]
+export const WORLD_ORDER: WorldKey[] = ["production", "sales", "design", "warehouse", "shopfloor", "crm", "finance", "settings"]
 
 export const PARAM_TEMPLATES: ParamTemplate[] = [
   {
@@ -227,4 +252,256 @@ export const SHOPFLOOR_OPERATORS: ShopFloorOperator[] = [
   { name: "Tóth Kinga", pin: "2345", initials: "TK", machines: ["M-BIESSE-01", "M-HOMAG-01"] },
   { name: "Kiss András", pin: "3456", initials: "KA", machines: ["M-HOMAG-01", "M-BIESSE-02"] },
   { name: "Horváth Éva", pin: "4567", initials: "HE", machines: ["M-HOLZMA-02"] },
+]
+
+// ── CRM mock adatok ────────────────────────────────────────────────────────────
+export type LeadStatus = 'uj' | 'kapcsolat' | 'minosites' | 'nurturing' | 'konvertalva' | 'elvetve'
+export type OppStatus = 'nyitott' | 'igenyfelmeres' | 'osszeallitas' | 'ajanlat' | 'targyalas' | 'megnyert' | 'elveszett'
+export type CrmSource = 'telefon' | 'ajanlas' | 'email' | 'kiallitas' | 'weboldal' | 'webshop' | 'belsoepitesz'
+export type TaskPriority = 'magas' | 'kozepes' | 'alacsony'
+
+export interface CrmActivity { at: string; kind: string; who: string; text: string }
+export interface Lead {
+  id: string; status: LeadStatus; source: CrmSource; owner: string
+  company: string; contact: string; email: string; phone: string; city: string
+  title: string; interest: string; estValue: number; createdAt: string
+  activities: CrmActivity[]; referredBy?: string; oppId?: string; lostReason?: string
+}
+export interface Opportunity {
+  id: string; status: OppStatus; owner: string; customer: string; contact: string
+  phone: string; city: string; title: string; value: number; source: CrmSource
+  fromLead: string | null; expectedClose: string; isNewCustomer: boolean; createdAt: string
+  activities: CrmActivity[]; quoteId?: string; wonAt?: string; lostReason?: string; lostAt?: string
+}
+export interface CrmTask {
+  id: string; refType: 'lead' | 'opp'; refId: string; title: string
+  priority: TaskPriority; due: string; done: boolean; owner: string
+}
+
+export const LEAD_STATUS_META: Record<LeadStatus, { label: string; pill: string; dot: string }> = {
+  uj:          { label: "Új",                pill: "bg-stone-100 text-stone-700 border-stone-200",      dot: "bg-stone-400" },
+  kapcsolat:   { label: "Kapcsolatfelvétel", pill: "bg-sky-50 text-sky-700 border-sky-200",             dot: "bg-sky-500" },
+  minosites:   { label: "Minősítés",         pill: "bg-indigo-50 text-indigo-700 border-indigo-200",    dot: "bg-indigo-500" },
+  nurturing:   { label: "Nurturing",         pill: "bg-amber-50 text-amber-700 border-amber-200",       dot: "bg-amber-500" },
+  konvertalva: { label: "Konvertálva",       pill: "bg-emerald-50 text-emerald-700 border-emerald-200", dot: "bg-emerald-500" },
+  elvetve:     { label: "Elvetve",           pill: "bg-stone-200 text-stone-500 border-stone-300",      dot: "bg-stone-400" },
+}
+
+export const OPP_STATUS_META: Record<OppStatus, { label: string; pill: string; dot: string; prob: number }> = {
+  nyitott:       { label: "Nyitott",             pill: "bg-stone-100 text-stone-700 border-stone-200",      dot: "bg-stone-400",   prob: 0.10 },
+  igenyfelmeres: { label: "Igényfelmérés",       pill: "bg-sky-50 text-sky-700 border-sky-200",             dot: "bg-sky-500",     prob: 0.25 },
+  osszeallitas:  { label: "Összeállítás alatt",  pill: "bg-cyan-50 text-cyan-700 border-cyan-200",          dot: "bg-cyan-500",    prob: 0.40 },
+  ajanlat:       { label: "Ajánlat kiküldve",    pill: "bg-indigo-50 text-indigo-700 border-indigo-200",    dot: "bg-indigo-500",  prob: 0.55 },
+  targyalas:     { label: "Tárgyalás",           pill: "bg-amber-50 text-amber-700 border-amber-200",       dot: "bg-amber-500",   prob: 0.80 },
+  megnyert:      { label: "Megnyert",            pill: "bg-emerald-50 text-emerald-700 border-emerald-200", dot: "bg-emerald-500", prob: 1.0 },
+  elveszett:     { label: "Elveszett",           pill: "bg-rose-50 text-rose-700 border-rose-200",          dot: "bg-rose-500",    prob: 0 },
+}
+
+export const CRM_SOURCE_META: Record<CrmSource, { label: string; pill: string }> = {
+  telefon:      { label: "Telefon",              pill: "bg-sky-50 text-sky-700 border-sky-200" },
+  ajanlas:      { label: "Ajánlás",              pill: "bg-emerald-50 text-emerald-700 border-emerald-200" },
+  email:        { label: "Email",                pill: "bg-indigo-50 text-indigo-700 border-indigo-200" },
+  kiallitas:    { label: "Kiállítás",            pill: "bg-amber-50 text-amber-700 border-amber-200" },
+  weboldal:     { label: "Weboldal",             pill: "bg-blue-50 text-blue-700 border-blue-200" },
+  webshop:      { label: "Webshop",              pill: "bg-teal-50 text-teal-700 border-teal-200" },
+  belsoepitesz: { label: "Belsőépítész",         pill: "bg-rose-50 text-rose-700 border-rose-200" },
+}
+
+export const LEADS: Lead[] = [
+  { id: "LEAD-2426-001", status: "uj", source: "webshop", owner: "Szabó A.",
+    company: "", contact: "Kele Márton", email: "kele.marton@gmail.com", phone: "+36 30 244 5512", city: "Budapest",
+    title: "Konyhabútor felújítás (~3,2 fm)", interest: "L-alakú konyha, tölgy front, beépített gépekkel.",
+    estValue: 2_400_000, createdAt: "2026-04-27",
+    activities: [{ at: "2026-04-27 09:14", kind: "megjegyzes", who: "Rendszer", text: "Webshop érdeklődésből automatikusan létrehozva." }] },
+  { id: "LEAD-2426-002", status: "kapcsolat", source: "kiallitas", owner: "Kovács P.",
+    company: "Novitech Mérnökiroda Kft.", contact: "Halmi Gábor", email: "halmi@novitech.hu", phone: "+36 1 388 2210", city: "Budapest",
+    title: "Iroda berendezés — 40 munkaállomás", interest: "Új irodaszint teljes bútorozása, asztalok + tárolók + tárgyaló.",
+    estValue: 11_500_000, createdAt: "2026-04-22",
+    activities: [
+      { at: "2026-04-22 15:40", kind: "talalkozo", who: "Kovács P.", text: "Construma kiállításon felvett kapcsolat." },
+      { at: "2026-04-24 10:05", kind: "email", who: "Kovács P.", text: "Bemutatkozó anyag + referenciák kiküldve." }] },
+  { id: "LEAD-2426-003", status: "minosites", source: "ajanlas", owner: "Szabó A.",
+    company: "Bistro Central", contact: "Reményi Dóra", email: "remenyi@bistrocentral.hu", phone: "+36 70 119 4420", city: "Budapest",
+    title: "Étterem beépített bútorzat + pult", interest: "Vendégtér bútor + bárpult + kiszolgáló. Belváros Café ajánlására.",
+    estValue: 5_800_000, createdAt: "2026-04-18", referredBy: "Belváros Café",
+    activities: [
+      { at: "2026-04-18 11:00", kind: "hivas", who: "Szabó A.", text: "Bejövő hívás — Belváros Café ajánlására." },
+      { at: "2026-04-20 14:20", kind: "talalkozo", who: "Szabó A.", text: "Helyszíni egyeztetés, igények felmérve." }] },
+  { id: "LEAD-2426-004", status: "nurturing", source: "telefon", owner: "Szabó A.",
+    company: "", contact: "Dr. Halász Péter", email: "halasz.p@protonmail.com", phone: "+36 20 556 7781", city: "Balatonfüred",
+    title: "Nyaraló konyha + gardrób", interest: "Felújítás ősszel indul, addig tájékozódik.",
+    estValue: 4_200_000, createdAt: "2026-03-30",
+    activities: [
+      { at: "2026-03-30 16:10", kind: "hivas", who: "Szabó A.", text: "Érdeklődő hívás, projekt csak szeptemberben indul." },
+      { at: "2026-04-15 09:30", kind: "email", who: "Szabó A.", text: "Katalógus + anyagminta-info kiküldve." }] },
+  { id: "LEAD-2426-005", status: "elvetve", source: "email", owner: "Kovács P.",
+    company: "", contact: "Tarr Niké", email: "nike.tarr@gmail.com", phone: "+36 30 901 2244", city: "Szeged",
+    title: "Olcsó polcrendszer garázsba", interest: "Tömeggyártott, alacsony árfekvésű megoldást keres.",
+    estValue: 180_000, createdAt: "2026-04-12", lostReason: "Nem a profilunk — tömegtermék.",
+    activities: [
+      { at: "2026-04-12 08:50", kind: "email", who: "Kovács P.", text: "Beérkező megkeresés." },
+      { at: "2026-04-13 10:00", kind: "megjegyzes", who: "Kovács P.", text: "Elvetve — nem illik a profilunkba." }] },
+  { id: "LEAD-2426-006", status: "konvertalva", source: "belsoepitesz", owner: "Kovács P.",
+    company: "Vella Interior Design", contact: "Vella Andrea", email: "andrea@vellainterior.hu", phone: "+36 1 567 890", city: "Budapest",
+    title: "Penthouse konyha + nappali bútor", interest: "Belsőépítész partner közvetítésével, igényes egyedi konyha.",
+    estValue: 6_500_000, createdAt: "2026-04-10", referredBy: "Lakberendezés Plusz", oppId: "OPP-2426-001",
+    activities: [
+      { at: "2026-04-10 13:00", kind: "email", who: "Kovács P.", text: "Partner megkeresés + tervrajz." },
+      { at: "2026-04-14 11:30", kind: "talalkozo", who: "Kovács P.", text: "Minősítve — lehetőséggé konvertálva." }] },
+]
+
+export const OPPS: Opportunity[] = [
+  { id: "OPP-2426-001", status: "nyitott", owner: "Kovács P.",
+    customer: "Vella Interior Design", contact: "Vella Andrea", phone: "+36 1 567 890", city: "Budapest",
+    title: "Penthouse konyha + nappali bútor", value: 6_500_000,
+    source: "belsoepitesz", fromLead: "LEAD-2426-006", expectedClose: "2026-06-15", isNewCustomer: false, createdAt: "2026-04-14",
+    activities: [{ at: "2026-04-14 11:35", kind: "megjegyzes", who: "Kovács P.", text: "Lehetőség létrehozva LEAD-2426-006-ból." }] },
+  { id: "OPP-2426-002", status: "igenyfelmeres", owner: "Kovács P.",
+    customer: "Doorstar Hungary Zrt.", contact: "Kis Zoltán", phone: "+36 27 123 456", city: "Vác",
+    title: "Belső ajtó sorozat — 2. ütem (120 db)", value: 14_200_000,
+    source: "ajanlas", fromLead: null, expectedClose: "2026-05-30", isNewCustomer: false, createdAt: "2026-04-16",
+    activities: [
+      { at: "2026-04-16 09:00", kind: "hivas", who: "Kovács P.", text: "Meglévő ügyfél jelezte a 2. ütem igényét." },
+      { at: "2026-04-23 14:00", kind: "talalkozo", who: "Kovács P.", text: "Műszaki egyeztetés, mennyiségek pontosítva." }] },
+  { id: "OPP-2426-003", status: "ajanlat", owner: "Szabó A.",
+    customer: "Várdai Konyhastúdió", contact: "Várdai Eszter", phone: "+36 52 234 124", city: "Debrecen",
+    title: "Bemutatóterem bővítés — kiállító konyhák", value: 3_200_000,
+    source: "ajanlas", fromLead: null, expectedClose: "2026-05-12", isNewCustomer: false, createdAt: "2026-04-12", quoteId: "Q-2426-057",
+    activities: [
+      { at: "2026-04-12 10:00", kind: "email", who: "Szabó A.", text: "Igény beérkezett, paraméterek tisztázva." },
+      { at: "2026-04-25 16:30", kind: "email", who: "Szabó A.", text: "Ajánlat (Q-2426-057) kiküldve." }] },
+  { id: "OPP-2426-004", status: "targyalas", owner: "Kovács P.",
+    customer: "Hegyi Lakberendezés", contact: "Hegyi Krisztina", phone: "+36 99 312 444", city: "Sopron",
+    title: "Nappali fal + médiabútor", value: 2_400_000,
+    source: "weboldal", fromLead: null, expectedClose: "2026-05-08", isNewCustomer: false, createdAt: "2026-04-08", quoteId: "Q-2426-054",
+    activities: [
+      { at: "2026-04-21 11:00", kind: "email", who: "Kovács P.", text: "Ajánlat (Q-2426-054) kiküldve." },
+      { at: "2026-04-26 15:00", kind: "hivas", who: "Kovács P.", text: "Ügyfél kedvezményt kér, tárgyalás folyamatban." }] },
+  { id: "OPP-2426-005", status: "megnyert", owner: "Szabó A.",
+    customer: "Bognár Bútor Kft.", contact: "Bognár István", phone: "+36 72 412 333", city: "Pécs",
+    title: "Sorozat-gyártás keretszerződés (Q2)", value: 8_800_000,
+    source: "telefon", fromLead: null, expectedClose: "2026-04-26", isNewCustomer: false, createdAt: "2026-03-28", quoteId: "Q-2426-058", wonAt: "2026-04-26",
+    activities: [{ at: "2026-04-26 12:00", kind: "megjegyzes", who: "Szabó A.", text: "Megnyert — keretszerződés aláírva." }] },
+  { id: "OPP-2426-006", status: "elveszett", owner: "Szabó A.",
+    customer: "Pesti Ablakműhely", contact: "Pesti Tamás", phone: "+36 1 422 100", city: "Budapest",
+    title: "Raktári tárolók (selejtes ütem)", value: 1_100_000,
+    source: "weboldal", fromLead: null, expectedClose: "2026-04-20", isNewCustomer: false, createdAt: "2026-03-25", lostReason: "Árban alulmaradtunk.", lostAt: "2026-04-20",
+    activities: [{ at: "2026-04-20 09:00", kind: "megjegyzes", who: "Szabó A.", text: "Elveszett — ár-alapú döntés." }] },
+]
+
+export const CRM_TASKS: CrmTask[] = [
+  { id: "CRMT-001", refType: "opp",  refId: "OPP-2426-002", title: "Helyszíni felmérés időpont egyeztetése", priority: "magas",    due: "2026-04-29", done: false, owner: "Kovács P." },
+  { id: "CRMT-002", refType: "lead", refId: "LEAD-2426-002", title: "Visszahívás az iroda-projekt ajánlatáról", priority: "magas",  due: "2026-04-26", done: false, owner: "Kovács P." },
+  { id: "CRMT-003", refType: "opp",  refId: "OPP-2426-004", title: "Kedvezményes szerződés-tervezet küldése",   priority: "magas",  due: "2026-04-28", done: false, owner: "Kovács P." },
+  { id: "CRMT-004", refType: "lead", refId: "LEAD-2426-004", title: "Őszi újrakapcsolat — emlékeztető",          priority: "alacsony", due: "2026-09-01", done: false, owner: "Szabó A." },
+  { id: "CRMT-005", refType: "opp",  refId: "OPP-2426-003", title: "Ajánlat-utánkövetés (Várdai)",              priority: "kozepes", due: "2026-05-02", done: false, owner: "Szabó A." },
+  { id: "CRMT-006", refType: "lead", refId: "LEAD-2426-003", title: "Étterem — anyagminták bemutatása",          priority: "kozepes", due: "2026-04-24", done: true,  owner: "Szabó A." },
+]
+
+// ── Finance mock adatok ────────────────────────────────────────────────────────
+export type FinStatus = 'draft' | 'issued' | 'partial' | 'paid' | 'void'
+export type FinDir = 'out' | 'in'
+export type FinKind = 'normal' | 'advance' | 'proforma'
+export type PayMethod = 'bank' | 'cash' | 'card'
+
+export interface FinInvoiceLine { name: string; qty: number; unit: string; unitPrice: number; vat: number }
+export interface FinInvoice {
+  id: string; dir: FinDir; kind: FinKind; party: string; orderRef: string
+  status: FinStatus; issueDate: string; dueDate: string; currency: string
+  issuer: string; lines: FinInvoiceLine[]; note?: string; fxRate?: number
+  extNo?: string; submittedVia?: string; submittedAt?: string; voidReason?: string
+}
+export interface FinPayment {
+  id: string; invoiceId: string; amount: number; method: PayMethod
+  date: string; ref: string; who: string; note?: string
+}
+
+export const FIN_INV_TONE: Record<string, { bg: string; fg: string; dot: string; label: string }> = {
+  draft:   { bg: "bg-stone-100",   fg: "text-stone-600",   dot: "bg-stone-400",   label: "Piszkozat" },
+  issued:  { bg: "bg-sky-50",      fg: "text-sky-700",     dot: "bg-sky-500",     label: "Kiállítva" },
+  partial: { bg: "bg-amber-50",    fg: "text-amber-700",   dot: "bg-amber-500",   label: "Részben fizetve" },
+  paid:    { bg: "bg-emerald-50",  fg: "text-emerald-700", dot: "bg-emerald-500", label: "Fizetve" },
+  overdue: { bg: "bg-rose-50",     fg: "text-rose-700",    dot: "bg-rose-500",    label: "Lejárt" },
+  void:    { bg: "bg-stone-50",    fg: "text-stone-400",   dot: "bg-stone-300",   label: "Sztornó" },
+}
+
+export const FIN_KIND_META: Record<FinKind, { label: string; short: string; tone: string }> = {
+  normal:   { label: "Számla",        short: "Számla",    tone: "bg-stone-100 text-stone-700" },
+  advance:  { label: "Előleg-számla", short: "Előleg",    tone: "bg-violet-100 text-violet-700" },
+  proforma: { label: "Díjbekérő",     short: "Díjbekérő", tone: "bg-teal-100 text-teal-700" },
+}
+
+export const FIN_PAY_METHOD: Record<PayMethod, { label: string; tone: string }> = {
+  bank: { label: "Banki átutalás", tone: "bg-sky-50 text-sky-700" },
+  cash: { label: "Készpénz",       tone: "bg-emerald-50 text-emerald-700" },
+  card: { label: "Bankkártya",     tone: "bg-indigo-50 text-indigo-700" },
+}
+
+export const FIN_INVOICES_OUT: FinInvoice[] = [
+  { id: "SZ-2426-0060", dir: "out", kind: "advance", party: "Nagy Anna", orderRef: "JT-2426-0184",
+    status: "paid", issueDate: "2026-04-18", dueDate: "2026-04-25", currency: "HUF", issuer: "Szabó Anna",
+    note: "Gyártási előleg (30%) — Petőfi u. 12. konyha + nappali.",
+    lines: [{ name: "Gyártási előleg (30%) — Petőfi u. 12.", qty: 1, unit: "alk.", unitPrice: 810000, vat: 27 }] },
+  { id: "SZ-2426-0061", dir: "out", kind: "normal", party: "Nagy Anna", orderRef: "JT-2426-0184",
+    status: "issued", issueDate: "2026-04-16", dueDate: "2026-04-24", currency: "HUF", issuer: "Szabó Anna",
+    note: "Gyártáskezdés — részszámla (40%).",
+    lines: [{ name: "Gyártáskezdés — részszámla (40%) — Petőfi u. 12.", qty: 1, unit: "alk.", unitPrice: 1080000, vat: 27 }] },
+  { id: "SZ-2426-0042", dir: "out", kind: "normal", party: "Bognár Bútor Kft.", orderRef: "JT-2426-0184",
+    status: "issued", issueDate: "2026-04-20", dueDate: "2026-05-04", currency: "HUF", issuer: "Szabó Anna",
+    lines: [
+      { name: "Konyhabútor alsó sor (6 elem)", qty: 6, unit: "db", unitPrice: 185000, vat: 27 },
+      { name: "Konyhabútor felső sor (8 elem)", qty: 8, unit: "db", unitPrice: 140000, vat: 27 },
+      { name: "Szerelés, helyszíni beépítés", qty: 1, unit: "alk.", unitPrice: 320000, vat: 27 },
+    ] },
+  { id: "SZ-2426-0041", dir: "out", kind: "advance", party: "Doorstar Hungary Zrt.", orderRef: "JT-2426-0182",
+    status: "issued", issueDate: "2026-04-15", dueDate: "2026-04-29", currency: "HUF", issuer: "Kovács Péter",
+    note: "30% gyártási előleg a 12,4 M Ft-os ajtó-rendelésre.",
+    lines: [{ name: "Gyártási előleg (30%) — JT-2426-0182", qty: 1, unit: "alk.", unitPrice: 2929134, vat: 27 }] },
+  { id: "SZ-2426-0039", dir: "out", kind: "normal", party: "Hegyi Lakberendezés", orderRef: "JT-2426-0180",
+    status: "issued", issueDate: "2026-04-09", dueDate: "2026-04-23", currency: "HUF", issuer: "Kovács Péter",
+    lines: [{ name: "Gardrób szekrény-sor (egyedi)", qty: 1, unit: "alk.", unitPrice: 1685000, vat: 27 }] },
+  { id: "SZ-2426-0038", dir: "out", kind: "normal", party: "Vella Interior Design", orderRef: "JT-2426-0178",
+    status: "partial", issueDate: "2026-04-12", dueDate: "2026-04-26", currency: "HUF", issuer: "Szabó Anna",
+    lines: [{ name: "Beépített nappali bútor", qty: 1, unit: "alk.", unitPrice: 3000000, vat: 27 }] },
+  { id: "SZ-2426-0036", dir: "out", kind: "normal", party: "Tóth Konyha & Társa", orderRef: "JT-2426-0176",
+    status: "paid", issueDate: "2026-04-05", dueDate: "2026-04-19", currency: "HUF", issuer: "Szabó Anna",
+    lines: [
+      { name: "Konyhabútor alsó elem (3 db)", qty: 3, unit: "db", unitPrice: 185000, vat: 27 },
+      { name: "Hettich fiókcsúszó beépítés", qty: 1, unit: "alk.", unitPrice: 145000, vat: 27 },
+    ] },
+  { id: "SZ-2426-0043", dir: "out", kind: "normal", party: "Várdai Konyhastúdió", orderRef: "JT-2426-0183",
+    status: "draft", issueDate: "2026-04-27", dueDate: "2026-05-11", currency: "HUF", issuer: "Szabó Anna",
+    lines: [{ name: "Konyhastúdió bemutató bútor", qty: 1, unit: "alk.", unitPrice: 1535000, vat: 27 }] },
+  { id: "SZ-2426-0035", dir: "out", kind: "normal", party: "Erdei Műbútor", orderRef: "JT-2426-0175",
+    status: "void", issueDate: "2026-04-03", dueDate: "2026-04-17", currency: "HUF", issuer: "Kovács Péter",
+    voidReason: "Hibás vevői adatok — új számla kiállítva.",
+    lines: [{ name: "Egyedi műbútor", qty: 1, unit: "alk.", unitPrice: 598000, vat: 27 }] },
+]
+
+export const FIN_INVOICES_IN: FinInvoice[] = [
+  { id: "SINV-2426-045", dir: "in", kind: "normal", party: "Falco Sopron Zrt.", orderRef: "PO-2426-094",
+    extNo: "FA-26-2231", status: "draft", issueDate: "2026-04-26", dueDate: "2026-05-26", currency: "HUF",
+    issuer: "Falco Sopron Zrt.", submittedVia: "supplier", submittedAt: "2026-04-26",
+    lines: [{ name: "Tölgy 22mm bútorlap", qty: 20, unit: "tábla", unitPrice: 32100, vat: 27 }] },
+  { id: "SINV-2426-044", dir: "in", kind: "normal", party: "Egger Faipari Kft.", orderRef: "PO-2426-091",
+    extNo: "EG-2026-3391", status: "issued", issueDate: "2026-04-23", dueDate: "2026-05-23", currency: "HUF", issuer: "Tóth Kinga",
+    lines: [{ name: "Tölgy 22mm tábla", qty: 30, unit: "tábla", unitPrice: 31800, vat: 27 }] },
+  { id: "SINV-2426-041", dir: "in", kind: "normal", party: "Falco Sopron Zrt.", orderRef: "PO-2426-088",
+    extNo: "FA-26-2204", status: "issued", issueDate: "2026-04-06", dueDate: "2026-04-20", currency: "HUF", issuer: "Nagy János",
+    lines: [{ name: "Bükk 18mm tábla", qty: 40, unit: "tábla", unitPrice: 17900, vat: 27 }] },
+  { id: "SINV-2426-040", dir: "in", kind: "normal", party: "Kronospan HU Zrt.", orderRef: "PO-2426-089",
+    extNo: "KR-2026-1188", status: "paid", issueDate: "2026-04-04", dueDate: "2026-04-18", currency: "HUF", issuer: "Tóth Kinga",
+    lines: [{ name: "MDF 19mm tábla", qty: 50, unit: "tábla", unitPrice: 9600, vat: 27 }] },
+  { id: "SINV-2426-039", dir: "in", kind: "normal", party: "Hettich Hungary", orderRef: "PO-2426-086",
+    extNo: "HE-2026-0912", status: "partial", issueDate: "2026-04-11", dueDate: "2026-05-11", currency: "HUF", issuer: "Tóth Kinga",
+    lines: [{ name: "Hettich fiókcsúszó 500mm", qty: 120, unit: "db", unitPrice: 1180, vat: 27 }] },
+]
+
+export const FIN_PAYMENTS: FinPayment[] = [
+  { id: "PMT-0009", invoiceId: "SZ-2426-0060", amount: 1028700, method: "card", date: "2026-04-19", ref: "ONLINE-7K2P", who: "Nagy Anna", note: "Online előleg-fizetés (portál)" },
+  { id: "PMT-0008", invoiceId: "SZ-2426-0041", amount: 2929134, method: "bank", date: "2026-04-22", ref: "GIRO-9921", who: "Pénzügy", note: "Doorstar előleg — teljes" },
+  { id: "PMT-0007", invoiceId: "SZ-2426-0038", amount: 1500000, method: "bank", date: "2026-04-20", ref: "GIRO-9874", who: "Pénzügy", note: "Vella — részfizetés 1/2" },
+  { id: "PMT-0006", invoiceId: "SZ-2426-0036", amount: 889000,  method: "bank", date: "2026-04-17", ref: "GIRO-9810", who: "Pénzügy", note: "Tóth — teljes (1/1)" },
+  { id: "PMT-0005", invoiceId: "SINV-2426-040", amount: 609600, method: "bank", date: "2026-04-16", ref: "UTAL-2261", who: "Pénzügy", note: "Kronospan — teljes" },
+  { id: "PMT-0004", invoiceId: "SINV-2426-039", amount: 90000,  method: "bank", date: "2026-04-18", ref: "UTAL-2280", who: "Pénzügy", note: "Hettich — részfizetés" },
 ]

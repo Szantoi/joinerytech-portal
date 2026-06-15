@@ -300,6 +300,48 @@ export function Icon({ name, size = 18, className = '' }: IconProps) {
           <path d="M4 6h16M4 12h16M4 18h16" />
         </svg>
       )
+    case 'phone':
+      return (
+        <svg {...common}>
+          <path d="M5 4h4l2 5-2.5 1.5a11 11 0 0 0 5 5L15 13l5 2v4a2 2 0 0 1-2 2A16 16 0 0 1 3 6a2 2 0 0 1 2-2z" />
+        </svg>
+      )
+    case 'calendar':
+      return (
+        <svg {...common}>
+          <rect x="3" y="4" width="18" height="18" rx="2" />
+          <path d="M16 2v4M8 2v4M3 10h18" />
+        </svg>
+      )
+    case 'receipt':
+      return (
+        <svg {...common}>
+          <path d="M4 2v20l3-2 2 2 3-2 2 2 3-2 2 2V2l-3 2-2-2-3 2-2-2-3 2L4 2z" />
+          <path d="M9 10h6M9 14h4" />
+        </svg>
+      )
+    case 'file':
+      return (
+        <svg {...common}>
+          <path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9L13 2z" />
+          <path d="M13 2v7h7" />
+        </svg>
+      )
+    case 'lock':
+      return (
+        <svg {...common}>
+          <rect x="3" y="11" width="18" height="11" rx="2" />
+          <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+        </svg>
+      )
+    case 'storefront':
+      return (
+        <svg {...common}>
+          <path d="M3 9l1-5h16l1 5" />
+          <path d="M3 9a3 3 0 0 0 6 0 3 3 0 0 0 6 0 3 3 0 0 0 6 0" />
+          <path d="M5 22V12h14v10M9 22v-6h6v6" />
+        </svg>
+      )
     default:
       return null
   }
