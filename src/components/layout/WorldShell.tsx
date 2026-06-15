@@ -25,6 +25,8 @@ export const ACCENT_MAP: Record<string, {
   cyan:    { tint: 'bg-cyan-100',    iconBg: 'bg-cyan-100',    iconFg: 'text-cyan-700',    fg: 'text-cyan-700',    sideBg: 'bg-cyan-50/30',    sideAccent: 'border-cyan-600',    sideHover: 'hover:bg-cyan-50' },
   orange:  { tint: 'bg-orange-100',  iconBg: 'bg-orange-100',  iconFg: 'text-orange-700',  fg: 'text-orange-700',  sideBg: 'bg-orange-50/30',  sideAccent: 'border-orange-600',  sideHover: 'hover:bg-orange-50' },
   rose:    { tint: 'bg-rose-100',    iconBg: 'bg-rose-100',    iconFg: 'text-rose-700',    fg: 'text-rose-700',    sideBg: 'bg-rose-50/30',    sideAccent: 'border-rose-600',    sideHover: 'hover:bg-rose-50' },
+  slate:   { tint: 'bg-slate-100',   iconBg: 'bg-slate-100',   iconFg: 'text-slate-700',   fg: 'text-slate-700',   sideBg: 'bg-slate-50/30',   sideAccent: 'border-slate-600',   sideHover: 'hover:bg-slate-50' },
+  purple:  { tint: 'bg-purple-100',  iconBg: 'bg-purple-100',  iconFg: 'text-purple-700',  fg: 'text-purple-700',  sideBg: 'bg-purple-50/30',  sideAccent: 'border-purple-600',  sideHover: 'hover:bg-purple-50' },
 }
 
 interface WorldSidebarProps {

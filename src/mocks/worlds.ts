@@ -143,9 +143,44 @@ export const WORLDS: Record<string, World> = {
     ],
     badge: "1 blokkolt",
   },
+  masterdata: {
+    key: "masterdata", hu: "Törzsadatok", en: "Master Data",
+    sub: "Termékek, anyagok, szállítók nyilvántartása",
+    icon: "database", accent: "stone",
+    screens: [
+      { key: "dash", hu: "Áttekintés", en: "Overview" },
+      { key: "products", hu: "Termékek", en: "Products" },
+      { key: "materials", hu: "Anyagok", en: "Materials" },
+      { key: "suppliers", hu: "Szállítók", en: "Suppliers" },
+    ],
+    badge: "8 termék",
+  },
+  trade: {
+    key: "trade", hu: "Kereskedelem", en: "Trade",
+    sub: "Árajánlatok, megrendelések, partnerek",
+    icon: "briefcase", accent: "teal",
+    screens: [
+      { key: "dash", hu: "Áttekintés", en: "Overview" },
+      { key: "quotes", hu: "Árajánlatok", en: "Quotes" },
+      { key: "pos", hu: "Megrendelések", en: "POs" },
+      { key: "partners", hu: "Partnerek", en: "Partners" },
+    ],
+    badge: "2 nyitott",
+  },
+  interior: {
+    key: "interior", hu: "Belső tér", en: "Interior",
+    sub: "Szoba-konfigurációk, bútor elrendezés",
+    icon: "home", accent: "violet",
+    screens: [
+      { key: "dash", hu: "Áttekintés", en: "Overview" },
+      { key: "rooms", hu: "Szobák", en: "Rooms" },
+      { key: "furniture", hu: "Bútor kártyák", en: "Furniture" },
+    ],
+    badge: "4 szoba",
+  },
 }
 
-export const WORLD_ORDER: WorldKey[] = ["production", "sales", "design", "warehouse", "shopfloor", "crm", "finance", "projects", "logistics", "mfgprep", "supervisor", "settings"]
+export const WORLD_ORDER: WorldKey[] = ["production", "sales", "design", "warehouse", "shopfloor", "crm", "finance", "projects", "logistics", "mfgprep", "supervisor", "masterdata", "trade", "interior", "settings"]
 
 export const PARAM_TEMPLATES: ParamTemplate[] = [
   {

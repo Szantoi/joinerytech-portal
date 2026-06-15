@@ -24,6 +24,9 @@ import { ProjectsWorldPage } from './pages/ProjectsPage'
 import { LogisticsWorldPage } from './pages/LogisticsPage'
 import { MfgPrepWorldPage } from './pages/MfgPrepPage'
 import { SupervisorWorldPage } from './pages/SupervisorPage'
+import { MasterdataWorldPage } from './pages/MasterdataPage'
+import { TradeWorldPage } from './pages/TradePage'
+import { InteriorWorldPage } from './pages/InteriorPage'
 
 function HomePage() {
   const navigate = useNavigate()
@@ -270,6 +273,39 @@ export function App() {
         <Route path="/w/supervisor/:screen" element={
           <RequireAuth>
             <SupervisorWorldPage />
+          </RequireAuth>
+        } />
+
+        <Route path="/w/masterdata" element={
+          <RequireAuth>
+            <MasterdataWorldPage />
+          </RequireAuth>
+        } />
+        <Route path="/w/masterdata/:screen" element={
+          <RequireAuth>
+            <MasterdataWorldPage />
+          </RequireAuth>
+        } />
+
+        <Route path="/w/trade" element={
+          <RequireAuth>
+            <TradeWorldPage />
+          </RequireAuth>
+        } />
+        <Route path="/w/trade/:screen" element={
+          <RequireAuth>
+            <TradeWorldPage />
+          </RequireAuth>
+        } />
+
+        <Route path="/w/interior" element={
+          <RequireAuth>
+            <InteriorWorldPage />
+          </RequireAuth>
+        } />
+        <Route path="/w/interior/:screen" element={
+          <RequireAuth>
+            <InteriorWorldPage />
           </RequireAuth>
         } />
 

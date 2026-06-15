@@ -380,6 +380,21 @@ export function Icon({ name, size = 18, className = '' }: IconProps) {
           <circle cx="12" cy="12" r="3" />
         </svg>
       )
+    case 'database':
+      return (
+        <svg {...common}>
+          <ellipse cx="12" cy="5" rx="9" ry="3" />
+          <path d="M3 5v14c0 1.7 4 3 9 3s9-1.3 9-3V5" />
+          <path d="M3 12c0 1.7 4 3 9 3s9-1.3 9-3" />
+        </svg>
+      )
+    case 'home':
+      return (
+        <svg {...common}>
+          <path d="M3 9.5 12 3l9 6.5V21H3V9.5z" />
+          <path d="M9 21v-6h6v6" />
+        </svg>
+      )
     default:
       return null
   }
