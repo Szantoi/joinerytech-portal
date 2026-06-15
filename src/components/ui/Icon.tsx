@@ -365,6 +365,21 @@ export function Icon({ name, size = 18, className = '' }: IconProps) {
           <circle cx="18" cy="5" r="3" />
         </svg>
       )
+    case 'clipboard':
+      return (
+        <svg {...common}>
+          <rect x="8" y="2" width="8" height="4" rx="1" />
+          <path d="M8 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2h-2" />
+          <path d="M9 12h6M9 16h4" />
+        </svg>
+      )
+    case 'eye':
+      return (
+        <svg {...common}>
+          <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7z" />
+          <circle cx="12" cy="12" r="3" />
+        </svg>
+      )
     default:
       return null
   }

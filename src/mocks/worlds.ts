@@ -121,9 +121,31 @@ export const WORLDS: Record<string, World> = {
     ],
     badge: "2 úton",
   },
+  mfgprep: {
+    key: "mfgprep", hu: "Gyártás-előkészítés", en: "Mfg Prep",
+    sub: "Release queue, munkalapok, gyártási jóváhagyás",
+    icon: "clipboard", accent: "orange",
+    screens: [
+      { key: "dash", hu: "Áttekintés", en: "Overview" },
+      { key: "queue", hu: "Release queue", en: "Queue" },
+      { key: "datasheets", hu: "Munkalapok", en: "Datasheets" },
+    ],
+    badge: "2 függő",
+  },
+  supervisor: {
+    key: "supervisor", hu: "Műszakvezető", en: "Supervisor",
+    sub: "Élő műhely-monitor, napi terv vs. tény, blokkolók",
+    icon: "eye", accent: "rose",
+    screens: [
+      { key: "dash", hu: "Áttekintés", en: "Overview" },
+      { key: "floor", hu: "Műhely-floor", en: "Floor" },
+      { key: "dayplan", hu: "Napi terv", en: "Day Plan" },
+    ],
+    badge: "1 blokkolt",
+  },
 }
 
-export const WORLD_ORDER: WorldKey[] = ["production", "sales", "design", "warehouse", "shopfloor", "crm", "finance", "projects", "logistics", "settings"]
+export const WORLD_ORDER: WorldKey[] = ["production", "sales", "design", "warehouse", "shopfloor", "crm", "finance", "projects", "logistics", "mfgprep", "supervisor", "settings"]
 
 export const PARAM_TEMPLATES: ParamTemplate[] = [
   {

@@ -23,6 +23,8 @@ export const ACCENT_MAP: Record<string, {
   stone:   { tint: 'bg-stone-100',   iconBg: 'bg-stone-100',   iconFg: 'text-stone-700',   fg: 'text-stone-700',   sideBg: 'bg-stone-50/40',   sideAccent: 'border-stone-700',   sideHover: 'hover:bg-stone-100' },
   violet:  { tint: 'bg-violet-100',  iconBg: 'bg-violet-100',  iconFg: 'text-violet-700',  fg: 'text-violet-700',  sideBg: 'bg-violet-50/30',  sideAccent: 'border-violet-600',  sideHover: 'hover:bg-violet-50' },
   cyan:    { tint: 'bg-cyan-100',    iconBg: 'bg-cyan-100',    iconFg: 'text-cyan-700',    fg: 'text-cyan-700',    sideBg: 'bg-cyan-50/30',    sideAccent: 'border-cyan-600',    sideHover: 'hover:bg-cyan-50' },
+  orange:  { tint: 'bg-orange-100',  iconBg: 'bg-orange-100',  iconFg: 'text-orange-700',  fg: 'text-orange-700',  sideBg: 'bg-orange-50/30',  sideAccent: 'border-orange-600',  sideHover: 'hover:bg-orange-50' },
+  rose:    { tint: 'bg-rose-100',    iconBg: 'bg-rose-100',    iconFg: 'text-rose-700',    fg: 'text-rose-700',    sideBg: 'bg-rose-50/30',    sideAccent: 'border-rose-600',    sideHover: 'hover:bg-rose-50' },
 }
 
 interface WorldSidebarProps {

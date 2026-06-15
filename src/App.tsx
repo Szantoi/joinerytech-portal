@@ -22,6 +22,8 @@ import { CrmWorldPage } from './pages/CrmPage'
 import { FinanceWorldPage } from './pages/FinancePage'
 import { ProjectsWorldPage } from './pages/ProjectsPage'
 import { LogisticsWorldPage } from './pages/LogisticsPage'
+import { MfgPrepWorldPage } from './pages/MfgPrepPage'
+import { SupervisorWorldPage } from './pages/SupervisorPage'
 
 function HomePage() {
   const navigate = useNavigate()
@@ -246,6 +248,28 @@ export function App() {
         <Route path="/w/logistics/:screen" element={
           <RequireAuth>
             <LogisticsWorldPage />
+          </RequireAuth>
+        } />
+
+        <Route path="/w/mfgprep" element={
+          <RequireAuth>
+            <MfgPrepWorldPage />
+          </RequireAuth>
+        } />
+        <Route path="/w/mfgprep/:screen" element={
+          <RequireAuth>
+            <MfgPrepWorldPage />
+          </RequireAuth>
+        } />
+
+        <Route path="/w/supervisor" element={
+          <RequireAuth>
+            <SupervisorWorldPage />
+          </RequireAuth>
+        } />
+        <Route path="/w/supervisor/:screen" element={
+          <RequireAuth>
+            <SupervisorWorldPage />
           </RequireAuth>
         } />
 

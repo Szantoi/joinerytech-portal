@@ -7,7 +7,7 @@ import type { WorldKey } from '../../types'
 
 // Worlds accessible per Keycloak role
 const ROLE_WORLDS: Record<string, WorldKey[]> = {
-  Admin:    ['production', 'sales', 'design', 'warehouse', 'shopfloor', 'crm', 'finance', 'projects', 'logistics', 'settings'],
+  Admin:    ['production', 'sales', 'design', 'warehouse', 'shopfloor', 'crm', 'finance', 'projects', 'logistics', 'mfgprep', 'supervisor', 'settings'],
   Designer: ['production', 'sales', 'design', 'warehouse', 'crm', 'finance', 'projects', 'logistics', 'settings'],
   Joiner:   ['shopfloor'],
 }
