@@ -226,9 +226,51 @@ export const WORLDS: Record<string, World> = {
     ],
     badge: "1 késő",
   },
+  tasks: {
+    key: "tasks", hu: "Feladataim", en: "Tasks",
+    sub: "Személyes és kereszt-világ feladatkezelés",
+    icon: "clipboard", accent: "violet",
+    screens: [
+      { key: "dash", hu: "Áttekintés" },
+      { key: "mytasks", hu: "Saját feladatok" },
+      { key: "kanban", hu: "Kanban tábla" },
+    ],
+    badge: "2 lejárt",
+  },
+  docs: {
+    key: "docs", hu: "Dokumentumtár", en: "Docs",
+    sub: "Verziózott dokumentumok, rajzok, szerződések",
+    icon: "file", accent: "amber",
+    screens: [
+      { key: "dash", hu: "Áttekintés" },
+      { key: "files", hu: "Dokumentumok" },
+    ],
+    badge: "2 ellenőrzés",
+  },
+  ai: {
+    key: "ai", hu: "AI munkaterület", en: "AI",
+    sub: "Ágensek, receptek, memória, chat",
+    icon: "sparkle", accent: "purple",
+    screens: [
+      { key: "dash", hu: "Áttekintés" },
+      { key: "chat", hu: "Chat" },
+      { key: "agents", hu: "Ágensek" },
+      { key: "skills", hu: "Receptek" },
+    ],
+    badge: "1 aktív",
+  },
+  execbi: {
+    key: "execbi", hu: "Vezetői BI", en: "ExecBI",
+    sub: "Kereszt-világ KPI cockpit, trendek, elemzések",
+    icon: "chart", accent: "indigo",
+    screens: [
+      { key: "dash", hu: "Áttekintés" },
+    ],
+    badge: "BI",
+  },
 }
 
-export const WORLD_ORDER: WorldKey[] = ["production", "sales", "design", "warehouse", "shopfloor", "crm", "finance", "projects", "logistics", "mfgprep", "supervisor", "masterdata", "trade", "interior", "maintenance", "quality", "ehs", "attendance", "settings"]
+export const WORLD_ORDER: WorldKey[] = ["production", "sales", "design", "warehouse", "shopfloor", "crm", "finance", "projects", "logistics", "mfgprep", "supervisor", "masterdata", "trade", "interior", "maintenance", "quality", "ehs", "attendance", "tasks", "docs", "ai", "execbi", "settings"]
 
 export const PARAM_TEMPLATES: ParamTemplate[] = [
   {

@@ -31,6 +31,10 @@ import { MaintenanceWorldPage } from './pages/MaintenancePage'
 import { QualityWorldPage } from './pages/QualityPage'
 import { EhsWorldPage } from './pages/EhsPage'
 import { AttendanceWorldPage } from './pages/AttendancePage'
+import { TasksWorldPage } from './pages/TasksPage'
+import { DocsWorldPage } from './pages/DocsPage'
+import { AiWorldPage } from './pages/AiPage'
+import { ExecBiWorldPage } from './pages/ExecBiPage'
 
 function HomePage() {
   const navigate = useNavigate()
@@ -354,6 +358,50 @@ export function App() {
         <Route path="/w/attendance/:screen" element={
           <RequireAuth>
             <AttendanceWorldPage />
+          </RequireAuth>
+        } />
+
+        <Route path="/w/tasks" element={
+          <RequireAuth>
+            <TasksWorldPage />
+          </RequireAuth>
+        } />
+        <Route path="/w/tasks/:screen" element={
+          <RequireAuth>
+            <TasksWorldPage />
+          </RequireAuth>
+        } />
+
+        <Route path="/w/docs" element={
+          <RequireAuth>
+            <DocsWorldPage />
+          </RequireAuth>
+        } />
+        <Route path="/w/docs/:screen" element={
+          <RequireAuth>
+            <DocsWorldPage />
+          </RequireAuth>
+        } />
+
+        <Route path="/w/ai" element={
+          <RequireAuth>
+            <AiWorldPage />
+          </RequireAuth>
+        } />
+        <Route path="/w/ai/:screen" element={
+          <RequireAuth>
+            <AiWorldPage />
+          </RequireAuth>
+        } />
+
+        <Route path="/w/execbi" element={
+          <RequireAuth>
+            <ExecBiWorldPage />
+          </RequireAuth>
+        } />
+        <Route path="/w/execbi/:screen" element={
+          <RequireAuth>
+            <ExecBiWorldPage />
           </RequireAuth>
         } />
 

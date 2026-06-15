@@ -407,6 +407,12 @@ export function Icon({ name, size = 18, className = '' }: IconProps) {
           <circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/>
         </svg>
       )
+    case 'chart':
+      return (
+        <svg {...common}>
+          <line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/>
+        </svg>
+      )
     default:
       return null
   }

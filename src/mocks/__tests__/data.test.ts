@@ -48,9 +48,9 @@ describe('Mock data integrity', () => {
     expect(NESTING.sheet.w).toBe(2800)
   })
 
-  it('has 19 worlds', () => {
-    expect(Object.keys(WORLDS)).toHaveLength(19)
-    expect(WORLD_ORDER).toHaveLength(19)
+  it('has 23 worlds', () => {
+    expect(Object.keys(WORLDS)).toHaveLength(23)
+    expect(WORLD_ORDER).toHaveLength(23)
   })
 
   it('has quotes', () => {
