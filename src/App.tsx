@@ -35,6 +35,7 @@ import { TasksWorldPage } from './pages/TasksPage'
 import { DocsWorldPage } from './pages/DocsPage'
 import { AiWorldPage } from './pages/AiPage'
 import { ExecBiWorldPage } from './pages/ExecBiPage'
+import { ShopWorldPage } from './pages/ShopPage'
 
 function HomePage() {
   const navigate = useNavigate()
@@ -402,6 +403,17 @@ export function App() {
         <Route path="/w/execbi/:screen" element={
           <RequireAuth>
             <ExecBiWorldPage />
+          </RequireAuth>
+        } />
+
+        <Route path="/w/shop" element={
+          <RequireAuth>
+            <ShopWorldPage />
+          </RequireAuth>
+        } />
+        <Route path="/w/shop/:screen" element={
+          <RequireAuth>
+            <ShopWorldPage />
           </RequireAuth>
         } />
 

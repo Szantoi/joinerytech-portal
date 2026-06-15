@@ -268,9 +268,21 @@ export const WORLDS: Record<string, World> = {
     ],
     badge: "BI",
   },
+  shop: {
+    key: 'shop', hu: 'Bolt', en: 'Shop',
+    sub: 'B2B termékrendelés és kosárkezelés',
+    icon: 'storefront', accent: 'emerald',
+    badge: '3 nyitott',
+    screens: [
+      { key: 'dash', hu: 'Áttekintés' },
+      { key: 'catalog', hu: 'Katalógus' },
+      { key: 'cart', hu: 'Kosár' },
+      { key: 'orders', hu: 'Rendelések' },
+    ],
+  },
 }
 
-export const WORLD_ORDER: WorldKey[] = ["production", "sales", "design", "warehouse", "shopfloor", "crm", "finance", "projects", "logistics", "mfgprep", "supervisor", "masterdata", "trade", "interior", "maintenance", "quality", "ehs", "attendance", "tasks", "docs", "ai", "execbi", "settings"]
+export const WORLD_ORDER: WorldKey[] = ["production", "sales", "design", "warehouse", "shopfloor", "crm", "finance", "projects", "logistics", "mfgprep", "supervisor", "masterdata", "trade", "interior", "maintenance", "quality", "ehs", "attendance", "tasks", "docs", "ai", "execbi", "shop", "settings"]
 
 export const PARAM_TEMPLATES: ParamTemplate[] = [
   {
