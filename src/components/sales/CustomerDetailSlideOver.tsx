@@ -2,8 +2,7 @@ import { useState, useEffect } from 'react'
 import { SlideOver, GhostBtn } from '../ui'
 import { useApi, useMutation, API_BASE } from '../../hooks/useApi'
 import {
-  CUSTOMER_TYPE_STYLE, QUOTE_STATUS_MAP, getMockCustomerDetail,
-  QUOTES_FALLBACK,
+  CUSTOMER_TYPE_STYLE, QUOTE_STATUS_MAP,
   type CustomerDetailDto, type QuoteListItemDto, type PagedResult,
 } from '../../data/data-sales-detail'
 
@@ -17,7 +16,7 @@ interface Props {
 const SECTION = 'text-[11px] font-semibold text-stone-500 uppercase tracking-wide mb-2'
 
 export function CustomerDetailSlideOver({ open, customerId, onClose, onOpenQuote }: Props) {
-  const { data: customerData, refetch: refetchCustomer } = useApi<CustomerDetailDto>(
+  const { data: customerData, isLoading: customerLoading, refetch: refetchCustomer } = useApi<CustomerDetailDto>(
     customerId ? `${API_BASE.sales}/api/customers/${customerId}` : null
   )
   const { data: quotesData, refetch: refetchQuotes } = useApi<PagedResult<QuoteListItemDto>>(
@@ -27,27 +26,28 @@ export function CustomerDetailSlideOver({ open, customerId, onClose, onOpenQuote
     if (open && customerId) { refetchCustomer(); refetchQuotes() }
   }, [open, customerId]) // eslint-disable-line
 
-  const customer: CustomerDetailDto = customerData ?? getMockCustomerDetail(customerId)
-  const recentQuotes: QuoteListItemDto[] = quotesData?.items ??
-    QUOTES_FALLBACK.filter((q) => q.customerName === customer.name).slice(0, 5)
+  const customer = customerData
+  const recentQuotes: QuoteListItemDto[] = quotesData?.items ?? []
 
-  const typeStyle = CUSTOMER_TYPE_STYLE[customer.type] ?? CUSTOMER_TYPE_STYLE.Active
-  const initials = customer.name.split(' ').slice(0, 2).map((s) => s[0]).join('')
+  const typeStyle = CUSTOMER_TYPE_STYLE[customer?.type ?? 'Active'] ?? CUSTOMER_TYPE_STYLE.Active
+  const initials = (customer?.name ?? '').split(' ').slice(0, 2).map((s) => s[0]).join('')
 
   // Contact edit
   const [editingContact, setEditingContact] = useState(false)
   const [contactForm, setContactForm] = useState({
-    contactName: customer.contactName,
-    contactEmail: customer.contactEmail,
-    contactPhone: customer.contactPhone,
+    contactName: customer?.contactName ?? '',
+    contactEmail: customer?.contactEmail ?? '',
+    contactPhone: customer?.contactPhone ?? '',
   })
   useEffect(() => {
-    setContactForm({
-      contactName: customer.contactName,
-      contactEmail: customer.contactEmail,
-      contactPhone: customer.contactPhone,
-    })
-  }, [customer.contactName, customer.contactEmail, customer.contactPhone])
+    if (customer) {
+      setContactForm({
+        contactName: customer.contactName,
+        contactEmail: customer.contactEmail,
+        contactPhone: customer.contactPhone,
+      })
+    }
+  }, [customer?.contactName, customer?.contactEmail, customer?.contactPhone]) // eslint-disable-line
 
   // Address collapsibles
   const [showBilling, setShowBilling] = useState(false)
@@ -55,9 +55,9 @@ export function CustomerDetailSlideOver({ open, customerId, onClose, onOpenQuote
 
   // FSM action
   const [actionLoading, setActionLoading] = useState<string | null>(null)
-  const [localType, setLocalType] = useState(customer.type)
+  const [localType, setLocalType] = useState(customer?.type ?? 'Active')
   const [confirmAction, setConfirmAction] = useState<'promote' | 'deactivate' | null>(null)
-  useEffect(() => { setLocalType(customer.type) }, [customer.type])
+  useEffect(() => { if (customer?.type) setLocalType(customer.type) }, [customer?.type])
 
   const { mutate: mutateContact, isLoading: savingContact } = useMutation<unknown>()
   const { mutate: mutateAction } = useMutation<unknown>()
@@ -92,11 +92,16 @@ export function CustomerDetailSlideOver({ open, customerId, onClose, onOpenQuote
     <SlideOver
       open={open}
       onClose={onClose}
-      title={customer.name}
-      subtitle={`${customer.city} · ${currentTypeStyle.label}`}
+      title={customer?.name ?? '…'}
+      subtitle={customer ? `${customer.city} · ${currentTypeStyle.label}` : ''}
       width={520}
       footer={<GhostBtn onClick={onClose}>Bezárás</GhostBtn>}
     >
+      {(customerLoading || !customer) ? (
+        <div className="px-5 py-8 flex items-center justify-center">
+          <div className="w-6 h-6 border-2 border-stone-200 border-t-indigo-600 rounded-full animate-spin" />
+        </div>
+      ) : (
       <div className="px-5 py-4 space-y-5">
 
         {/* Avatar fejléc */}
@@ -281,6 +286,7 @@ export function CustomerDetailSlideOver({ open, customerId, onClose, onOpenQuote
           </div>
         )}
       </div>
+      )}
     </SlideOver>
   )
 }

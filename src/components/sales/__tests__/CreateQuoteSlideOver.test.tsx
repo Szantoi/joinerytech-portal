@@ -53,14 +53,25 @@ describe('CreateQuoteSlideOver', () => {
     await waitFor(() => expect(screen.getByText('Kötelező mező')).toBeTruthy())
   })
 
-  it('shows customer results from fallback when typing', async () => {
-    vi.stubGlobal('fetch', vi.fn(() => Promise.resolve({ ok: false, status: 503 })))
+  it('shows customer results from API when typing', async () => {
+    vi.stubGlobal('fetch', vi.fn(() =>
+      Promise.resolve({
+        ok: true,
+        json: () => Promise.resolve({
+          items: [
+            { id: 'C-001', name: 'Teszt Kft.', type: 'Active', contactName: 'Teszt Elek',
+              contactEmail: 'teszt@teszt.hu', contactPhone: '+36 1 234 567',
+              city: 'Budapest', openQuoteCount: 1, totalOrderValue: 5_000_000, createdAt: '2024-01-01' },
+          ],
+          totalCount: 1,
+        }),
+      })
+    ))
     renderSlideOver()
     const input = screen.getByPlaceholderText('Ügyfél keresése...')
     fireEvent.change(input, { target: { value: 'Kft' } })
     fireEvent.focus(input)
     await waitFor(() => {
-      // CUSTOMERS_FALLBACK should contain at least one "Kft" entry
       const results = screen.queryAllByText(/Kft/i)
       expect(results.length).toBeGreaterThan(0)
     })

@@ -2,7 +2,6 @@ import { useState, useEffect } from 'react'
 import { SlideOver, GhostBtn, Icon } from '../ui'
 import { useApi, useMutation, API_BASE } from '../../hooks/useApi'
 import {
-  CUSTOMERS_FALLBACK,
   type CustomerDto, type PagedResult, type QuoteListItemDto,
 } from '../../data/data-sales-detail'
 
@@ -38,18 +37,18 @@ export function CreateQuoteSlideOver({
   const { data: searchData, refetch: refetchSearch } = useApi<PagedResult<CustomerDto>>(searchUrl)
   useEffect(() => { if (searchUrl) refetchSearch() }, [customerSearch]) // eslint-disable-line
 
-  const searchResults: CustomerDto[] = searchData?.items ??
-    CUSTOMERS_FALLBACK.filter((c) =>
-      c.name.toLowerCase().includes(customerSearch.toLowerCase())
-    ).slice(0, 6)
+  const searchResults: CustomerDto[] = searchData?.items ?? []
 
-  // Prefill customer if provided
+  // Prefill customer by ID from API
+  const { data: prefillCustomerData } = useApi<CustomerDto>(
+    prefillCustomerId && open ? `${API_BASE.sales}/api/customers/${prefillCustomerId}` : null
+  )
   useEffect(() => {
-    if (prefillCustomerId && open) {
-      const found = CUSTOMERS_FALLBACK.find((c) => c.id === prefillCustomerId)
-      if (found) { setSelectedCustomer(found); setCustomerSearch(found.name) }
+    if (prefillCustomerData && open) {
+      setSelectedCustomer(prefillCustomerData)
+      setCustomerSearch(prefillCustomerData.name)
     }
-  }, [prefillCustomerId, open]) // eslint-disable-line
+  }, [prefillCustomerData, open]) // eslint-disable-line
 
   function reset() {
     setCustomerSearch(''); setSelectedCustomer(null); setShowDropdown(false)

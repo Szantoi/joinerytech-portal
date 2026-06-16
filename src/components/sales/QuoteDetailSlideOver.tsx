@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { SlideOver, GhostBtn, Icon } from '../ui'
 import { useApi, useMutation, API_BASE } from '../../hooks/useApi'
 import {
-  QUOTE_STATUS_MAP, getMockQuoteDetail, calcVat, calcGross, fmtHuf,
+  QUOTE_STATUS_MAP, calcVat, calcGross, fmtHuf,
   type QuoteDetailDto, type QuoteLineDto,
 } from '../../data/data-sales-detail'
 
@@ -15,16 +15,16 @@ interface Props {
 const SECTION = 'text-[11px] font-semibold text-stone-500 uppercase tracking-wide mb-2'
 
 export function QuoteDetailSlideOver({ open, quoteId, onClose }: Props) {
-  const { data, refetch } = useApi<QuoteDetailDto>(
+  const { data, isLoading: quoteLoading, refetch } = useApi<QuoteDetailDto>(
     quoteId ? `${API_BASE.sales}/api/quotes/${quoteId}` : null
   )
   useEffect(() => { if (open && quoteId) refetch() }, [open, quoteId]) // eslint-disable-line
 
-  const quote: QuoteDetailDto = data ?? getMockQuoteDetail(quoteId)
+  const quote = data
 
   // Local lines state for optimistic updates
   const [lines, setLines] = useState<QuoteLineDto[]>([])
-  useEffect(() => { setLines(quote.lines ?? []) }, [quote.id, data]) // eslint-disable-line
+  useEffect(() => { setLines(quote?.lines ?? []) }, [quote?.id, data]) // eslint-disable-line
 
   const subtotal = lines.reduce((s, l) => s + l.lineTotal, 0)
   const vat = calcVat(subtotal)
@@ -47,8 +47,8 @@ export function QuoteDetailSlideOver({ open, quoteId, onClose }: Props) {
   const [rejectReason, setRejectReason] = useState('')
   const [actionLoading, setActionLoading] = useState<string | null>(null)
   const [actionDone, setActionDone] = useState('')
-  const [localStatus, setLocalStatus] = useState(quote.status)
-  useEffect(() => { setLocalStatus(quote.status) }, [quote.status])
+  const [localStatus, setLocalStatus] = useState(quote?.status ?? 'Draft')
+  useEffect(() => { if (quote?.status) setLocalStatus(quote.status) }, [quote?.status])
 
   const { mutate } = useMutation<unknown>()
 
@@ -133,17 +133,26 @@ export function QuoteDetailSlideOver({ open, quoteId, onClose }: Props) {
     }
   }
 
-  const tone = QUOTE_STATUS_MAP[localStatus]
+  // CI-003: client-side derived expired state — backend stores 'Sent', FE computes display
+  const todayStr = new Date().toISOString().slice(0, 10)
+  const isExpiredDisplay = localStatus === 'Sent' && quote?.expiresAt != null && quote.expiresAt < todayStr
+  const displayStatus = isExpiredDisplay ? 'Expired' : localStatus
+  const tone = QUOTE_STATUS_MAP[displayStatus]
 
   return (
     <SlideOver
       open={open}
       onClose={onClose}
-      title={quote.quoteNumber}
-      subtitle={quote.customerName}
+      title={quote?.quoteNumber ?? '…'}
+      subtitle={quote?.customerName ?? ''}
       width={680}
       footer={<GhostBtn onClick={onClose}>Bezárás</GhostBtn>}
     >
+      {(quoteLoading || !quote) ? (
+        <div className="px-5 py-8 flex items-center justify-center">
+          <div className="w-6 h-6 border-2 border-stone-200 border-t-indigo-600 rounded-full animate-spin" />
+        </div>
+      ) : (
       <div className="px-5 py-4 space-y-6">
 
         {/* Fejléc összefoglaló */}
@@ -435,6 +444,7 @@ export function QuoteDetailSlideOver({ open, quoteId, onClose }: Props) {
           </div>
         )}
       </div>
+      )}
     </SlideOver>
   )
 }

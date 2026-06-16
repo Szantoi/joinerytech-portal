@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, afterEach } from 'vitest'
 import { render, screen, fireEvent, waitFor } from '@testing-library/react'
 import { CustomerDetailSlideOver } from '../CustomerDetailSlideOver'
-import { getMockCustomerDetail } from '../../../data/data-sales-detail'
+import type { CustomerDetailDto } from '../../../data/data-sales-detail'
 
 vi.mock('../../../auth', () => ({
   useAuth: vi.fn(() => ({
@@ -16,14 +16,34 @@ afterEach(() => {
   vi.unstubAllGlobals()
 })
 
+const MOCK_CUSTOMER: CustomerDetailDto = {
+  id: 'C-001',
+  name: 'Bognár Bútor Kft.',
+  type: 'Active',
+  contactName: 'Bognár Attila',
+  contactEmail: 'bognar@bognarbutor.hu',
+  contactPhone: '+36 30 123 4567',
+  city: 'Győr',
+  openQuoteCount: 2,
+  totalOrderValue: 8_500_000,
+  createdAt: '2024-03-01',
+  billingAddress: { street: 'Ipari út 12.', city: 'Győr', zip: '9021', country: 'HU' },
+}
+
 function mockFetchError() {
   vi.stubGlobal('fetch', vi.fn(() => Promise.resolve({ ok: false, status: 503 })))
 }
 
-// C-001 is a real ID: "Bognár Bútor Kft." (Active)
-const REAL_CUSTOMER_ID = 'C-001'
+function mockFetchSuccess() {
+  vi.stubGlobal('fetch', vi.fn((url: string) => {
+    if (url.includes('/quotes')) {
+      return Promise.resolve({ ok: true, json: () => Promise.resolve({ items: [], totalCount: 0 }) })
+    }
+    return Promise.resolve({ ok: true, json: () => Promise.resolve(MOCK_CUSTOMER) })
+  }))
+}
 
-function renderSlideOver(customerId = REAL_CUSTOMER_ID, open = true) {
+function renderSlideOver(customerId = 'C-001', open = true) {
   return render(
     <CustomerDetailSlideOver
       open={open}
@@ -35,34 +55,32 @@ function renderSlideOver(customerId = REAL_CUSTOMER_ID, open = true) {
 }
 
 describe('CustomerDetailSlideOver', () => {
-  it('renders customer name from mock fallback', async () => {
-    mockFetchError()
+  it('renders customer name from API', async () => {
+    mockFetchSuccess()
     renderSlideOver()
-    const mock = getMockCustomerDetail(REAL_CUSTOMER_ID)
-    await waitFor(() => expect(screen.getAllByText(mock.name).length).toBeGreaterThan(0))
+    await waitFor(() => expect(screen.getAllByText('Bognár Bútor Kft.').length).toBeGreaterThan(0))
   })
 
   it('renders Kapcsolattartó section', async () => {
-    mockFetchError()
+    mockFetchSuccess()
     renderSlideOver()
     await waitFor(() => expect(screen.getByText('Kapcsolattartó')).toBeTruthy())
   })
 
   it('shows contact name', async () => {
-    mockFetchError()
+    mockFetchSuccess()
     renderSlideOver()
-    const mock = getMockCustomerDetail(REAL_CUSTOMER_ID)
-    await waitFor(() => expect(screen.getAllByText(mock.contactName).length).toBeGreaterThan(0))
+    await waitFor(() => expect(screen.getAllByText('Bognár Attila').length).toBeGreaterThan(0))
   })
 
   it('shows Szerkesztés button for contact edit', async () => {
-    mockFetchError()
+    mockFetchSuccess()
     renderSlideOver()
     await waitFor(() => expect(screen.getByText('Szerkesztés')).toBeTruthy())
   })
 
   it('entering edit mode shows Mentés button', async () => {
-    mockFetchError()
+    mockFetchSuccess()
     renderSlideOver()
     await waitFor(() => screen.getByText('Szerkesztés'))
     fireEvent.click(screen.getByText('Szerkesztés'))
@@ -70,9 +88,16 @@ describe('CustomerDetailSlideOver', () => {
   })
 
   it('shows Utolsó ajánlatok section', async () => {
-    mockFetchError()
+    mockFetchSuccess()
     renderSlideOver()
     await waitFor(() => expect(screen.getByText('Utolsó ajánlatok')).toBeTruthy())
+  })
+
+  it('shows loading spinner while fetching', () => {
+    vi.stubGlobal('fetch', vi.fn(() => new Promise(() => {})))
+    renderSlideOver()
+    const spinner = document.querySelector('.animate-spin')
+    expect(spinner).toBeTruthy()
   })
 
   it('shows Bezárás footer button', async () => {
@@ -83,13 +108,12 @@ describe('CustomerDetailSlideOver', () => {
 
   it('does not render when open=false', () => {
     mockFetchError()
-    renderSlideOver(REAL_CUSTOMER_ID, false)
+    renderSlideOver('C-001', false)
     expect(screen.queryByText('Kapcsolattartó')).toBeNull()
   })
 
   it('shows Deaktiválás action for Active customer', async () => {
-    mockFetchError()
-    // C-001 is Active type → should show Deaktiválás
+    mockFetchSuccess()
     renderSlideOver()
     await waitFor(() => expect(screen.getByText('Deaktiválás')).toBeTruthy())
   })
