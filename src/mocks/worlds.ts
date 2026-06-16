@@ -152,6 +152,7 @@ export const WORLDS: Record<string, World> = {
       { key: "products", hu: "Termékek", en: "Products" },
       { key: "materials", hu: "Anyagok", en: "Materials" },
       { key: "suppliers", hu: "Szállítók", en: "Suppliers" },
+      { key: "templates", hu: "Sablonok", en: "Templates" },
     ],
     badge: "8 termék",
   },
@@ -280,9 +281,43 @@ export const WORLDS: Record<string, World> = {
       { key: 'orders', hu: 'Rendelések' },
     ],
   },
+  hr: {
+    key: 'hr', hu: 'HR', en: 'HR',
+    sub: 'Munkaerő-kapacitás, jelenlét, távollétek',
+    icon: 'user', accent: 'amber',
+    badge: '1 kérelem',
+    screens: [
+      { key: 'dash', hu: 'Áttekintés' },
+      { key: 'people', hu: 'Dolgozók' },
+      { key: 'capacity', hu: 'Kapacitás-naptár' },
+      { key: 'absences', hu: 'Távollétek' },
+    ],
+  },
+  kontrolling: {
+    key: 'kontrolling', hu: 'Kontrolling', en: 'Controlling',
+    sub: 'Projekt-jövedelmezőség, terv vs. tény',
+    icon: 'analytics', accent: 'slate',
+    badge: '4 projekt',
+    screens: [
+      { key: 'dash', hu: 'Áttekintés' },
+      { key: 'projects', hu: 'Projekt-fedezet' },
+    ],
+  },
+  service: {
+    key: 'service', hu: 'Szerviz', en: 'Service',
+    sub: 'Reklamáció, garancia, szerviz látogatások',
+    icon: 'wrench', accent: 'orange',
+    badge: '3 nyitott',
+    screens: [
+      { key: 'dash', hu: 'Áttekintés' },
+      { key: 'tickets', hu: 'Jegyek' },
+      { key: 'warranties', hu: 'Garanciák' },
+      { key: 'visits', hu: 'Látogatások' },
+    ],
+  },
 }
 
-export const WORLD_ORDER: WorldKey[] = ["production", "sales", "design", "warehouse", "shopfloor", "crm", "finance", "projects", "logistics", "mfgprep", "supervisor", "masterdata", "trade", "interior", "maintenance", "quality", "ehs", "attendance", "tasks", "docs", "ai", "execbi", "shop", "settings"]
+export const WORLD_ORDER: WorldKey[] = ["production", "sales", "design", "warehouse", "shopfloor", "crm", "finance", "projects", "logistics", "mfgprep", "supervisor", "masterdata", "trade", "interior", "maintenance", "quality", "ehs", "attendance", "hr", "kontrolling", "service", "tasks", "docs", "ai", "execbi", "shop", "settings"]
 
 export const PARAM_TEMPLATES: ParamTemplate[] = [
   {

@@ -1,13 +1,15 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { Card, Icon } from '../components/ui'
 import { SlideOver } from '../components/ui/SlideOver'
 import { WorldShell } from '../components/layout/WorldShell'
 import {
-  PRODUCTS, MATERIALS, SUPPLIERS,
-  PRODUCT_STATUS_META, MATERIAL_TYPE_META, SUPPLIER_STATUS_META,
-  type MasterdataProduct, type MasterdataMaterial, type MasterdataSupplier,
+  PRODUCTS, SUPPLIERS,
+  PRODUCT_STATUS_META, SUPPLIER_STATUS_META,
+  type MasterdataProduct, type MasterdataSupplier,
 } from '../mocks/masterdata'
+import { fetchAll, useApi, API_BASE } from '../hooks/useApi'
+import { useAuth } from '../auth'
 
 // ── Helpers ────────────────────────────────────────────────────────────────
 function huf(n: number): string {
@@ -113,10 +115,14 @@ function SupplierDetailSlideOver({ supplier, onClose }: { supplier: MasterdataSu
   )
 }
 
+// ── Known material types (used for API queries and KPI count) ─────────────
+const KNOWN_MATERIAL_TYPES = [
+  'MDF 18mm', 'MDF 16mm', 'HDF 3mm', 'Forgácslap 18mm', 'ABS él 0.8mm', 'HDF', 'MDF',
+]
+
 // ── Dashboard ─────────────────────────────────────────────────────────────
 function MasterdataDashboard() {
   const activeProducts = PRODUCTS.filter((p) => p.status === 'active').length
-  const materialCount = MATERIALS.length
   const activeSuppliers = SUPPLIERS.filter((s) => s.status === 'active').length
   const lowStock = PRODUCTS.filter((p) => p.stock <= p.minStock).length
 
@@ -128,7 +134,7 @@ function MasterdataDashboard() {
       </div>
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
         <MdKpi label="Aktív termékek" value={activeProducts} sub={`${PRODUCTS.length} összesen`} />
-        <MdKpi label="Anyag cikkszámok" value={materialCount} sub="aktív anyagok" />
+        <MdKpi label="Anyag cikkszámok" value={KNOWN_MATERIAL_TYPES.length} sub="konfigurált anyag" />
         <MdKpi label="Aktív szállítók" value={activeSuppliers} sub={`${SUPPLIERS.length} összesen`} />
         <MdKpi label="Alacsony készlet" value={lowStock} sub="figyelmet igényel" />
       </div>
@@ -193,32 +199,76 @@ function ProductsList() {
 }
 
 // ── Materials List ─────────────────────────────────────────────────────────
+interface ApiStockItem {
+  materialType: string
+  fullPanelCount: number
+  widthMm: number
+  heightMm: number
+  offcutCount: number
+}
+
 function MaterialsList() {
+  const { token } = useAuth()
+  const [stocks, setStocks] = useState<ApiStockItem[] | null>(null)
+  const [isLoading, setIsLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+
+  useEffect(() => {
+    if (!token) return
+    setIsLoading(true)
+    const urls = KNOWN_MATERIAL_TYPES.map(
+      mt => `${API_BASE.inventory}/api/inventory/stock?materialType=${encodeURIComponent(mt)}`
+    )
+    fetchAll<ApiStockItem>(urls, token)
+      .then(results => {
+        const valid = results.filter((r): r is ApiStockItem => r !== null && r.fullPanelCount !== undefined)
+        setStocks(valid.length > 0 ? valid : [])
+        setIsLoading(false)
+      })
+      .catch(() => {
+        setError('Inventory API nem elérhető')
+        setIsLoading(false)
+      })
+  }, [token])
+
   return (
     <div className="px-4 md:px-7 py-5 md:py-6 space-y-4">
       <div className="text-[16px] font-semibold tracking-tight text-stone-900">Anyag-törzs</div>
-      <Card className="p-0 overflow-hidden">
-        <div className="divide-y divide-stone-100">
-          {MATERIALS.map((m) => {
-            const tm = MATERIAL_TYPE_META[m.type]
-            return (
-              <div key={m.id} className="px-5 py-3.5 flex items-center gap-3">
+      {isLoading && (
+        <div className="space-y-2">
+          {[1,2,3].map(i => <div key={i} className="h-14 rounded-xl bg-stone-100 animate-pulse" />)}
+        </div>
+      )}
+      {error && (
+        <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-[12px] text-amber-700">{error}</div>
+      )}
+      {!isLoading && !error && stocks !== null && stocks.length === 0 && (
+        <div className="rounded-xl border border-stone-200 bg-stone-50 px-4 py-8 text-center text-[12px] text-stone-500">
+          Nincs adat az Inventory API-ból
+        </div>
+      )}
+      {!isLoading && stocks && stocks.length > 0 && (
+        <Card className="p-0 overflow-hidden">
+          <div className="divide-y divide-stone-100">
+            {stocks.map((s) => (
+              <div key={s.materialType} className="px-5 py-3.5 flex items-center gap-3">
                 <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2">
-                    <span className="text-[13.5px] font-medium text-stone-900">{m.name}</span>
-                    <span className={`inline-flex px-2 h-5 items-center rounded-full text-[10px] font-medium ${tm.bg} ${tm.fg}`}>{tm.label}</span>
+                  <div className="text-[13.5px] font-medium text-stone-900">{s.materialType}</div>
+                  <div className="text-[11px] text-stone-400 font-mono mt-0.5">
+                    {s.widthMm > 0 && s.heightMm > 0 ? `${s.widthMm}×${s.heightMm} mm` : '—'}
                   </div>
-                  <div className="text-[11px] text-stone-400 font-mono mt-0.5">{m.code} · {m.supplier}</div>
                 </div>
                 <div className="text-right shrink-0">
-                  <div className="text-[13px] font-semibold text-stone-800">{huf(m.price)}/{m.unit}</div>
-                  <div className="text-[11px] text-stone-500">{m.stock} {m.unit} raktáron</div>
+                  <div className="text-[13px] font-semibold text-stone-800">{s.fullPanelCount} lap</div>
+                  {s.offcutCount > 0 && (
+                    <div className="text-[11px] text-stone-500">+{s.offcutCount} maradék</div>
+                  )}
                 </div>
               </div>
-            )
-          })}
-        </div>
-      </Card>
+            ))}
+          </div>
+        </Card>
+      )}
     </div>
   )
 }
@@ -255,6 +305,70 @@ function SuppliersList() {
   )
 }
 
+// ── Templates List ────────────────────────────────────────────────────────
+
+interface ApiTemplate {
+  id: string
+  name: string
+  tradeType: string
+  version: number
+  isActive: boolean
+  isArchived: boolean
+}
+
+function TemplatesList() {
+  const { data, isLoading, error, refetch } = useApi<ApiTemplate[]>(
+    `${API_BASE.abstractions}/api/modules/templates`
+  )
+  useEffect(() => { refetch() }, []) // eslint-disable-line
+
+  const templates: ApiTemplate[] = data ?? []
+
+  return (
+    <div className="px-4 md:px-7 py-5 md:py-6 space-y-4">
+      <div className="text-[16px] font-semibold tracking-tight text-stone-900">Sablonok</div>
+      {isLoading && (
+        <div className="space-y-2">
+          {[1, 2, 3].map(i => <div key={i} className="h-14 rounded-xl bg-stone-100 animate-pulse" />)}
+        </div>
+      )}
+      {error && (
+        <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-[12px] text-amber-700">
+          Abstractions API nem elérhető — {error}
+        </div>
+      )}
+      {!isLoading && !error && templates.length === 0 && (
+        <div className="rounded-xl border border-stone-200 bg-stone-50 px-4 py-8 text-center text-[12px] text-stone-500">
+          Nincs sablon az Abstractions API-ból
+        </div>
+      )}
+      {!isLoading && templates.length > 0 && (
+        <Card className="p-0 overflow-hidden">
+          <div className="divide-y divide-stone-100">
+            {templates.map((t) => (
+              <div key={t.id} className="px-5 py-3.5 flex items-center gap-3 hover:bg-stone-50 transition">
+                <div className="flex-1 min-w-0">
+                  <div className="text-[13.5px] font-medium text-stone-900">{t.name}</div>
+                  <div className="text-[11px] text-stone-400 font-mono mt-0.5">
+                    {t.tradeType} · v{t.version}
+                  </div>
+                </div>
+                <div className="shrink-0">
+                  {t.isActive ? (
+                    <span className="inline-flex items-center gap-1 px-2 h-5 rounded-full bg-emerald-50 text-emerald-700 text-[10.5px] font-medium">Aktív</span>
+                  ) : (
+                    <span className="inline-flex items-center gap-1 px-2 h-5 rounded-full bg-stone-100 text-stone-500 text-[10.5px] font-medium">Inaktív</span>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+        </Card>
+      )}
+    </div>
+  )
+}
+
 // ── World Page ─────────────────────────────────────────────────────────────
 export function MasterdataWorldPage() {
   const navigate = useNavigate()
@@ -265,6 +379,7 @@ export function MasterdataWorldPage() {
     if (currentScreen === 'products')  return <ProductsList />
     if (currentScreen === 'materials') return <MaterialsList />
     if (currentScreen === 'suppliers') return <SuppliersList />
+    if (currentScreen === 'templates') return <TemplatesList />
     return <MasterdataDashboard />
   }
 
