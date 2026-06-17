@@ -3,6 +3,7 @@ import { useLocation } from 'react-router-dom'
 import { Card, StatusPill, Icon } from '../components/ui'
 import { I18N } from '../mocks/data'
 import { useApi, API_BASE } from '../hooks/useApi'
+import { NestingViewer, type NestingResultDto } from '../components/NestingViewer'
 
 interface ApiCuttingPlan {
   id: string
@@ -32,6 +33,14 @@ export function ProductionPage({ initialTab = 'cutting' }: { initialTab?: 'cutti
     `${API_BASE.cutting}/api/cutting/plans`
   )
   useEffect(() => { fetchPlans() }, []) // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Fetch nesting data for selected plan
+  const { data: nestingData, refetch: fetchNesting } = useApi<NestingResultDto>(
+    selectedPlan ? `${API_BASE.cutting}/api/cutting/sheets/${selectedPlan}/nesting` : null
+  )
+  useEffect(() => {
+    if (selectedPlan) fetchNesting()
+  }, [selectedPlan]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // Handle highlightPlanId from navigation state
   useEffect(() => {
@@ -200,9 +209,14 @@ export function ProductionPage({ initialTab = 'cutting' }: { initialTab?: 'cutti
               </div>
             </div>
 
-            <div className="flex items-center justify-center h-52 rounded-lg bg-stone-50 border border-stone-200/70 text-stone-400 text-[13px]">
-              {currentPlanData ? 'Nesting API nem elérhető' : 'Válasszon vágási tervet a megjelenítéshez'}
-            </div>
+            {/* Nesting visualization */}
+            {nestingData ? (
+              <NestingViewer data={nestingData} />
+            ) : (
+              <div className="flex items-center justify-center h-52 rounded-lg bg-stone-50 border border-stone-200/70 text-stone-400 text-[13px]">
+                {currentPlanData ? 'Nesting API nem elérhető' : 'Válasszon vágási tervet a megjelenítéshez'}
+              </div>
+            )}
           </Card>
         </div>
       )}

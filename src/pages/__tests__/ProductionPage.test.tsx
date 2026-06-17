@@ -158,4 +158,249 @@ describe('ProductionPage', () => {
 
     vi.useRealTimers()
   })
+
+  // ─── TOP 2: Nesting Visualization tests ───────────────────────────────────
+
+  it('fetches nesting data when plan is selected', async () => {
+    const mockPlans = [
+      { id: 'CP-184-ABC', name: 'CP-184-ABC', date: '2024-06-15', status: 'Draft' },
+    ]
+
+    const mockNestingData = {
+      strategy: 'Guillotine',
+      sheets: [
+        {
+          id: 'sheet-1',
+          width: 2800,
+          height: 2070,
+          wastePercentage: 12.5,
+          placedParts: [
+            { id: 'Part-001', x: 0, y: 0, width: 400, height: 600, materialType: 'EG-3303-18' },
+          ],
+        },
+      ],
+    }
+
+    const fetchMock = vi.fn((url: string) => {
+      if (url.includes('/api/cutting/plans')) {
+        return Promise.resolve({
+          ok: true,
+          json: () => Promise.resolve(mockPlans),
+        })
+      }
+      if (url.includes('/nesting')) {
+        return Promise.resolve({
+          ok: true,
+          json: () => Promise.resolve(mockNestingData),
+        })
+      }
+      return Promise.resolve({ ok: false, status: 503 })
+    })
+
+    vi.stubGlobal('fetch', fetchMock)
+
+    render(
+      <MemoryRouter>
+        <ProductionPage />
+      </MemoryRouter>
+    )
+
+    // Wait for plans to load
+    await waitFor(() => {
+      const planButtons = screen.getAllByRole('button')
+      const planButton = planButtons.find(btn => btn.textContent?.includes('CP-184-ABC'))
+      expect(planButton).toBeTruthy()
+    })
+
+    // Click on a plan
+    const planButtons = screen.getAllByRole('button')
+    const planButton = planButtons.find(btn => btn.textContent?.includes('CP-184-ABC'))
+    if (planButton) {
+      fireEvent.click(planButton)
+
+      // Wait for nesting data to load
+      await waitFor(() => {
+        expect(fetchMock).toHaveBeenCalledWith(
+          expect.stringContaining('/nesting'),
+          expect.any(Object)
+        )
+      })
+    }
+  })
+
+  it('displays NestingViewer when nesting data is available', async () => {
+    const mockPlans = [
+      { id: 'CP-184-ABC', name: 'CP-184-ABC', date: '2024-06-15', status: 'Draft' },
+    ]
+
+    const mockNestingData = {
+      strategy: 'Guillotine',
+      sheets: [
+        {
+          id: 'sheet-1',
+          width: 2800,
+          height: 2070,
+          wastePercentage: 12.5,
+          placedParts: [
+            { id: 'Part-001', x: 0, y: 0, width: 400, height: 600, materialType: 'EG-3303-18' },
+          ],
+        },
+      ],
+    }
+
+    vi.stubGlobal('fetch', vi.fn((url: string) => {
+      if (url.includes('/api/cutting/plans')) {
+        return Promise.resolve({
+          ok: true,
+          json: () => Promise.resolve(mockPlans),
+        })
+      }
+      if (url.includes('/nesting')) {
+        return Promise.resolve({
+          ok: true,
+          json: () => Promise.resolve(mockNestingData),
+        })
+      }
+      return Promise.resolve({ ok: false, status: 503 })
+    }))
+
+    render(
+      <MemoryRouter>
+        <ProductionPage />
+      </MemoryRouter>
+    )
+
+    // Click on a plan
+    await waitFor(() => screen.getAllByRole('button'))
+    const planButtons = screen.getAllByRole('button')
+    const planButton = planButtons.find(btn => btn.textContent?.includes('CP-184-ABC'))
+
+    if (planButton) {
+      fireEvent.click(planButton)
+
+      // Wait for NestingViewer to render
+      await waitFor(() => {
+        expect(screen.getByText('Hulladék: 12.5%')).toBeTruthy()
+        expect(screen.getByText('Stratégia: Guillotine')).toBeTruthy()
+      })
+    }
+  })
+
+  it('shows fallback message when nesting API fails', async () => {
+    const mockPlans = [
+      { id: 'CP-184-ABC', name: 'CP-184-ABC', date: '2024-06-15', status: 'Draft' },
+    ]
+
+    vi.stubGlobal('fetch', vi.fn((url: string) => {
+      if (url.includes('/api/cutting/plans')) {
+        return Promise.resolve({
+          ok: true,
+          json: () => Promise.resolve(mockPlans),
+        })
+      }
+      if (url.includes('/nesting')) {
+        return Promise.resolve({ ok: false, status: 503 })
+      }
+      return Promise.resolve({ ok: false, status: 503 })
+    }))
+
+    render(
+      <MemoryRouter>
+        <ProductionPage />
+      </MemoryRouter>
+    )
+
+    // Click on a plan
+    await waitFor(() => screen.getAllByRole('button'))
+    const planButtons = screen.getAllByRole('button')
+    const planButton = planButtons.find(btn => btn.textContent?.includes('CP-184-ABC'))
+
+    if (planButton) {
+      fireEvent.click(planButton)
+
+      // Wait for fallback message
+      await waitFor(() => {
+        expect(screen.getByText('Nesting API nem elérhető')).toBeTruthy()
+      })
+    }
+  })
+
+  it('shows empty state when no plan is selected', () => {
+    vi.stubGlobal('fetch', vi.fn(() => Promise.resolve({ ok: false, status: 503 })))
+
+    render(
+      <MemoryRouter>
+        <ProductionPage />
+      </MemoryRouter>
+    )
+
+    expect(screen.getByText('Nincs kiválasztott terv')).toBeTruthy()
+  })
+
+  it('refetches nesting data when different plan is selected', async () => {
+    const mockPlans = [
+      { id: 'CP-184-ABC', name: 'CP-184-ABC', date: '2024-06-15', status: 'Draft' },
+      { id: 'CP-183-XYZ', name: 'CP-183-XYZ', date: '2024-06-14', status: 'Planned' },
+    ]
+
+    const fetchMock = vi.fn((url: string) => {
+      if (url.includes('/api/cutting/plans')) {
+        return Promise.resolve({
+          ok: true,
+          json: () => Promise.resolve(mockPlans),
+        })
+      }
+      if (url.includes('/nesting')) {
+        return Promise.resolve({
+          ok: true,
+          json: () => Promise.resolve({
+            strategy: 'FFDH',
+            sheets: [
+              {
+                id: 'sheet-1',
+                width: 2800,
+                height: 2070,
+                wastePercentage: 8.0,
+                placedParts: [],
+              },
+            ],
+          }),
+        })
+      }
+      return Promise.resolve({ ok: false, status: 503 })
+    })
+
+    vi.stubGlobal('fetch', fetchMock)
+
+    render(
+      <MemoryRouter>
+        <ProductionPage />
+      </MemoryRouter>
+    )
+
+    // Click on first plan
+    await waitFor(() => screen.getAllByRole('button'))
+    const firstPlanButton = screen.getAllByRole('button').find(btn => btn.textContent?.includes('CP-184-ABC'))
+    if (firstPlanButton) {
+      fireEvent.click(firstPlanButton)
+      await waitFor(() => {
+        expect(fetchMock).toHaveBeenCalledWith(
+          expect.stringContaining('CP-184-ABC/nesting'),
+          expect.any(Object)
+        )
+      })
+    }
+
+    // Click on second plan
+    const secondPlanButton = screen.getAllByRole('button').find(btn => btn.textContent?.includes('CP-183-XYZ'))
+    if (secondPlanButton) {
+      fireEvent.click(secondPlanButton)
+      await waitFor(() => {
+        expect(fetchMock).toHaveBeenCalledWith(
+          expect.stringContaining('CP-183-XYZ/nesting'),
+          expect.any(Object)
+        )
+      })
+    }
+  })
 })
