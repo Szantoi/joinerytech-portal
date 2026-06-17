@@ -1,8 +1,7 @@
-import { useState, useEffect } from 'react'
-import { Card, StatusPill, GhostBtn, PrimaryBtn, Icon } from '../components/ui'
-import { CUTTING_PLANS, NESTING, I18N } from '../mocks/data'
-import { NESTING_SHEETS } from '../mocks/extra2'
-import type { NestingPart, NestingSheet } from '../types'
+import { useState, useEffect, useRef } from 'react'
+import { useLocation } from 'react-router-dom'
+import { Card, StatusPill, Icon } from '../components/ui'
+import { I18N } from '../mocks/data'
 import { useApi, API_BASE } from '../hooks/useApi'
 
 interface ApiCuttingPlan {
@@ -10,6 +9,8 @@ interface ApiCuttingPlan {
   name: string
   date: string
   status: string
+  orderReference?: string
+  customerName?: string
 }
 
 const PLAN_STATUS_MAP: Record<string, string> = {
@@ -21,55 +22,53 @@ const PLAN_STATUS_MAP: Record<string, string> = {
 
 export function ProductionPage({ initialTab = 'cutting' }: { initialTab?: 'cutting' | 'machining' }) {
   const t = I18N.hu
+  const location = useLocation()
   const [tab, setTab] = useState<'cutting' | 'machining'>(initialTab)
-  const [selectedPlan, setSelectedPlan] = useState(CUTTING_PLANS[0].id)
-  const [hoveredPart, setHoveredPart] = useState<string | null>(null)
-  const [sheetIdx, setSheetIdx] = useState(0)
+  const [selectedPlan, setSelectedPlan] = useState<string | null>(null)
+  const [highlightedPlan, setHighlightedPlan] = useState<string | null>(null)
+  const planRefs = useRef<Record<string, HTMLButtonElement | null>>({})
 
   const { data: apiPlans, refetch: fetchPlans } = useApi<ApiCuttingPlan[]>(
     `${API_BASE.cutting}/api/cutting/plans`
   )
   useEffect(() => { fetchPlans() }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Use API plans if available, else fall back to mock
-  const displayPlans = apiPlans && apiPlans.length > 0
-    ? apiPlans.map(p => ({
-        id: p.id,
-        displayId: p.name || p.id.slice(0, 12).toUpperCase(),
-        material: p.date,
-        sheets: 1,
-        util: 0,
-        status: PLAN_STATUS_MAP[p.status] ?? 'draft',
-        order: '—',
-        machine: '—',
-        operator: '—',
-        isApiPlan: true,
-      }))
-    : CUTTING_PLANS.map(p => ({ ...p, displayId: p.id, isApiPlan: false }))
+  // Handle highlightPlanId from navigation state
+  useEffect(() => {
+    const highlightPlanId = (location.state as { highlightPlanId?: string })?.highlightPlanId
+    if (highlightPlanId) {
+      setSelectedPlan(highlightPlanId)
+      setHighlightedPlan(highlightPlanId)
 
-  const selectedFromApi = apiPlans && apiPlans.length > 0
-  const currentPlanData = selectedFromApi
-    ? (displayPlans.find(p => p.id === selectedPlan) ?? displayPlans[0])
-    : (CUTTING_PLANS.find(p => p.id === selectedPlan) ?? CUTTING_PLANS[0])
+      // Scroll to the highlighted plan after a short delay to ensure rendering
+      setTimeout(() => {
+        planRefs.current[highlightPlanId]?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+      }, 100)
 
-  // Always use mock nesting data — no per-plan nesting available from API yet
-  const mockPlan = CUTTING_PLANS[0]
-  const sheetCount = Math.max(
-    selectedFromApi ? 1 : (CUTTING_PLANS.find(p => p.id === selectedPlan)?.sheets ?? 1),
-    1
-  )
+      // Remove highlight after 3 seconds
+      setTimeout(() => {
+        setHighlightedPlan(null)
+      }, 3000)
+    }
+  }, [location.state])
 
-  // Keep backward compat: plan variable for nesting display
-  const plan = CUTTING_PLANS.find(p => p.id === selectedPlan) ?? mockPlan
+  const displayPlans = apiPlans?.map(p => ({
+    id: p.id,
+    displayId: p.name || p.id.slice(0, 12).toUpperCase(),
+    material: p.date,
+    sheets: 1,
+    util: 0,
+    status: PLAN_STATUS_MAP[p.status] ?? 'draft',
+    order: p.orderReference || '—',
+    customerName: p.customerName || '',
+    machine: '—',
+    operator: '—',
+    isApiPlan: true,
+  })) ?? []
 
-  const getSheet = (i: number): { parts: NestingPart[]; util: number } => {
-    if (i === 0) return { parts: NESTING.parts, util: plan.util }
-    const sheets = NESTING_SHEETS as Array<NestingSheet | null>
-    const ext = sheets[i] ?? sheets[(i % (sheets.length - 1)) + 1]
-    return ext ?? { parts: NESTING.parts, util: plan.util }
-  }
-
-  const curSheet = getSheet(sheetIdx)
+  const currentPlanData = selectedPlan
+    ? (displayPlans.find(p => p.id === selectedPlan) ?? null)
+    : null
 
   const machiningCols = [
     {
@@ -138,10 +137,11 @@ export function ProductionPage({ initialTab = 'cutting' }: { initialTab?: 'cutti
                 return (
                   <button
                     key={p.id}
-                    onClick={() => { setSelectedPlan(p.id); setSheetIdx(0) }}
-                    className={`w-full text-left px-4 py-3 border-b border-stone-100 last:border-0 ${
+                    ref={(el) => { planRefs.current[p.id] = el }}
+                    onClick={() => { setSelectedPlan(p.id) }}
+                    className={`w-full text-left px-4 py-3 border-b border-stone-100 last:border-0 transition-all ${
                       active ? 'bg-teal-50/60' : 'hover:bg-stone-50'
-                    }`}
+                    } ${highlightedPlan === p.id ? 'border-l-4 border-l-teal-500' : ''}`}
                   >
                     <div className="flex items-center justify-between gap-2 mb-1">
                       <span className="text-[11.5px] font-mono text-stone-700">{p.displayId}</span>
@@ -154,7 +154,11 @@ export function ProductionPage({ initialTab = 'cutting' }: { initialTab?: 'cutti
                         <StatusPill status={p.status} label={t.status[p.status as keyof typeof t.status] ?? p.status} />
                       </span>
                     </div>
-                    <div className="text-[12.5px] font-medium text-stone-900">{p.material}</div>
+                    <div className="text-[12.5px] font-medium text-stone-900">
+                      {p.customerName && p.order !== '—'
+                        ? `${p.customerName} · ${p.order}`
+                        : p.customerName || p.material || p.order}
+                    </div>
                     <div className="mt-1.5 flex items-center gap-2 text-[10.5px] text-stone-500">
                       {!p.isApiPlan && <><span className="font-mono">{p.sheets} {t.prod.sheet}</span><span>·</span></>}
                       {!p.isApiPlan && <span>{t.prod.utilization} {p.util}%</span>}
@@ -188,94 +192,16 @@ export function ProductionPage({ initialTab = 'cutting' }: { initialTab?: 'cutti
               <div>
                 <div className="text-[10.5px] uppercase tracking-wide text-stone-500 font-medium">{t.prod.nesting}</div>
                 <div className="text-[15px] font-semibold text-stone-900 mt-0.5">
-                  {currentPlanData.displayId} · {currentPlanData.material}
+                  {currentPlanData ? `${currentPlanData.displayId} · ${currentPlanData.material}` : '—'}
                 </div>
                 <div className="text-[11.5px] text-stone-500 mt-0.5 font-mono">
-                  {currentPlanData.order} · {currentPlanData.machine} · {currentPlanData.operator}
+                  {currentPlanData ? `${currentPlanData.order} · ${currentPlanData.machine} · ${currentPlanData.operator}` : 'Nincs kiválasztott terv'}
                 </div>
-              </div>
-              <div className="flex items-center gap-2">
-                <GhostBtn icon="settings">Beállítások</GhostBtn>
-                <PrimaryBtn icon="external">Megnyit CNC-n</PrimaryBtn>
               </div>
             </div>
 
-            <div className="grid grid-cols-4 gap-2 mb-4">
-              {[
-                { label: t.prod.utilization, value: `${curSheet.util}%`,                       tone: 'text-teal-700' },
-                { label: t.prod.waste,       value: `${(100 - curSheet.util).toFixed(0)}%`,    tone: 'text-amber-700' },
-                { label: t.prod.parts,       value: String(curSheet.parts.length),              tone: 'text-stone-900' },
-                { label: t.prod.sheet,       value: `${sheetIdx + 1} / ${sheetCount}`,          tone: 'text-stone-900' },
-              ].map((x, i) => (
-                <div key={i} className="bg-stone-50 border border-stone-200/70 rounded-lg p-2.5">
-                  <div className="text-[10.5px] uppercase tracking-wide text-stone-500">{x.label}</div>
-                  <div className={`text-[16px] font-semibold tabular-nums ${x.tone}`}>{x.value}</div>
-                </div>
-              ))}
-            </div>
-
-            <div className="bg-stone-50/40 rounded-lg border border-stone-200/70 p-3">
-              <NestingSVG
-                parts={curSheet.parts}
-                sheetW={NESTING.sheet.w}
-                sheetH={NESTING.sheet.h}
-                hoveredPart={hoveredPart}
-                onHover={setHoveredPart}
-              />
-            </div>
-
-            {sheetCount > 1 && (
-              <div className="mt-3 flex items-center gap-2 flex-wrap">
-                <button
-                  onClick={() => setSheetIdx(Math.max(0, sheetIdx - 1))}
-                  disabled={sheetIdx === 0}
-                  className="w-7 h-7 grid place-items-center rounded-md border border-stone-200 bg-white text-stone-600 hover:bg-stone-50 disabled:opacity-30"
-                >
-                  <Icon name="chevron" size={14} className="rotate-180" />
-                </button>
-                <div className="flex items-center gap-1 flex-wrap">
-                  {Array.from({ length: sheetCount }, (_, i) => i).map((i) => {
-                    const sh = getSheet(i)
-                    const isActive = i === sheetIdx
-                    return (
-                      <button
-                        key={i}
-                        onClick={() => setSheetIdx(i)}
-                        title={`Tábla ${i + 1} · ${sh.util}% kihasználás`}
-                        className={`relative w-12 h-9 rounded-md border-2 transition overflow-hidden bg-stone-50 ${
-                          isActive ? 'border-teal-600' : 'border-stone-200 hover:border-stone-300'
-                        }`}
-                      >
-                        <span className="absolute inset-0 grid place-items-center text-[10px] font-mono text-stone-600">{i + 1}</span>
-                        <span
-                          className={`absolute bottom-0 left-0 h-0.5 ${isActive ? 'bg-teal-600' : 'bg-stone-300'}`}
-                          style={{ width: `${sh.util}%` }}
-                        />
-                      </button>
-                    )
-                  })}
-                </div>
-                <button
-                  onClick={() => setSheetIdx(Math.min(sheetCount - 1, sheetIdx + 1))}
-                  disabled={sheetIdx >= sheetCount - 1}
-                  className="w-7 h-7 grid place-items-center rounded-md border border-stone-200 bg-white text-stone-600 hover:bg-stone-50 disabled:opacity-30"
-                >
-                  <Icon name="chevron" size={14} />
-                </button>
-                <div className="text-[10.5px] text-stone-500 font-mono ml-2">
-                  Tábla {sheetIdx + 1} / {sheetCount} · {curSheet.util}% kihasználás
-                </div>
-              </div>
-            )}
-
-            <div className="mt-3 flex items-center gap-3 text-[10.5px] text-stone-500 flex-wrap">
-              <span className="inline-flex items-center gap-1.5">
-                <span className="w-3 h-3 rounded-sm bg-teal-300" />{t.prod.parts}
-              </span>
-              <span className="inline-flex items-center gap-1.5">
-                <span className="w-3 h-3 rounded-sm" style={{ background: 'url(#grain)', border: '1px solid #a8a29e' }} />Tábla
-              </span>
-              <span className="ml-auto font-mono">Vágási rés: 4 mm · Forgás: 90°</span>
+            <div className="flex items-center justify-center h-52 rounded-lg bg-stone-50 border border-stone-200/70 text-stone-400 text-[13px]">
+              {currentPlanData ? 'Nesting API nem elérhető' : 'Válasszon vágási tervet a megjelenítéshez'}
             </div>
           </Card>
         </div>
@@ -308,67 +234,5 @@ export function ProductionPage({ initialTab = 'cutting' }: { initialTab?: 'cutti
         </div>
       )}
     </div>
-  )
-}
-
-interface NestingSVGProps {
-  parts: NestingPart[]
-  sheetW: number
-  sheetH: number
-  hoveredPart: string | null
-  onHover: (id: string | null) => void
-}
-
-function NestingSVG({ parts, sheetW, sheetH, hoveredPart, onHover }: NestingSVGProps) {
-  const SCALE = 0.18
-  const W = sheetW * SCALE
-  const H = sheetH * SCALE
-  const fills = ['#ccfbf1', '#99f6e4', '#5eead4', '#14b8a6']
-
-  return (
-    <svg viewBox={`0 0 ${W + 24} ${H + 36}`} style={{ width: '100%', height: 'auto' }} className="block">
-      <defs>
-        <pattern id="grain" x="0" y="0" width="6" height="6" patternUnits="userSpaceOnUse">
-          <rect width="6" height="6" fill="#fafaf9" />
-          <path d="M0 3 Q3 1.5 6 3" stroke="#e7e5e4" strokeWidth=".5" fill="none" />
-        </pattern>
-      </defs>
-      <g transform="translate(12,12)">
-        <rect x="0" y="0" width={W} height={H} fill="url(#grain)" stroke="#a8a29e" strokeWidth="1" />
-        <text x={W / 2} y={H + 16} textAnchor="middle" fontSize="9" fill="#78716c" fontFamily="ui-monospace,monospace">
-          {sheetW} × {sheetH} mm
-        </text>
-        {parts.map((p, i) => {
-          const x = p.x * SCALE
-          const y = p.y * SCALE
-          const w = p.w * SCALE
-          const h = p.h * SCALE
-          const fill = fills[i % fills.length]
-          const isHover = hoveredPart === p.id
-          return (
-            <g
-              key={p.id}
-              onMouseEnter={() => onHover(p.id)}
-              onMouseLeave={() => onHover(null)}
-              style={{ cursor: 'pointer' }}
-            >
-              <rect
-                x={x} y={y} width={w} height={h}
-                fill={fill}
-                fillOpacity={isHover ? 1 : 0.85}
-                stroke={isHover ? '#0f766e' : '#0d9488'}
-                strokeWidth={isHover ? 1.5 : 0.75}
-              />
-              <text x={x + w / 2} y={y + h / 2 - 2} textAnchor="middle" fontSize="8.5" fill="#134e4a" fontWeight="600">
-                {p.label}
-              </text>
-              <text x={x + w / 2} y={y + h / 2 + 9} textAnchor="middle" fontSize="7.5" fill="#0f766e" fontFamily="ui-monospace,monospace">
-                {p.w}×{p.h}
-              </text>
-            </g>
-          )
-        })}
-      </g>
-    </svg>
   )
 }

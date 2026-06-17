@@ -258,4 +258,129 @@ describe('DesignPage', () => {
     await waitFor(() => expect(screen.getByText('Számítás eredménye')).toBeTruthy())
     expect(screen.getByText('Ajtólap')).toBeTruthy()
   })
+
+  // ─── TOP 1: Design→Cutting Workflow tests ─────────────────────────────────
+
+  it('MaterialsGenerator submit button calls POST /cutting/api/sheets', async () => {
+    const fetchMock = vi.fn((url: string) => {
+      if (url.includes('/api/sheets')) {
+        return Promise.resolve({
+          ok: true,
+          json: () => Promise.resolve({ sheetId: 'SH-001', cuttingPlanId: 'CP-184-ABC' }),
+        })
+      }
+      return Promise.resolve({ ok: false, status: 503 })
+    })
+    vi.stubGlobal('fetch', fetchMock)
+
+    const { container } = render(
+      <MemoryRouter initialEntries={['/w/design/generate']}>
+        <Routes>
+          <Route path="/w/design/:screen" element={<DesignWorldPage />} />
+          <Route path="/w/production/:tab" element={<div>ProductionPage Mock</div>} />
+        </Routes>
+      </MemoryRouter>
+    )
+
+    // Navigate to step 2
+    await waitFor(() => screen.getByText('Tovább →'))
+    fireEvent.click(screen.getByText('Tovább →'))
+    await waitFor(() => screen.getByText('Áttekintés →'))
+    fireEvent.click(screen.getByText('Áttekintés →'))
+
+    // Click submit button
+    await waitFor(() => screen.getByText('Terv létrehozása és tovább a Gyártásba'))
+    fireEvent.click(screen.getByText('Terv létrehozása és tovább a Gyártásba'))
+
+    // Verify API was called with correct payload
+    await waitFor(() => {
+      expect(fetchMock).toHaveBeenCalledWith(
+        expect.stringContaining('/api/sheets'),
+        expect.objectContaining({
+          method: 'POST',
+          body: expect.any(String),
+        })
+      )
+    })
+  })
+
+  it('MaterialsGenerator navigates to ProductionPage with highlightPlanId on success', async () => {
+    const fetchMock = vi.fn((url: string) => {
+      if (url.includes('/api/sheets')) {
+        return Promise.resolve({
+          ok: true,
+          json: () => Promise.resolve({ sheetId: 'SH-001', cuttingPlanId: 'CP-184-XYZ' }),
+        })
+      }
+      return Promise.resolve({ ok: false, status: 503 })
+    })
+    vi.stubGlobal('fetch', fetchMock)
+
+    render(
+      <MemoryRouter initialEntries={['/w/design/generate']}>
+        <Routes>
+          <Route path="/w/design/:screen" element={<DesignWorldPage />} />
+          <Route path="/w/production/:tab" element={<div>ProductionPage Mock</div>} />
+        </Routes>
+      </MemoryRouter>
+    )
+
+    // Navigate to step 2
+    await waitFor(() => screen.getByText('Tovább →'))
+    fireEvent.click(screen.getByText('Tovább →'))
+    await waitFor(() => screen.getByText('Áttekintés →'))
+    fireEvent.click(screen.getByText('Áttekintés →'))
+
+    // Click submit button
+    await waitFor(() => screen.getByText('Terv létrehozása és tovább a Gyártásba'))
+    fireEvent.click(screen.getByText('Terv létrehozása és tovább a Gyártásba'))
+
+    // Verify navigation to ProductionPage
+    await waitFor(() => {
+      expect(screen.getByText('ProductionPage Mock')).toBeTruthy()
+    })
+  })
+
+  it('MaterialsGenerator shows loading state during submission', async () => {
+    let resolveFetch: (value: any) => void
+    const fetchPromise = new Promise((resolve) => { resolveFetch = resolve })
+
+    const fetchMock = vi.fn((url: string) => {
+      if (url.includes('/api/sheets')) {
+        return fetchPromise
+      }
+      return Promise.resolve({ ok: false, status: 503 })
+    })
+    vi.stubGlobal('fetch', fetchMock)
+
+    render(
+      <MemoryRouter initialEntries={['/w/design/generate']}>
+        <Routes>
+          <Route path="/w/design/:screen" element={<DesignWorldPage />} />
+        </Routes>
+      </MemoryRouter>
+    )
+
+    // Navigate to step 2
+    await waitFor(() => screen.getByText('Tovább →'))
+    fireEvent.click(screen.getByText('Tovább →'))
+    await waitFor(() => screen.getByText('Áttekintés →'))
+    fireEvent.click(screen.getByText('Áttekintés →'))
+
+    // Click submit button
+    await waitFor(() => screen.getByText('Terv létrehozása és tovább a Gyártásba'))
+    const submitButton = screen.getByText('Terv létrehozása és tovább a Gyártásba')
+    fireEvent.click(submitButton)
+
+    // Verify loading state
+    await waitFor(() => {
+      expect(screen.getByText('Küldés...')).toBeTruthy()
+    })
+
+    // Resolve fetch
+    resolveFetch!({
+      ok: true,
+      json: () => Promise.resolve({ sheetId: 'SH-001', cuttingPlanId: 'CP-184-TEST' }),
+    })
+  })
 })

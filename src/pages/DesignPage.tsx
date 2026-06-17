@@ -144,9 +144,7 @@ function DesignDashboard({ onScreen }: { onScreen: (s: string) => void }) {
   )
   useEffect(() => { refetch() }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
-  const templateCount = apiTemplates && apiTemplates.length > 0
-    ? apiTemplates.length
-    : PARAM_TEMPLATES.length
+  const templateCount = apiTemplates?.length ?? 0
 
   const stats = [
     { label: 'Aktív sablonok',       value: templateCount, delta: '+3 e hónapban' },
@@ -675,9 +673,9 @@ function TemplateEditor() {
 // ─── Materials Generator ──────────────────────────────────────────────────────
 type ResolvedPart = { name: string; mat: string; w: number | string; h: number | string; t: number | string; qty: number | string }
 
-function genCuttingPlanId() { return `CP-184-${Math.random().toString(36).slice(2, 5).toUpperCase()}` }
-
 function MaterialsGenerator() {
+  const navigate = useNavigate()
+  const { mutate, isLoading: isSubmitting } = useMutation<{ sheetId: string; cuttingPlanId: string }>()
   const [step, setStep] = useState(0)
   const availableTemplates = PARAM_TEMPLATES.filter((t) => t.id !== 'T-04')
   const [tplId, setTplId] = useState(availableTemplates[0].id)
@@ -687,7 +685,7 @@ function MaterialsGenerator() {
   )
   const [orderRef, setOrderRef] = useState('JT-2426-0184 — Bognár Bútor Kft.')
   const [extras, setExtras] = useState<ResolvedPart[]>([])
-  const [cuttingPlanId] = useState(genCuttingPlanId)
+  const [cuttingPlanId, setCuttingPlanId] = useState<string | null>(null)
 
   useEffect(() => {
     setVars(Object.fromEntries(tpl.vars.map((v) => [v.key, v.default])))
@@ -838,8 +836,32 @@ function MaterialsGenerator() {
             </Card>
             <div className="flex justify-between">
               <button onClick={() => setStep(1)} className="h-9 px-4 border border-stone-200 text-[12px] rounded-lg hover:bg-stone-50">← Paraméterek</button>
-              <button onClick={() => setStep(3)} className="h-9 px-5 bg-emerald-600 text-white text-[12px] font-medium rounded-lg hover:bg-emerald-700 inline-flex items-center gap-1.5">
-                <Icon name="bolt" size={12} />Szabászlistába küldés
+              <button
+                onClick={async () => {
+                  try {
+                    const result = await mutate(
+                      `${API_BASE.cutting}/api/sheets`,
+                      {
+                        method: 'POST',
+                        body: {
+                          orderReference: orderRef,
+                          templateId: tpl.id,
+                          calculatedParts: allParts,
+                        },
+                      }
+                    )
+                    setCuttingPlanId(result.cuttingPlanId)
+                    navigate('/w/production/cutting', { state: { highlightPlanId: result.cuttingPlanId } })
+                  } catch (err) {
+                    console.error('Failed to submit cutting plan:', err)
+                    // TODO: Show user-friendly error toast
+                  }
+                }}
+                disabled={isSubmitting}
+                className="h-9 px-5 bg-emerald-600 text-white text-[12px] font-medium rounded-lg hover:bg-emerald-700 disabled:opacity-50 inline-flex items-center gap-1.5"
+              >
+                <Icon name="bolt" size={12} />
+                {isSubmitting ? 'Küldés...' : 'Terv létrehozása és tovább a Gyártásba'}
               </button>
             </div>
           </div>
