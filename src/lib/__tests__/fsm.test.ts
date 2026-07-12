@@ -4,7 +4,7 @@
  */
 import { describe, it, expect } from 'vitest';
 import { canTransition, checkTransition, availableTransitions, outgoing } from '../fsm';
-import { catalogFsm } from '../fsmDefinitions';
+import { catalogFsm, batchFsm } from '../fsmDefinitions';
 
 describe('catalog FSM transition rules (from prototype _catFlow)', () => {
   it('allows the declared happy-path transitions', () => {
@@ -72,5 +72,26 @@ describe('availableTransitions — what buttons to render for a user', () => {
 
   it('outgoing returns [] for an unknown status (no crash)', () => {
     expect(outgoing(catalogFsm, 'nonexistent')).toEqual([]);
+  });
+});
+
+describe('batch FSM (shop-floor lifecycle — BatchAssignmentBoard governance)', () => {
+  it('enforces the manufacturing progression, no skips', () => {
+    expect(canTransition(batchFsm, 'assigned', 'running')).toBe(true);
+    expect(canTransition(batchFsm, 'running', 'completed')).toBe(true);
+    expect(canTransition(batchFsm, 'unassigned', 'running')).toBe(false); // must be assigned first
+    expect(canTransition(batchFsm, 'assigned', 'completed')).toBe(false); // must run first
+  });
+
+  it('gates start/complete to shop-floor roles (Joiner/Admin)', () => {
+    expect(checkTransition(batchFsm, 'assigned', 'running', { roles: ['Joiner'] }).ok).toBe(true);
+    expect(checkTransition(batchFsm, 'running', 'completed', { roles: ['Admin'] }).ok).toBe(true);
+    const blocked = checkTransition(batchFsm, 'assigned', 'running', { roles: ['Designer'] });
+    expect(blocked.ok).toBe(false);
+    if (!blocked.ok) expect(blocked.reason).toBe('forbidden_role');
+  });
+
+  it('completed is terminal', () => {
+    expect(outgoing(batchFsm, 'completed')).toEqual([]);
   });
 });

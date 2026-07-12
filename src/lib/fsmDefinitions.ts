@@ -50,9 +50,28 @@ export const catalogFsm: FsmDefinition = {
 };
 
 /**
+ * Machine batch (gyártási batch) lifecycle — `MachineBatch['status']`.
+ * The manufacturing progression on the shop floor:
+ *   unassigned → assigned → running → completed
+ * Starting/completing is shop-floor work (Joiner) or Admin; assignment is handled
+ * separately (operator + machine + time), so it is not gated by role here.
+ */
+export const batchFsm: FsmDefinition = {
+  name: 'batch',
+  statuses: ['unassigned', 'assigned', 'running', 'completed'],
+  transitions: {
+    unassigned: [{ to: 'assigned', label: 'Hozzárendelés' }],
+    assigned: [{ to: 'running', roles: ['Joiner', 'Admin'], label: 'Indítás' }],
+    running: [{ to: 'completed', roles: ['Joiner', 'Admin'], label: 'Kész' }],
+    completed: [],
+  },
+};
+
+/**
  * Central registry so a component can look up an FSM by entity kind without
  * importing each definition. Extend as new entities gain governance.
  */
 export const FSMS: Record<string, FsmDefinition> = {
   catalog: catalogFsm,
+  batch: batchFsm,
 };

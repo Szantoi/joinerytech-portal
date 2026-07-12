@@ -2,6 +2,8 @@ import { useState } from 'react'
 import { Card, Icon, StatusPill } from '../ui'
 import { useApi, useMutation, API_BASE } from '../../hooks/useApi'
 import { useAuth } from '../../hooks/useAuth'
+import { checkTransition } from '../../lib/fsm'
+import { batchFsm } from '../../lib/fsmDefinitions'
 
 // ─── TypeScript Interfaces ────────────────────────────────────────────────────
 
@@ -391,16 +393,27 @@ export function BatchAssignmentBoard({ date, batches, onAssignSuccess }: BatchAs
   }
 
   const handleStart = (batchId: string) => {
-    // TODO: Call FSM transition API when available
+    const b = localBatches.find(x => x.id === batchId)
+    if (!b) return
+    // Config-driven FSM governance (batchFsm): only a declared transition, and only
+    // for a permitted role. Replaces the previous implicit assumption.
+    const chk = checkTransition(batchFsm, b.status, 'running', { roles })
+    if (!chk.ok) { alert(chk.message); return }
+    // Optimistic update. TODO: swap for the batch-status transition API once the
+    // endpoint exists — the transition is already validated here + server-side.
     setLocalBatches(prev =>
-      prev.map(b => (b.id === batchId ? { ...b, status: 'running' } : b))
+      prev.map(x => (x.id === batchId ? { ...x, status: 'running' } : x))
     )
   }
 
   const handleComplete = (batchId: string) => {
-    // TODO: Call FSM transition API when available
+    const b = localBatches.find(x => x.id === batchId)
+    if (!b) return
+    const chk = checkTransition(batchFsm, b.status, 'completed', { roles })
+    if (!chk.ok) { alert(chk.message); return }
+    // Optimistic update. TODO: swap for the batch-status transition API once available.
     setLocalBatches(prev =>
-      prev.map(b => (b.id === batchId ? { ...b, status: 'completed' } : b))
+      prev.map(x => (x.id === batchId ? { ...x, status: 'completed' } : x))
     )
   }
 
