@@ -51,10 +51,9 @@ describe('MfgPrepPage', () => {
     expect(screen.getAllByText('Release queue').length).toBeGreaterThan(0)
   })
 
-  it('queue shows release items', () => {
+  it('queue shows endpoint pending banner', () => {
     renderMfg('queue')
-    expect(screen.getAllByText(/Bognár Bútor Kft/).length).toBeGreaterThan(0)
-    expect(screen.getAllByText(/Doorstar Hungary Zrt/).length).toBeGreaterThan(0)
+    expect(screen.getByText('Backend endpoint nem elérhető')).toBeTruthy()
   })
 
   it('queue has status filter buttons', () => {
@@ -64,39 +63,10 @@ describe('MfgPrepPage', () => {
     expect(screen.getAllByText('Blokkolt').length).toBeGreaterThan(0)
   })
 
-  it('queue shows priority badges', () => {
-    renderMfg('queue')
-    expect(screen.getAllByText('Sürgős').length).toBeGreaterThan(0)
-  })
-
-  it('clicking release item opens detail SlideOver', () => {
-    renderMfg('queue')
-    fireEvent.click(screen.getAllByText(/Bognár Bútor Kft/)[0])
-    expect(screen.getAllByText(/REL-2426-001/).length).toBeGreaterThan(0)
-  })
-
-  it('release detail shows checklist', () => {
-    renderMfg('queue')
-    fireEvent.click(screen.getAllByText(/Bognár Bútor Kft/)[0])
-    expect(screen.getByText('Ellenőrzőlista')).toBeTruthy()
-    expect(screen.getByText('Anyaglista ellenőrzve')).toBeTruthy()
-  })
-
-  it('release detail shows material note', () => {
-    renderMfg('queue')
-    fireEvent.click(screen.getAllByText(/Bognár Bútor Kft/)[0])
-    expect(screen.getByText(/Bükk 18mm/)).toBeTruthy()
-  })
-
-  it('blocked item shows in queue', () => {
-    renderMfg('queue')
-    expect(screen.getAllByText(/Tóth Konyha|Fehér fényezett/).length).toBeGreaterThan(0)
-  })
-
-  it('queue filter works — in_production filter', () => {
+  it('queue filter changes endpoint param in pending banner', () => {
     renderMfg('queue')
     fireEvent.click(screen.getAllByText('Gyártásban')[0])
-    expect(screen.getByText('Konyhabútor — 16 fiókos sor')).toBeTruthy()
+    expect(screen.getByText('Backend endpoint nem elérhető')).toBeTruthy()
   })
 
   it('renders datasheets screen', () => {
@@ -104,22 +74,8 @@ describe('MfgPrepPage', () => {
     expect(screen.getAllByText('Munkalapok').length).toBeGreaterThan(0)
   })
 
-  it('datasheets list shows active sheets', () => {
+  it('datasheets screen shows endpoint pending banner', () => {
     renderMfg('datasheets')
-    expect(screen.getAllByText(/Bognár Bútor Kft|Doorstar|Hegyi/).length).toBeGreaterThan(0)
-    expect(screen.getAllByText('Aktív').length).toBeGreaterThan(0)
-  })
-
-  it('clicking datasheet opens detail SlideOver', () => {
-    renderMfg('datasheets')
-    fireEvent.click(screen.getAllByText(/Bognár Bútor Kft/)[0])
-    expect(screen.getAllByText(/DS-2426-001/).length).toBeGreaterThan(0)
-  })
-
-  it('datasheet detail shows operations', () => {
-    renderMfg('datasheets')
-    fireEvent.click(screen.getAllByText(/Bognár Bútor Kft/)[0])
-    expect(screen.getAllByText('Műveletek').length).toBeGreaterThan(0)
-    expect(screen.getAllByText('Szabászat').length).toBeGreaterThan(0)
+    expect(screen.getByText('Backend endpoint nem elérhető')).toBeTruthy()
   })
 })

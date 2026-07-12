@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { Card, StatusPill } from '../components/ui'
 import { OffcutsPanel } from '../components/orders/OffcutsPanel'
 import { MovementsPage as MovementsTab } from './warehouse/MovementsPage'
-import { MATERIALS, I18N } from '../mocks/data'
+import { I18N } from '../mocks/data'
 import { fetchAll, API_BASE } from '../hooks/useApi'
 import { useAuth } from '../auth'
 
@@ -32,16 +32,25 @@ export function InventoryPage() {
   const [tab, setTab] = useState<InvTab>('materials')
   const { token } = useAuth()
   const [apiStocks, setApiStocks] = useState<ApiStockItem[] | null>(null)
+  const [isLoading, setIsLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
     if (!token) return
+    setIsLoading(true)
     const urls = KNOWN_MATERIAL_TYPES.map(
       mt => `${API_BASE.inventory}/api/inventory/stock?materialType=${encodeURIComponent(mt)}`
     )
-    fetchAll<ApiStockItem>(urls, token).then(results => {
-      const valid = results.filter((r): r is ApiStockItem => r !== null && r.fullPanelCount !== undefined)
-      if (valid.length > 0) setApiStocks(valid)
-    })
+    fetchAll<ApiStockItem>(urls, token)
+      .then(results => {
+        const valid = results.filter((r): r is ApiStockItem => r !== null && r.fullPanelCount !== undefined)
+        if (valid.length > 0) setApiStocks(valid)
+        setIsLoading(false)
+      })
+      .catch(e => {
+        setError(e?.message ?? 'Ismeretlen hiba')
+        setIsLoading(false)
+      })
   }, [token])
 
   // Build display materials from API or mock
@@ -55,7 +64,7 @@ export function InventoryPage() {
         price: 8500,
         trend: stockTrend(s.fullPanelCount),
       }))
-    : MATERIALS
+    : []
 
   const alertCount = displayMaterials.filter((m) => m.trend !== 'ok').length
 
@@ -86,6 +95,25 @@ export function InventoryPage() {
 
       {tab === 'materials' && (
         <>
+          {isLoading && (
+            <div className="grid grid-cols-3 gap-3 mb-3">
+              {[0, 1, 2].map(i => (
+                <div key={i} className="animate-pulse bg-stone-100 rounded-2xl h-24" />
+              ))}
+            </div>
+          )}
+          {error && (
+            <div className="mb-3 rounded-xl bg-amber-50 border border-amber-200 px-4 py-3 text-[12.5px] text-amber-800">
+              Inventory API nem elérhető — {error}
+            </div>
+          )}
+          {!isLoading && !error && displayMaterials.length === 0 && (
+            <div className="mb-3 rounded-xl bg-stone-50 border border-stone-200 px-4 py-3 text-[12.5px] text-stone-600">
+              Nincs adat az Inventory API-ból
+            </div>
+          )}
+          {!isLoading && !error && displayMaterials.length > 0 && (
+          <>
           <div className="grid grid-cols-3 gap-3 mb-3">
             {[
               { label: 'Anyagok',       value: displayMaterials.length, sub: 'katalógusban' },
@@ -142,6 +170,8 @@ export function InventoryPage() {
               )
             })}
           </div>
+          </>
+          )}
         </>
       )}
 

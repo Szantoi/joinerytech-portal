@@ -10,6 +10,31 @@ vi.mock('../../auth', () => ({
   })),
 }))
 
+vi.mock('../../hooks/useApi', () => ({
+  useApi: vi.fn(() => ({
+    data: {
+      items: [
+        { id: 'test-1', title: '16-fiókos szekrény', targetFacilityId: 'f1', phase: 'Delivery', isDelegated: false },
+      ],
+      totalCount: 1,
+    },
+    isLoading: false,
+    error: null,
+    refetch: vi.fn(),
+  })),
+  useMutation: vi.fn(() => ({
+    mutate: vi.fn(() => Promise.resolve({})),
+    isLoading: false,
+    error: null,
+  })),
+  fetchAll: vi.fn(() => Promise.resolve([])),
+  API_BASE: {
+    kernel: '/api', joinery: '/joinery', cutting: '/cutting',
+    inventory: '/inventory', procurement: '/procurement',
+    abstractions: '/abstractions', ai: '/ai', identity: '/identity', sales: '/sales',
+  },
+}))
+
 afterEach(() => { vi.unstubAllGlobals() })
 
 describe('WorkflowPage', () => {

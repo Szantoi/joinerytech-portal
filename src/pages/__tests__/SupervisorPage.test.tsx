@@ -1,7 +1,8 @@
-import { describe, it, expect, vi } from 'vitest'
-import { render, screen, fireEvent } from '@testing-library/react'
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
+import { render, screen, fireEvent, waitFor } from '@testing-library/react'
 import { MemoryRouter, Route, Routes } from 'react-router-dom'
 import { SupervisorWorldPage } from '../SupervisorPage'
+import { WORKSTATIONS } from '../../mocks/supervisor'
 
 vi.mock('../../auth', () => ({
   useAuth: vi.fn(() => ({
@@ -9,6 +10,19 @@ vi.mock('../../auth', () => ({
     user: { profile: { name: 'Test User' } }, roles: ['Admin'],
   })),
 }))
+
+beforeEach(() => {
+  vi.stubGlobal('fetch', vi.fn((url: string) => {
+    if (url.includes('/tools/workstations')) {
+      return Promise.resolve({ ok: true, json: () => Promise.resolve(WORKSTATIONS) })
+    }
+    return Promise.resolve({ ok: true, json: () => Promise.resolve([]) })
+  }))
+})
+
+afterEach(() => {
+  vi.unstubAllGlobals()
+})
 
 function renderSup(path = '') {
   const url = path ? `/w/supervisor/${path}` : '/w/supervisor'
@@ -45,33 +59,36 @@ describe('SupervisorPage', () => {
     expect(screen.getAllByText('Magas').length).toBeGreaterThan(0)
   })
 
-  it('dashboard shows workstation cards', () => {
+  it('dashboard shows workstation cards', async () => {
     renderSup()
-    expect(screen.getAllByText('Holzma HPP380').length).toBeGreaterThan(0)
+    await waitFor(() => expect(screen.getAllByText('Holzma HPP380').length).toBeGreaterThan(0))
     expect(screen.getAllByText('Biesse Rover CNC').length).toBeGreaterThan(0)
   })
 
-  it('dashboard shows workstation states', () => {
+  it('dashboard shows workstation states', async () => {
     renderSup()
-    expect(screen.getAllByText('Dolgozik').length).toBeGreaterThan(0)
+    await waitFor(() => expect(screen.getAllByText('Dolgozik').length).toBeGreaterThan(0))
     expect(screen.getAllByText('Blokkolt').length).toBeGreaterThan(0)
   })
 
-  it('clicking workstation opens detail SlideOver', () => {
+  it('clicking workstation opens detail SlideOver', async () => {
     renderSup()
+    await waitFor(() => expect(screen.getAllByText('Holzma HPP380').length).toBeGreaterThan(0))
     fireEvent.click(screen.getAllByText('Holzma HPP380')[0])
     expect(screen.getAllByText('Szabászat').length).toBeGreaterThan(0)
     expect(screen.getByText(/Kihasználtság ma/)).toBeTruthy()
   })
 
-  it('blocked workstation shows blocked reason in detail', () => {
+  it('blocked workstation shows blocked reason in detail', async () => {
     renderSup()
+    await waitFor(() => expect(screen.getAllByText('Biesse Rover CNC').length).toBeGreaterThan(0))
     fireEvent.click(screen.getAllByText('Biesse Rover CNC')[0])
     expect(screen.getAllByText(/CNC program/).length).toBeGreaterThan(0)
   })
 
-  it('workstation detail shows operator name', () => {
+  it('workstation detail shows operator name', async () => {
     renderSup()
+    await waitFor(() => expect(screen.getAllByText('Holzma HPP380').length).toBeGreaterThan(0))
     fireEvent.click(screen.getAllByText('Holzma HPP380')[0])
     expect(screen.getAllByText('Nagy J.').length).toBeGreaterThan(0)
   })
@@ -87,16 +104,16 @@ describe('SupervisorPage', () => {
     expect(screen.getAllByText('Műhely-floor').length).toBeGreaterThan(0)
   })
 
-  it('floor screen shows all workstations', () => {
+  it('floor screen shows all workstations', async () => {
     renderSup('floor')
-    expect(screen.getAllByText('Holzma HPP380').length).toBeGreaterThan(0)
+    await waitFor(() => expect(screen.getAllByText('Holzma HPP380').length).toBeGreaterThan(0))
     expect(screen.getAllByText('Homag KAL 310').length).toBeGreaterThan(0)
     expect(screen.getAllByText('Szerelőpad 1').length).toBeGreaterThan(0)
   })
 
-  it('floor screen shows utilization percentages', () => {
+  it('floor screen shows utilization percentages', async () => {
     renderSup('floor')
-    expect(screen.getAllByText(/82%|68%/).length).toBeGreaterThan(0)
+    await waitFor(() => expect(screen.getAllByText(/82%|68%/).length).toBeGreaterThan(0))
   })
 
   it('renders dayplan screen', () => {

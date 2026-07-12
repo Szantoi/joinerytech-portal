@@ -1,7 +1,7 @@
 export type OrderStatus = 'draft' | 'calc' | 'ready' | 'released' | 'planned' | 'running' | 'done' | 'low' | 'ok' | 'critical'
 export type OrderType = 'door' | 'cabinet' | 'window' | 'custom'
 export type UserRole = 'admin' | 'manager' | 'operator' | 'viewer'
-export type WorldKey = 'production' | 'sales' | 'design' | 'warehouse' | 'shopfloor' | 'settings' | 'crm' | 'finance' | 'projects' | 'logistics' | 'mfgprep' | 'supervisor' | 'masterdata' | 'trade' | 'interior' | 'maintenance' | 'quality' | 'ehs' | 'attendance' | 'tasks' | 'docs' | 'ai' | 'execbi' | 'shop'
+export type WorldKey = 'production' | 'sales' | 'design' | 'warehouse' | 'shopfloor' | 'settings' | 'crm' | 'finance' | 'projects' | 'logistics' | 'mfgprep' | 'supervisor' | 'masterdata' | 'trade' | 'interior' | 'maintenance' | 'quality' | 'ehs' | 'attendance' | 'tasks' | 'docs' | 'ai' | 'execbi' | 'shop' | 'hr' | 'kontrolling' | 'service'
 export type TaskKind = 'cutting' | 'edgeband' | 'cnc'
 export type MachineState = 'running' | 'idle'
 export type QuoteStatus = 'draft' | 'sent' | 'approved' | 'rejected' | 'expired'

@@ -35,7 +35,7 @@ function TaskDetailSlideOver({ task, onClose }: { task: Task | null; onClose: ()
           <TaskStatusPill status={task.status} />
         </div>
 
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <div>
             <div className="text-[10.5px] text-stone-400 mb-0.5">Határidő</div>
             <div className="text-[12px] font-mono text-stone-800">{task.dueDate}</div>

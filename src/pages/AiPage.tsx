@@ -4,6 +4,8 @@ import { Card } from '../components/ui'
 import { SlideOver } from '../components/ui/SlideOver'
 import { WorldShell } from '../components/layout/WorldShell'
 import { AI_AGENTS, AI_SKILLS, AI_MEMORY, AI_AGENT_STAGE_META, type AiAgent } from '../mocks/ai'
+import { useAuth } from '../auth'
+import { API_BASE } from '../hooks/useApi'
 
 // ── Helpers ────────────────────────────────────────────────────────────────
 function AgentStagePill({ stage }: { stage: AiAgent['stage'] }) {
@@ -124,11 +126,79 @@ function SkillsList() {
 }
 
 // ── AI Chat Panel ──────────────────────────────────────────────────────────
+interface ChatMsg { role: 'user' | 'assistant'; text: string }
+
 function AiChatPanel() {
-  const messages = [
-    { role: 'user', text: 'Készíts összefoglalót a heti gyártási terhelésről' },
-    { role: 'assistant', text: 'A heti terhelés alapján: Holzma HPP380 95%-on, Biesse Rover 78%-on fut. Javasolt intézkedés: ...' },
-  ]
+  const { token } = useAuth()
+  const [messages, setMessages] = useState<ChatMsg[]>([])
+  const [input, setInput] = useState('')
+  const [isStreaming, setIsStreaming] = useState(false)
+
+  async function sendMessage() {
+    if (!input.trim() || isStreaming || !token) return
+    const userMsg: ChatMsg = { role: 'user', text: input.trim() }
+    const newMessages = [...messages, userMsg]
+    setMessages([...newMessages, { role: 'assistant', text: '' }])
+    setInput('')
+    setIsStreaming(true)
+
+    try {
+      const res = await fetch(`${API_BASE.ai}/bff/chat/stream`, {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          messages: newMessages.map((m) => ({ role: m.role, content: m.text })),
+        }),
+      })
+
+      if (!res.ok || !res.body) {
+        setMessages((prev) => {
+          const updated = [...prev]
+          updated[updated.length - 1] = { role: 'assistant', text: 'Hiba történt a kérés során.' }
+          return updated
+        })
+        return
+      }
+
+      const reader = res.body.getReader()
+      const decoder = new TextDecoder()
+      let buffer = ''
+
+      while (true) {
+        const { done, value } = await reader.read()
+        if (done) break
+        buffer += decoder.decode(value, { stream: true })
+        const lines = buffer.split('\n')
+        buffer = lines.pop() ?? ''
+        for (const line of lines) {
+          if (!line.startsWith('data: ')) continue
+          const data = line.slice(6).trim()
+          if (data === '[DONE]') break
+          try {
+            const chunk = JSON.parse(data) as { type: string; text?: string }
+            if (chunk.type === 'text' && chunk.text) {
+              setMessages((prev) => {
+                const updated = [...prev]
+                updated[updated.length - 1] = {
+                  role: 'assistant',
+                  text: updated[updated.length - 1].text + chunk.text,
+                }
+                return updated
+              })
+            }
+          } catch { /* ignore malformed SSE chunks */ }
+        }
+      }
+    } catch {
+      setMessages((prev) => {
+        const updated = [...prev]
+        updated[updated.length - 1] = { role: 'assistant', text: 'Kapcsolati hiba.' }
+        return updated
+      })
+    } finally {
+      setIsStreaming(false)
+    }
+  }
 
   return (
     <div className="px-4 md:px-7 py-5 md:py-6 max-w-[900px] mx-auto">
@@ -138,16 +208,19 @@ function AiChatPanel() {
       </div>
       <div className="bg-white rounded-2xl border border-stone-200 overflow-hidden">
         <div className="p-4 space-y-3 min-h-[300px]">
+          {messages.length === 0 && (
+            <div className="flex items-center justify-center h-[260px] text-stone-400 text-[13px]">
+              Kezdj el egy beszélgetést az AI ágensekkel
+            </div>
+          )}
           {messages.map((msg, i) => (
             <div key={i} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
               <div
                 className={`max-w-[80%] rounded-xl px-3 py-2 text-[12.5px] ${
-                  msg.role === 'user'
-                    ? 'bg-purple-600 text-white'
-                    : 'bg-stone-100 text-stone-800'
+                  msg.role === 'user' ? 'bg-purple-600 text-white' : 'bg-stone-100 text-stone-800'
                 }`}
               >
-                {msg.text}
+                {msg.text || <span className="animate-pulse text-stone-400">…</span>}
               </div>
             </div>
           ))}
@@ -155,11 +228,18 @@ function AiChatPanel() {
         <div className="border-t border-stone-100 p-3 flex gap-2">
           <input
             type="text"
+            value={input}
+            onChange={(e) => setInput(e.target.value)}
+            onKeyDown={(e) => { if (e.key === 'Enter') sendMessage() }}
             placeholder="Írj üzenetet..."
-            className="flex-1 h-9 px-3 rounded-lg border border-stone-200 text-[12.5px] focus:outline-none focus:border-purple-400"
-            readOnly
+            disabled={isStreaming}
+            className="flex-1 h-9 px-3 rounded-lg border border-stone-200 text-[12.5px] focus:outline-none focus:border-purple-400 disabled:bg-stone-50"
           />
-          <button className="h-9 px-4 rounded-lg bg-purple-600 text-white text-[12.5px] font-medium">
+          <button
+            onClick={sendMessage}
+            disabled={isStreaming || !input.trim()}
+            className="h-9 px-4 rounded-lg bg-purple-600 text-white text-[12.5px] font-medium disabled:opacity-50"
+          >
             Küld
           </button>
         </div>

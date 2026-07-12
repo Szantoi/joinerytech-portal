@@ -839,22 +839,33 @@ function MaterialsGenerator() {
               <button
                 onClick={async () => {
                   try {
+                    // Map to backend CuttingLineInput format
+                    const lines = allParts.map((part) => ({
+                      partName: String(part.name),
+                      materialType: String(part.mat),
+                      widthMm: Number(part.w),
+                      heightMm: Number(part.h),
+                      thicknessMm: Number(part.t),
+                      quantity: Number(part.qty),
+                      notes: null,
+                    }))
+
                     const result = await mutate(
                       `${API_BASE.cutting}/api/sheets`,
                       {
                         method: 'POST',
                         body: {
                           orderReference: orderRef,
-                          templateId: tpl.id,
-                          calculatedParts: allParts,
+                          lines,
                         },
                       }
                     )
-                    setCuttingPlanId(result.cuttingPlanId)
-                    navigate('/w/production/cutting', { state: { highlightPlanId: result.cuttingPlanId } })
+                    setCuttingPlanId(result.sheetId || result.cuttingPlanId)
+                    navigate('/w/production/cutting', { state: { highlightPlanId: result.sheetId || result.cuttingPlanId } })
+                    setStep(3)
                   } catch (err) {
                     console.error('Failed to submit cutting plan:', err)
-                    // TODO: Show user-friendly error toast
+                    alert('Hiba történt a vágási terv létrehozásakor. Próbáld újra!')
                   }
                 }}
                 disabled={isSubmitting}

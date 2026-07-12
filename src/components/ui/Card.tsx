@@ -10,8 +10,8 @@ export function Card({ children, className = '', interactive = false }: CardProp
   return (
     <div
       className={cn(
-        'bg-white border border-stone-200/80 rounded-xl',
-        interactive && 'hover:border-stone-300 transition cursor-pointer',
+        'bg-white dark:bg-stone-900 border border-stone-200/80 dark:border-stone-700/80 rounded-xl',
+        interactive && 'hover:border-stone-300 dark:hover:border-stone-600 transition cursor-pointer',
         className,
       )}
     >

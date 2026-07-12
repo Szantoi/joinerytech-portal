@@ -2,12 +2,11 @@ import { useState, useEffect } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { Card, Icon, SlideOver, GhostBtn } from '../components/ui'
 import { WorldShell } from '../components/layout/WorldShell'
-import { ORDERS } from '../mocks/data'
 import { useApi, useMutation, API_BASE } from '../hooks/useApi'
 import { useSalesDetail } from '../hooks/useSalesDetail'
 import { SalesDetailHost } from '../components/sales/SalesDetailHost'
 import {
-  QUOTE_STATUS_MAP as STATUS_MAP, CUSTOMERS_FALLBACK, QUOTES_FALLBACK, fmtM as fmt,
+  QUOTE_STATUS_MAP as STATUS_MAP, fmtM as fmt,
   type CustomerDto, type QuoteListItemDto, type PagedResult,
 } from '../data/data-sales-detail'
 
@@ -71,9 +70,9 @@ function SalesDashboard({ onScreen, onOpenQuote }: { onScreen: (s: string) => vo
 
   useEffect(() => { refetchQuotes(); refetchCustomers() }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
-  const quotes: QuoteListItemDto[] = quotesData?.items ?? QUOTES_FALLBACK
-  const customers: CustomerDto[] = customersData?.items ?? CUSTOMERS_FALLBACK
-  const totalCustomers: number = customersData?.totalCount ?? CUSTOMERS_FALLBACK.length
+  const quotes: QuoteListItemDto[] = quotesData?.items ?? []
+  const customers: CustomerDto[] = customersData?.items ?? []
+  const totalCustomers: number = customersData?.totalCount ?? 0
 
   // KPI computations
   const openQuotes = quotes.filter((q) => q.status === 'Sent' || q.status === 'Accepted')
@@ -84,6 +83,7 @@ function SalesDashboard({ onScreen, onOpenQuote }: { onScreen: (s: string) => vo
   const denominator = quotes.filter((q) => ['Sent', 'Accepted', 'Rejected'].includes(q.status)).length
   const conversionRate = denominator > 0 ? Math.round((acceptedCount / denominator) * 100) + '%' : '—'
 
+  const todayStr = new Date().toISOString().slice(0, 10)
   const sevenDaysLater = new Date()
   sevenDaysLater.setDate(sevenDaysLater.getDate() + 7)
   const sevenDaysStr = sevenDaysLater.toISOString().slice(0, 10)
@@ -181,7 +181,8 @@ function SalesDashboard({ onScreen, onOpenQuote }: { onScreen: (s: string) => vo
               <div className="text-[12px] text-stone-400 py-3 text-center">Nincs lejáró ajánlat</div>
             )}
             {expiring.map((q) => {
-              const tone = STATUS_MAP[q.status]
+              const isExpired = q.expiresAt != null && q.expiresAt < todayStr
+              const tone = STATUS_MAP[isExpired ? 'Expired' : q.status]
               return (
                 <button key={q.id} onClick={() => onOpenQuote?.(q.id)} className="w-full grid grid-cols-[1fr_140px_120px_90px] gap-3 px-3 py-2.5 rounded-lg border border-stone-100 hover:bg-stone-50/40 items-center text-left">
                   <div className="min-w-0">
@@ -243,8 +244,9 @@ function SalesQuotes({ onOpenQuote, onCreateQuote }: { onOpenQuote?: (id: string
   )
   useEffect(() => { refetch() }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
-  const allQuotes: QuoteListItemDto[] = data?.items ?? QUOTES_FALLBACK
+  const allQuotes: QuoteListItemDto[] = data?.items ?? []
   const list = filter === 'all' ? allQuotes : allQuotes.filter((q) => q.status === filter)
+  const todayStr = new Date().toISOString().slice(0, 10)
 
   void error
 
@@ -300,7 +302,8 @@ function SalesQuotes({ onOpenQuote, onCreateQuote }: { onOpenQuote?: (id: string
             </thead>
             <tbody>
               {list.map((q) => {
-                const tone = STATUS_MAP[q.status]
+                const isExpired = q.status === 'Sent' && q.expiresAt != null && q.expiresAt < todayStr
+                const tone = STATUS_MAP[isExpired ? 'Expired' : q.status]
                 return (
                   <tr key={q.id} onClick={() => onOpenQuote?.(q.id)} className="border-b border-stone-50 last:border-0 hover:bg-stone-50/40 cursor-pointer">
                     <td className="px-5 py-2.5 font-mono text-stone-700">{q.quoteNumber}</td>
@@ -351,7 +354,7 @@ function SalesCustomers({ onOpenCustomer }: { onOpenCustomer?: (id: string) => v
 
   useEffect(() => { refetch() }, [url]) // eslint-disable-line react-hooks/exhaustive-deps
 
-  const customers: CustomerDto[] = data?.items ?? CUSTOMERS_FALLBACK
+  const customers: CustomerDto[] = data?.items ?? []
   const filtered = searchQuery && !data
     ? customers.filter(
         (c) =>
@@ -607,45 +610,10 @@ function CreateCustomerSlideOver({ open, onClose, onRefetch }: CreateCustomerSli
 // ─── SalesOrders ─────────────────────────────────────────────────────────────
 
 function SalesOrders() {
-  const [filter, setFilter] = useState<string>('all')
-  const counts: Record<string, number> = { all: ORDERS.length }
-  ORDERS.forEach((o) => { counts[o.status] = (counts[o.status] ?? 0) + 1 })
-  const list = filter === 'all' ? ORDERS : ORDERS.filter((o) => o.status === filter)
-
-  const STATUS_LABELS: Record<string, { label: string; bg: string; fg: string }> = {
-    draft:    { label: 'Vázlat',     bg: 'bg-stone-100',  fg: 'text-stone-600' },
-    calc:     { label: 'Kalkuláció', bg: 'bg-sky-50',     fg: 'text-sky-700' },
-    released: { label: 'Kiadva',     bg: 'bg-amber-50',   fg: 'text-amber-700' },
-    ready:    { label: 'Kész',       bg: 'bg-emerald-50', fg: 'text-emerald-700' },
-  }
-
-  const FILTER_STATUS = ['all', 'draft', 'calc', 'released', 'ready']
-
   return (
     <div className="px-7 py-6 space-y-4">
       <div className="mx-0 mb-0 px-4 py-2.5 bg-amber-50 border border-amber-200 rounded-lg text-[11.5px] text-amber-800">
         A megrendelések a Gyártás modulban kezelhetők. Ez a nézet összesítő — élő adatok hamarosan.
-      </div>
-
-      <div className="flex items-center gap-2 flex-wrap">
-        {FILTER_STATUS.map((s) => (
-          <button
-            key={s}
-            onClick={() => setFilter(s)}
-            className={`px-3 h-8 rounded-lg text-[11.5px] font-medium border transition inline-flex items-center gap-1.5 ${
-              filter === s
-                ? 'bg-indigo-50 border-indigo-300 text-indigo-800'
-                : 'bg-white border-stone-200 text-stone-700 hover:border-stone-300'
-            }`}
-          >
-            {s === 'all' ? 'Összes' : (STATUS_LABELS[s]?.label ?? s)}
-            <span className={`px-1.5 rounded text-[10px] tabular-nums ${
-              filter === s ? 'bg-indigo-100 text-indigo-700' : 'bg-stone-100 text-stone-600'
-            }`}>
-              {counts[s] ?? 0}
-            </span>
-          </button>
-        ))}
       </div>
 
       <Card className="p-0 overflow-hidden">
@@ -660,25 +628,9 @@ function SalesOrders() {
             </tr>
           </thead>
           <tbody>
-            {list.map((o) => {
-              const tone = STATUS_LABELS[o.status] ?? { label: o.status, bg: 'bg-stone-100', fg: 'text-stone-600' }
-              return (
-                <tr key={o.id} className="border-b border-stone-50 last:border-0 hover:bg-stone-50/40">
-                  <td className="px-5 py-2.5 font-mono text-stone-700">{o.id}</td>
-                  <td className="px-5 py-2.5 font-medium text-stone-900">{o.customer}</td>
-                  <td className="px-5 py-2.5 text-stone-600 font-mono">{o.date}</td>
-                  <td className="px-5 py-2.5 text-stone-600">{o.items}</td>
-                  <td className="px-5 py-2.5">
-                    <span className={`inline-flex items-center px-2 h-6 rounded-full text-[10.5px] font-medium ${tone.bg} ${tone.fg}`}>
-                      {tone.label}
-                    </span>
-                  </td>
-                  <td className="px-5 py-2.5 text-right font-semibold text-stone-900 font-mono">
-                    {o.total.toLocaleString('hu-HU')} Ft
-                  </td>
-                </tr>
-              )
-            })}
+            <tr>
+              <td colSpan={6} className="px-5 py-8 text-center text-[12px] text-stone-400">Nincs adat</td>
+            </tr>
           </tbody>
         </table>
       </Card>

@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from 'vitest'
-import { render, screen, fireEvent } from '@testing-library/react'
+import { render, screen } from '@testing-library/react'
 import { MemoryRouter, Route, Routes } from 'react-router-dom'
 import { QualityWorldPage } from '../QualityPage'
 
@@ -36,12 +36,12 @@ describe('QualityPage', () => {
     expect(screen.getAllByText('Aktív auditok').length).toBeGreaterThan(0)
   })
 
-  it('dashboard shows NCR panel', () => {
+  it('dashboard shows NCR panel heading', () => {
     renderQuality()
     expect(screen.getByText('Nyitott NCR-ek')).toBeTruthy()
   })
 
-  it('dashboard shows audit log snippet', () => {
+  it('dashboard shows audit log heading', () => {
     renderQuality()
     expect(screen.getByText('Legutóbbi auditok')).toBeTruthy()
   })
@@ -51,28 +51,9 @@ describe('QualityPage', () => {
     expect(screen.getAllByText('NCR-ek').length).toBeGreaterThan(0)
   })
 
-  it('NCR list shows NCRs with severity badges', () => {
+  it('NCR list shows endpoint pending banner', () => {
     renderQuality('ncr')
-    expect(screen.getAllByText('Kritikus').length).toBeGreaterThan(0)
-    expect(screen.getAllByText('Súlyos').length).toBeGreaterThan(0)
-  })
-
-  it('clicking NCR opens detail SlideOver', () => {
-    renderQuality('ncr')
-    fireEvent.click(screen.getAllByText(/Felületi karcolás/)[0])
-    expect(screen.getAllByText(/NCR-001/).length).toBeGreaterThan(0)
-  })
-
-  it('NCR detail shows description', () => {
-    renderQuality('ncr')
-    fireEvent.click(screen.getAllByText(/Felületi karcolás/)[0])
-    expect(screen.getByText('Leírás')).toBeTruthy()
-  })
-
-  it('NCR detail shows status change buttons for open NCR', () => {
-    renderQuality('ncr')
-    fireEvent.click(screen.getAllByText(/Felületi karcolás/)[0])
-    expect(screen.getByText('Vizsgálat indítása')).toBeTruthy()
+    expect(screen.getByText('Backend endpoint nem elérhető')).toBeTruthy()
   })
 
   it('renders templates screen', () => {
@@ -80,10 +61,9 @@ describe('QualityPage', () => {
     expect(screen.getAllByText('Sablonok').length).toBeGreaterThan(0)
   })
 
-  it('templates list shows checklist item count', () => {
+  it('templates screen shows endpoint pending banner', () => {
     renderQuality('templates')
-    expect(screen.getAllByText(/Konyhabútor végső ellenőrzés/).length).toBeGreaterThan(0)
-    expect(screen.getAllByText(/Ajtólap minőségi ellenőrzés/).length).toBeGreaterThan(0)
+    expect(screen.getByText('Backend endpoint nem elérhető')).toBeTruthy()
   })
 
   it('renders audit log screen', () => {
@@ -91,15 +71,8 @@ describe('QualityPage', () => {
     expect(screen.getAllByText('Auditok').length).toBeGreaterThan(0)
   })
 
-  it('audit log shows results', () => {
+  it('audit log shows endpoint pending banner', () => {
     renderQuality('audits')
-    expect(screen.getAllByText('Megfelelt').length).toBeGreaterThan(0)
-    expect(screen.getAllByText('Feltételes').length).toBeGreaterThan(0)
-    expect(screen.getAllByText('Nem felelt').length).toBeGreaterThan(0)
-  })
-
-  it('audit log shows inspector names', () => {
-    renderQuality('audits')
-    expect(screen.getAllByText(/Tóth K\.|Kiss A\./).length).toBeGreaterThan(0)
+    expect(screen.getByText('Backend endpoint nem elérhető')).toBeTruthy()
   })
 })

@@ -7,7 +7,7 @@ import type { WorldKey } from '../../types'
 
 // Worlds accessible per Keycloak role
 const ROLE_WORLDS: Record<string, WorldKey[]> = {
-  Admin:    ['production', 'sales', 'design', 'warehouse', 'shopfloor', 'crm', 'finance', 'projects', 'logistics', 'mfgprep', 'supervisor', 'masterdata', 'trade', 'interior', 'maintenance', 'quality', 'ehs', 'attendance', 'tasks', 'docs', 'ai', 'execbi', 'shop', 'settings'],
+  Admin:    ['production', 'sales', 'design', 'warehouse', 'shopfloor', 'crm', 'finance', 'projects', 'logistics', 'mfgprep', 'supervisor', 'masterdata', 'trade', 'interior', 'maintenance', 'quality', 'ehs', 'attendance', 'hr', 'kontrolling', 'service', 'tasks', 'docs', 'ai', 'execbi', 'shop', 'settings'],
   Designer: ['production', 'sales', 'design', 'warehouse', 'crm', 'finance', 'projects', 'logistics', 'masterdata', 'trade', 'interior', 'maintenance', 'quality', 'ehs', 'tasks', 'docs', 'ai', 'settings'],
   Joiner:   ['shopfloor'],
 }
@@ -94,7 +94,7 @@ export function HomeScreen({ onEnter, lang = 'hu' }: HomeScreenProps) {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-stone-50 via-white to-teal-50/30">
-      <header className="px-8 py-5 flex items-center justify-between border-b border-stone-200/60">
+      <header className="px-4 md:px-8 py-5 flex items-center justify-between border-b border-stone-200/60">
         <div className="flex items-center gap-3">
           <div className="w-9 h-9 rounded-lg bg-stone-900 grid place-items-center text-white">
             <span className="text-[16px] font-bold tracking-tighter">jt</span>
@@ -149,17 +149,17 @@ export function HomeScreen({ onEnter, lang = 'hu' }: HomeScreenProps) {
         </div>
       </header>
 
-      <div className="max-w-[1200px] mx-auto px-8 pt-12 pb-6">
+      <div className="max-w-[1200px] mx-auto px-4 md:px-8 pt-8 md:pt-12 pb-6">
         <div className="text-[12px] uppercase tracking-[0.2em] text-stone-500 font-medium mb-2">
           {new Date().toLocaleDateString(lang === 'en' ? 'en-US' : 'hu-HU', { weekday: 'long', month: 'long', day: 'numeric' })}
         </div>
-        <h1 className="text-[44px] font-semibold tracking-tight text-stone-900 leading-tight">
+        <h1 className="text-[28px] md:text-[44px] font-semibold tracking-tight text-stone-900 leading-tight">
           {greeting}, {me}.
         </h1>
-        <p className="text-[16px] text-stone-500 mt-1">{subtitle}.</p>
+        <p className="text-[14px] md:text-[16px] text-stone-500 mt-1">{subtitle}.</p>
       </div>
 
-      <div className="max-w-[1200px] mx-auto px-8 pb-10">
+      <div className="max-w-[1200px] mx-auto px-4 md:px-8 pb-10">
         <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
           {visibleWorlds.filter((k): k is WorldKey => k in WORLDS).map((key) => {
             const w = WORLDS[key]
@@ -197,11 +197,11 @@ export function HomeScreen({ onEnter, lang = 'hu' }: HomeScreenProps) {
               <button
                 key={i}
                 onClick={() => onEnter(n.world, n.screen)}
-                className="w-full grid grid-cols-[20px_1fr_120px] gap-3 px-5 py-3 border-b border-stone-100 last:border-0 items-center text-left hover:bg-stone-50/70"
+                className="w-full grid grid-cols-[20px_1fr] md:grid-cols-[20px_1fr_120px] gap-3 px-5 py-3 border-b border-stone-100 last:border-0 items-center text-left hover:bg-stone-50/70"
               >
                 <div className={`w-2 h-2 rounded-full ${DOT_COLORS[n.type] ?? 'bg-stone-400'}`} />
                 <div className="text-[12.5px] text-stone-800 truncate">{n.text}</div>
-                <div className="text-[10.5px] text-stone-400 font-mono text-right">{n.when}</div>
+                <div className="hidden md:block text-[10.5px] text-stone-400 font-mono text-right">{n.when}</div>
               </button>
             ))}
           </Card>

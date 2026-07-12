@@ -36,8 +36,9 @@ describe('LoginPage', () => {
     expect(screen.getByText(/Bejelentkezés/)).toBeInTheDocument()
   })
 
-  it('calls login when not authenticated', () => {
+  it('renders login form when not authenticated', () => {
     render(<MemoryRouter><LoginPage /></MemoryRouter>)
-    expect(mockLogin).toHaveBeenCalledTimes(1)
+    expect(screen.getByText(/Üdv újra!/)).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /Bejelentkezés/ })).toBeInTheDocument()
   })
 })

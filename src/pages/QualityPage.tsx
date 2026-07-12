@@ -4,10 +4,19 @@ import { Card, Icon } from '../components/ui'
 import { SlideOver } from '../components/ui/SlideOver'
 import { WorldShell } from '../components/layout/WorldShell'
 import {
-  NCRS, TEMPLATES, AUDITS,
   NCR_STATUS_META, NCR_SEVERITY_META, AUDIT_RESULT_META,
   type QualityNcr, type NcrStatus, type NcrSeverity, type AuditResult,
 } from '../mocks/quality'
+
+function EndpointPending({ endpoint }: { endpoint: string }) {
+  return (
+    <div className="rounded-xl border-2 border-dashed border-amber-200 bg-amber-50/60 px-6 py-10 flex flex-col items-center gap-2 text-center">
+      <div className="text-[13px] font-semibold text-amber-700">Backend endpoint nem elérhető</div>
+      <code className="text-[11px] text-amber-600 bg-amber-100 rounded px-2 py-0.5">{endpoint}</code>
+      <div className="text-[11px] text-stone-500 mt-1">Az endpoint implementálása után lesz élő adat</div>
+    </div>
+  )
+}
 
 // ── Helpers ────────────────────────────────────────────────────────────────
 function NcrStatusPill({ status }: { status: NcrStatus }) {
@@ -93,30 +102,13 @@ function NcrDetailSlideOver({ ncr, onClose }: { ncr: QualityNcr | null; onClose:
 
 // ── NCR List ───────────────────────────────────────────────────────────────
 function NcrList() {
-  const [selected, setSelected] = useState<QualityNcr | null>(null)
   return (
     <div className="px-4 md:px-7 py-5 md:py-6 max-w-[1200px] mx-auto">
       <div className="mb-4">
         <h1 className="text-[20px] md:text-[24px] font-semibold tracking-tight text-stone-900">NCR-ek</h1>
         <p className="text-[12.5px] text-stone-500 mt-0.5">Nem-megfelelőségi rekordok</p>
       </div>
-      <div className="space-y-2">
-        {NCRS.map((ncr) => (
-          <button key={ncr.id} onClick={() => setSelected(ncr)}
-            className="w-full text-left bg-white rounded-xl border border-stone-200 px-4 py-3 hover:shadow-sm hover:border-emerald-200 transition flex items-center gap-3">
-            <div className="min-w-0 flex-1">
-              <div className="flex items-center gap-2 flex-wrap mb-1">
-                <NcrSeverityBadge severity={ncr.severity} />
-              </div>
-              <div className="text-[13px] font-semibold text-stone-900">{ncr.title}</div>
-              <div className="text-[11.5px] text-stone-500 mt-0.5">{ncr.product} · {ncr.reportedBy}</div>
-              <div className="text-[11px] text-stone-400 mt-1 font-mono">{ncr.reportedAt}</div>
-            </div>
-            <NcrStatusPill status={ncr.status} />
-          </button>
-        ))}
-      </div>
-      <NcrDetailSlideOver ncr={selected} onClose={() => setSelected(null)} />
+      <EndpointPending endpoint="GET /quality/api/ncrs [?]" />
     </div>
   )
 }
@@ -129,25 +121,7 @@ function TemplatesList() {
         <h1 className="text-[20px] md:text-[24px] font-semibold tracking-tight text-stone-900">Sablonok</h1>
         <p className="text-[12.5px] text-stone-500 mt-0.5">Minőség-ellenőrzési ellenőrzőlisták</p>
       </div>
-      <div className="space-y-3">
-        {TEMPLATES.map((tmpl) => (
-          <div key={tmpl.id} className="bg-white rounded-xl border border-stone-200 px-4 py-4">
-            <div className="flex items-start justify-between mb-2">
-              <div>
-                <div className="text-[13px] font-semibold text-stone-900">{tmpl.name}</div>
-                <div className="text-[11.5px] text-stone-500 mt-0.5">{tmpl.productType} · {tmpl.items.length} elem · {tmpl.usedCount}× használt</div>
-              </div>
-            </div>
-            <div className="flex flex-wrap gap-1.5 mt-2">
-              {tmpl.items.map((item, i) => (
-                <span key={i} className="px-2 h-6 rounded-md bg-stone-100 text-stone-600 text-[11px] inline-flex items-center">
-                  {item}
-                </span>
-              ))}
-            </div>
-          </div>
-        ))}
-      </div>
+      <EndpointPending endpoint="GET /quality/api/templates [?]" />
     </div>
   )
 }
@@ -160,32 +134,17 @@ function AuditLog() {
         <h1 className="text-[20px] md:text-[24px] font-semibold tracking-tight text-stone-900">Auditok</h1>
         <p className="text-[12.5px] text-stone-500 mt-0.5">Minőség-ellenőrzési audit napló</p>
       </div>
-      <div className="space-y-2">
-        {AUDITS.map((audit) => (
-          <div key={audit.id} className="bg-white rounded-xl border border-stone-200 px-4 py-3 flex items-center gap-3">
-            <div className="min-w-0 flex-1">
-              <div className="text-[13px] font-semibold text-stone-900">{audit.product}</div>
-              <div className="text-[11.5px] text-stone-500 mt-0.5">{audit.inspector} · {audit.date}</div>
-              <div className="text-[11px] text-stone-400 mt-1">Megfelelési arány: {audit.passRate}% · {audit.findings} megállapítás</div>
-            </div>
-            <AuditResultBadge result={audit.result} />
-          </div>
-        ))}
-      </div>
+      <EndpointPending endpoint="GET /quality/api/audits [?]" />
     </div>
   )
 }
 
 // ── Quality Dashboard ──────────────────────────────────────────────────────
 function QualityDashboard({ onScreen }: { onScreen: (s: string) => void }) {
-  const [selected, setSelected] = useState<QualityNcr | null>(null)
-
-  const openNcrs    = NCRS.filter((n) => n.status === 'open' || n.status === 'under_review').length
-  const closedNcrs  = NCRS.filter((n) => n.status === 'closed')
-  const avgClose    = closedNcrs.length > 0 ? 8 : 0 // demo value in days
-  const passAudits  = AUDITS.filter((a) => a.result === 'pass').length
-  const passRate    = Math.round((passAudits / AUDITS.length) * 100)
-  const activeAudits = AUDITS.filter((a) => a.result !== 'fail').length
+  const openNcrs    = 0
+  const avgClose    = 0
+  const passRate    = 0
+  const activeAudits = 0
 
   const KpiCard = ({ label, value, sub, tone, icon }: { label: string; value: string | number; sub: string; tone: string; icon: string }) => (
     <div className="bg-white rounded-2xl border border-stone-200 p-4">
@@ -226,17 +185,8 @@ function QualityDashboard({ onScreen }: { onScreen: (s: string) => void }) {
             <span className="text-[12.5px] font-semibold text-stone-800">Nyitott NCR-ek</span>
             <button onClick={() => onScreen('ncr')} className="text-[11px] text-emerald-600 hover:text-emerald-800">Összes →</button>
           </div>
-          <div className="divide-y divide-stone-50">
-            {NCRS.filter((n) => n.status === 'open' || n.status === 'under_review').map((ncr) => (
-              <button key={ncr.id} onClick={() => setSelected(ncr)}
-                className="w-full text-left px-4 py-3 hover:bg-stone-50/60 flex items-center gap-3">
-                <div className="min-w-0 flex-1">
-                  <div className="text-[12.5px] font-semibold text-stone-900 truncate">{ncr.title}</div>
-                  <div className="text-[11px] text-stone-500 mt-0.5">{ncr.product}</div>
-                </div>
-                <NcrSeverityBadge severity={ncr.severity} />
-              </button>
-            ))}
+          <div className="px-4 py-4 text-center text-[12px] text-stone-400">
+            Adatok nem elérhetők · endpoint fejlesztés alatt
           </div>
         </Card>
 
@@ -245,21 +195,12 @@ function QualityDashboard({ onScreen }: { onScreen: (s: string) => void }) {
             <span className="text-[12.5px] font-semibold text-stone-800">Legutóbbi auditok</span>
             <button onClick={() => onScreen('audits')} className="text-[11px] text-emerald-600 hover:text-emerald-800">Összes →</button>
           </div>
-          <div className="divide-y divide-stone-50">
-            {AUDITS.slice(0, 4).map((audit) => (
-              <div key={audit.id} className="px-4 py-3 flex items-center gap-3">
-                <div className="min-w-0 flex-1">
-                  <div className="text-[12.5px] font-semibold text-stone-900 truncate">{audit.product}</div>
-                  <div className="text-[11px] text-stone-500 mt-0.5">{audit.inspector} · {audit.date}</div>
-                </div>
-                <AuditResultBadge result={audit.result} />
-              </div>
-            ))}
+          <div className="px-4 py-4 text-center text-[12px] text-stone-400">
+            Adatok nem elérhetők · endpoint fejlesztés alatt
           </div>
         </Card>
       </div>
 
-      <NcrDetailSlideOver ncr={selected} onClose={() => setSelected(null)} />
     </div>
   )
 }

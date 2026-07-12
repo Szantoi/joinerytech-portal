@@ -1,9 +1,12 @@
 import { Routes, Route, Navigate, useNavigate, useParams } from 'react-router-dom'
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { AuthProvider } from './auth/AuthContext'
+import { ToastProvider } from './components/ui'
 import { CallbackPage } from './auth/CallbackPage'
 import { RequireAuth } from './auth/RequireAuth'
 import { HomeScreen } from './components/layout/HomeScreen'
 import { WorldShell } from './components/layout/WorldShell'
+import { ErrorBoundary } from './components/ErrorBoundary'
 import { LandingPage } from './pages/LandingPage'
 import { LoginPage } from './pages/LoginPage'
 import { DashboardPage } from './pages/DashboardPage'
@@ -15,9 +18,10 @@ import { DesignWorldPage } from './pages/DesignPage'
 import { WorkflowPage } from './pages/WorkflowPage'
 import { InventoryPage } from './pages/InventoryPage'
 import { ProcurementPage } from './pages/ProcurementPage'
-import { AnalyticsPage } from './pages/AnalyticsPage'
+import { CuttingAnalyticsPage } from './pages/CuttingAnalyticsPage'
 import { SettingsPage } from './pages/SettingsPage'
 import { ShopFloorPage } from './pages/ShopFloorPage'
+import { ShopFloorKioskPage } from './pages/ShopFloorKioskPage'
 import { CrmWorldPage } from './pages/CrmPage'
 import { FinanceWorldPage } from './pages/FinancePage'
 import { ProjectsWorldPage } from './pages/ProjectsPage'
@@ -25,7 +29,7 @@ import { LogisticsWorldPage } from './pages/LogisticsPage'
 import { MfgPrepWorldPage } from './pages/MfgPrepPage'
 import { SupervisorWorldPage } from './pages/SupervisorPage'
 import { MasterdataWorldPage } from './pages/MasterdataPage'
-import { TradeWorldPage } from './pages/TradePage'
+import { TradeWorld } from './pages/TradeWorld'
 import { InteriorWorldPage } from './pages/InteriorPage'
 import { MaintenanceWorldPage } from './pages/MaintenancePage'
 import { QualityWorldPage } from './pages/QualityPage'
@@ -36,6 +40,25 @@ import { DocsWorldPage } from './pages/DocsPage'
 import { AiWorldPage } from './pages/AiPage'
 import { ExecBiWorldPage } from './pages/ExecBiPage'
 import { ShopWorldPage } from './pages/ShopPage'
+import { HrWorldPage } from './pages/HrPage'
+import { ControllingWorldPage } from './pages/ControllingPage'
+import { ServiceWorldPage } from './pages/ServicePage'
+import { LotsPage, ZoneMapPage, MovementLogPage } from './pages/warehouse/LotsPage'
+import { ProductConfiguratorWizard } from './pages/ProductConfiguratorWizard'
+import { BOMPreviewPage } from './pages/BOMPreviewPage'
+import { WorkOrderSummary } from './pages/WorkOrderSummary'
+import { SupplierPortalPage } from './pages/SupplierPortalPage'
+import PublicQuoteRequestPage from './pages/PublicQuoteRequestPage'
+
+// Create a QueryClient instance
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      retry: 1,
+      refetchOnWindowFocus: false
+    }
+  }
+})
 
 function HomePage() {
   const navigate = useNavigate()
@@ -75,7 +98,7 @@ function ProductionWorldPage() {
     if (currentScreen === 'dash')      return <ProductionDashboardPage onScreen={(s) => navigate(`/w/production/${s}`)} />
     if (currentScreen === 'machining') return <ProductionPage initialTab="machining" />
     if (currentScreen === 'workflow')  return <WorkflowPage />
-    if (currentScreen === 'analytics') return <AnalyticsPage />
+    if (currentScreen === 'analytics') return <CuttingAnalyticsPage />
     return <ProductionPage initialTab="cutting" />
   }
 
@@ -86,9 +109,11 @@ function ProductionWorldPage() {
       onScreen={(key) => navigate(`/w/production/${key}`)}
       onHome={() => navigate('/')}
     >
-      <div key={currentScreen} className="contents">
-        {renderContent()}
-      </div>
+      <ErrorBoundary>
+        <div key={currentScreen} className="contents">
+          {renderContent()}
+        </div>
+      </ErrorBoundary>
     </WorldShell>
   )
 }
@@ -125,6 +150,9 @@ function WarehouseWorldPage() {
     if (currentScreen === 'inventory')   return <InventoryPage />
     if (currentScreen === 'procurement') return <ProcurementPage />
     if (currentScreen === 'movements')   return <MovementsPage />
+    if (currentScreen === 'lots')        return <LotsPage />
+    if (currentScreen === 'zones')       return <ZoneMapPage />
+    if (currentScreen === 'movementlog') return <MovementLogPage />
     return <InventoryPage />
   }
 
@@ -142,12 +170,15 @@ function WarehouseWorldPage() {
 
 export function App() {
   return (
-    <AuthProvider>
-      <Routes>
+    <QueryClientProvider client={queryClient}>
+      <AuthProvider>
+        <ToastProvider>
+        <Routes>
         {/* Public routes */}
         <Route path="/" element={<LandingPage />} />
         <Route path="/login" element={<LoginPage />} />
         <Route path="/callback" element={<CallbackPage />} />
+        <Route path="/quote-request" element={<PublicQuoteRequestPage />} />
 
         {/* Protected: world home (kártyák) */}
         <Route path="/w" element={
@@ -156,10 +187,37 @@ export function App() {
           </RequireAuth>
         } />
 
+        {/* Public: shopfloor kiosk (standalone, no auth) */}
+        <Route path="/shopfloor" element={<ShopFloorKioskPage />} />
+
         {/* Protected: shopfloor (standalone) */}
         <Route path="/w/shopfloor" element={
           <RequireAuth>
             <ShopFloorPage />
+          </RequireAuth>
+        } />
+
+        {/* Protected: supplier portal (standalone) */}
+        <Route path="/supplier/portal" element={
+          <RequireAuth>
+            <SupplierPortalPage />
+          </RequireAuth>
+        } />
+
+        {/* Protected: configurator flow */}
+        <Route path="/configurator" element={
+          <RequireAuth>
+            <ProductConfiguratorWizard />
+          </RequireAuth>
+        } />
+        <Route path="/configurator/preview/:configId" element={
+          <RequireAuth>
+            <BOMPreviewPage />
+          </RequireAuth>
+        } />
+        <Route path="/work-orders/new/:configId" element={
+          <RequireAuth>
+            <WorkOrderSummary />
           </RequireAuth>
         } />
 
@@ -298,12 +356,7 @@ export function App() {
 
         <Route path="/w/trade" element={
           <RequireAuth>
-            <TradeWorldPage />
-          </RequireAuth>
-        } />
-        <Route path="/w/trade/:screen" element={
-          <RequireAuth>
-            <TradeWorldPage />
+            <TradeWorld />
           </RequireAuth>
         } />
 
@@ -417,8 +470,43 @@ export function App() {
           </RequireAuth>
         } />
 
+        <Route path="/w/hr" element={
+          <RequireAuth>
+            <HrWorldPage />
+          </RequireAuth>
+        } />
+        <Route path="/w/hr/:screen" element={
+          <RequireAuth>
+            <HrWorldPage />
+          </RequireAuth>
+        } />
+
+        <Route path="/w/kontrolling" element={
+          <RequireAuth>
+            <ControllingWorldPage />
+          </RequireAuth>
+        } />
+        <Route path="/w/kontrolling/:screen" element={
+          <RequireAuth>
+            <ControllingWorldPage />
+          </RequireAuth>
+        } />
+
+        <Route path="/w/service" element={
+          <RequireAuth>
+            <ServiceWorldPage />
+          </RequireAuth>
+        } />
+        <Route path="/w/service/:screen" element={
+          <RequireAuth>
+            <ServiceWorldPage />
+          </RequireAuth>
+        } />
+
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
+      </ToastProvider>
     </AuthProvider>
+    </QueryClientProvider>
   )
 }

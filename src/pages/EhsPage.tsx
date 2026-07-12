@@ -55,7 +55,7 @@ function IncidentDetailSlideOver({ incident, onClose }: { incident: EhsIncident 
           <IncidentStatusPill status={incident.status} />
         </div>
 
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <div>
             <div className="text-[10.5px] text-stone-400 mb-0.5">Dátum</div>
             <div className="text-[12px] font-mono text-stone-800">{incident.date}</div>
@@ -176,7 +176,7 @@ function RiskMatrix() {
             <div className="flex items-center gap-2">
               <RiskLevelBadge level={selected.level} />
             </div>
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
                 <div className="text-[10.5px] text-stone-400 mb-0.5">Valószínűség</div>
                 <div className="text-[14px] font-bold text-stone-900">{selected.probability} / 3</div>

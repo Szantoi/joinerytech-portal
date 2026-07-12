@@ -1,1 +1,43 @@
 @import "tailwindcss";
+
+/* Tailwind 4 Dark Mode Configuration */
+@variant dark {
+  @media (prefers-color-scheme: dark) {
+    :root:not(.light *) {
+      @mixin dark;
+    }
+  }
+
+  :is(.dark *) {
+    @mixin dark;
+  }
+}
+
+/* Custom animations for ProductCard shimmer effect */
+@keyframes shimmer {
+  0% {
+    background-position: -1000px 0;
+  }
+  100% {
+    background-position: 1000px 0;
+  }
+}
+
+@theme {
+  --animate-shimmer: shimmer 2s infinite;
+
+  /* Dark-first color system (Tailwind 4 CSS variables) */
+  --color-bg-primary: #0f1419;
+  --color-bg-secondary: #1a1f26;
+  --color-bg-tertiary: #252b33;
+  --color-text-primary: #e7e9ea;
+  --color-text-secondary: #a8acb0;
+  --color-border-default: #2f363d;
+  --color-accent-primary: #3b82f6;
+  --color-accent-secondary: #60a5fa;
+}
+
+/* Aspect ratio utilities (if not already provided by Tailwind 4) */
+.aspect-\[4\/3\] {
+  aspect-ratio: 4 / 3;
+}

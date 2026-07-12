@@ -9,16 +9,20 @@ import { RolesPanel } from '../components/settings/RolesPanel'
 import { StageChainEditor } from '../components/settings/StageChainEditor'
 import { UsersPanel } from '../components/settings/UsersPanel'
 import { TemplatesPanel } from '../components/settings/TemplatesPanel'
-type SettingsTab = 'company' | 'users' | 'facilities' | 'machines' | 'partners' | 'workflow' | 'integrations' | 'catalog' | 'audit' | 'roles' | 'templates'
+import { AuthorityPanel } from '../components/settings/AuthorityPanel'
+import { ProcessesPanel } from '../components/settings/ProcessesPanel'
+type SettingsTab = 'company' | 'users' | 'facilities' | 'machines' | 'partners' | 'workflow' | 'processes' | 'integrations' | 'catalog' | 'audit' | 'roles' | 'templates' | 'authority'
 
 const TAB_LIST: Array<{ key: SettingsTab; label: string }> = [
   { key: 'company',      label: 'Cég' },
   { key: 'users',        label: 'Felhasználók' },
   { key: 'roles',        label: 'Jogosultságok' },
+  { key: 'authority',    label: 'Hatáskörök' },
   { key: 'facilities',   label: 'Telephely' },
   { key: 'machines',     label: 'Géppark' },
   { key: 'partners',     label: 'Partnerek' },
   { key: 'workflow',     label: 'Munkafolyamat' },
+  { key: 'processes',    label: 'Folyamatok' },
   { key: 'integrations', label: 'Integrációk' },
   { key: 'catalog',      label: 'Katalógus' },
   { key: 'templates',    label: 'Sablonok' },
@@ -58,20 +62,47 @@ export function SettingsPage({ initialTab = 'company', onTabChange }: SettingsPa
 
       {tab === 'company' && <CompanyTab />}
       {tab === 'users' && <UsersPanel />}
-      {tab === 'roles' && <RolesPanel />}
+      {tab === 'roles' && (
+        <>
+          <EndpointPending endpoint="GET /api/roles [?]" />
+          <RolesPanel />
+        </>
+      )}
       {tab === 'facilities' && <FacilitiesPanel />}
       {tab === 'machines' && <MachineParkPanel />}
-      {tab === 'partners' && <PartnersPanel />}
+      {tab === 'partners' && (
+        <>
+          <EndpointPending endpoint="GET /api/partners [?]" />
+          <PartnersPanel />
+        </>
+      )}
       {tab === 'audit' && <AuditPanel />}
       {tab === 'catalog' && <CatalogPanel />}
-      {tab === 'workflow' && <StageChainEditor />}
+      {tab === 'workflow' && (
+        <>
+          <EndpointPending endpoint="GET /api/workflow/stages [?]" />
+          <StageChainEditor />
+        </>
+      )}
+      {tab === 'processes' && <ProcessesPanel />}
       {tab === 'templates' && <TemplatesPanel />}
+      {tab === 'authority' && <AuthorityPanel />}
       {tab === 'integrations' && (
         <Card className="p-8 text-center">
           <div className="text-[13px] font-medium text-stone-700">Integrációk</div>
           <div className="text-[11.5px] text-stone-500 mt-1">Tartalom placeholder — ehhez a fülhöz design-folyamat van.</div>
         </Card>
       )}
+    </div>
+  )
+}
+
+function EndpointPending({ endpoint }: { endpoint: string }) {
+  return (
+    <div className="mb-4 rounded-xl border-2 border-dashed border-amber-200 bg-amber-50/60 px-6 py-4 flex flex-col items-start gap-1">
+      <div className="text-[13px] font-semibold text-amber-700">Backend endpoint nem elérhető</div>
+      <code className="text-[11px] text-amber-600 bg-amber-100 rounded px-2 py-0.5">{endpoint}</code>
+      <div className="text-[11px] text-stone-500">Az endpoint implementálása után lesz élő adat</div>
     </div>
   )
 }

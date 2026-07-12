@@ -3,9 +3,9 @@ import { render, screen } from '@testing-library/react'
 import { AnalyticsPage } from '../AnalyticsPage'
 
 describe('AnalyticsPage', () => {
-  it('renders waste metric', () => {
+  it('renders waste metric placeholder when no API data', () => {
     render(<AnalyticsPage />)
-    expect(screen.getByText('7.1%')).toBeTruthy()
+    expect(screen.getByText('—')).toBeTruthy()
   })
 
   it('renders capacity metric', () => {
@@ -23,9 +23,14 @@ describe('AnalyticsPage', () => {
     expect(screen.getByText('284')).toBeTruthy()
   })
 
-  it('renders machine waste table', () => {
+  it('renders machine waste section heading', () => {
     render(<AnalyticsPage />)
     expect(screen.getByText(/Gép-szintű hulladék/)).toBeTruthy()
+  })
+
+  it('machine waste section shows endpoint pending banner', () => {
+    render(<AnalyticsPage />)
+    expect(screen.getByText('Backend endpoint nem elérhető')).toBeTruthy()
   })
 
   it('renders period selector', () => {

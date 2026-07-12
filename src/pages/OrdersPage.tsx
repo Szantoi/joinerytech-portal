@@ -1,9 +1,13 @@
 import { useState, useEffect, useMemo } from 'react'
 import { Card, StatusPill, PrimaryBtn, GhostBtn, Icon } from '../components/ui'
 import { NewOrderDrawer } from '../components/orders/NewOrderDrawer'
-import { ORDERS, I18N } from '../mocks/data'
+import { MaterialRequisitionTable } from '../components/orders/MaterialRequisitionTable'
+import { HardwareSpecsCard } from '../components/orders/HardwareSpecsCard'
+import { I18N } from '../mocks/data'
 import { fmtHUF } from '../lib/utils'
 import { useApi, API_BASE } from '../hooks/useApi'
+import { useMaterialReq } from '../hooks/useMaterialReq'
+import { useHardwareSpecs } from '../hooks/useHardwareSpecs'
 import type { Order, OrderStatus } from '../types'
 
 interface ApiDoorOrder {
@@ -32,11 +36,16 @@ const ORDER_STATUS_MAP: Record<string, OrderStatus> = {
   Cancelled:         'draft',
 }
 
-function apiOrderToFe(o: ApiDoorOrder): Order {
+interface FeOrderWithUuid extends Order {
+  uuid: string  // Real order UUID for API calls
+}
+
+function apiOrderToFe(o: ApiDoorOrder): FeOrderWithUuid {
   const date = o.deliveryDate?.slice(0, 10)
     ?? (o.createdAt && !o.createdAt.startsWith('0001') ? o.createdAt.slice(0, 10) : '—')
   return {
     id: o.projectId || o.id.slice(0, 12).toUpperCase(),
+    uuid: o.id,  // Store the real UUID for API calls
     customer: o.projectName,
     type: 'door' as const,
     date,
@@ -61,9 +70,7 @@ export function OrdersPage() {
   )
   useEffect(() => { refetch() }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
-  const displayOrders: Order[] = apiPage?.items?.length
-    ? apiPage.items.map(apiOrderToFe)
-    : ORDERS
+  const displayOrders: FeOrderWithUuid[] = apiPage?.items?.map(apiOrderToFe) ?? []
 
   const counts = useMemo(() => {
     const c: Record<string, number> = { all: displayOrders.length }
@@ -134,6 +141,7 @@ export function OrdersPage() {
             onToggle={() => setExpandedId(expandedId === o.id ? null : o.id)}
             onCalc={() => startCalc(o.id)}
             onRelease={() => releaseOrder(o.id)}
+            realOrderId={o.uuid}
           />
         ))}
       </Card>
@@ -149,10 +157,16 @@ interface OrderRowProps {
   onToggle: () => void
   onCalc: () => void
   onRelease: () => void
+  realOrderId: string | null // UUID from API for fetching details
 }
 
-function OrderRow({ order, t, liveStatus, expanded, onToggle, onCalc, onRelease }: OrderRowProps) {
+function OrderRow({ order, t, liveStatus, expanded, onToggle, onCalc, onRelease, realOrderId }: OrderRowProps) {
   const isCalculating = liveStatus === 'calc'
+
+  // Fetch material requisition and hardware specs when expanded and ready/released
+  const shouldFetchDetails = expanded && (liveStatus === 'ready' || liveStatus === 'released')
+  const { materials, totalCost, loading: materialsLoading, isMock: materialsMock } = useMaterialReq(shouldFetchDetails ? realOrderId : null)
+  const { specs, loading: specsLoading, isMock: specsMock } = useHardwareSpecs(shouldFetchDetails ? realOrderId : null)
 
   const details = [
     { label: 'Tételszám', value: `${order.items} ${t.common.pieces}` },
@@ -197,45 +211,23 @@ function OrderRow({ order, t, liveStatus, expanded, onToggle, onCalc, onRelease 
             ))}
           </div>
 
-          {/* Anyaglista + Vágótervek (only for ready/released) */}
+          {/* Anyaglista + Specifikáció (only for ready/released) */}
           {(liveStatus === 'ready' || liveStatus === 'released') && (
-            <div className="grid grid-cols-2 gap-3 mb-3">
-              <div className="bg-white border border-stone-200/70 rounded-lg p-4">
-                <div className="flex items-center justify-between mb-2">
-                  <div className="text-[11.5px] font-semibold text-stone-900">Anyaglista</div>
-                  <span className="text-[10.5px] text-emerald-700 inline-flex items-center gap-1">
-                    <Icon name="check" size={10} />generálva
-                  </span>
-                </div>
-                <div className="flex items-baseline gap-2 mb-1">
-                  <span className="text-[20px] font-semibold tabular-nums text-stone-900">{order.items * 3}</span>
-                  <span className="text-[11px] text-stone-500">tétel</span>
-                </div>
-                <div className="text-[11.5px] text-stone-500 tabular-nums">
-                  Becsült anyagköltség: <span className="font-medium text-stone-700">{fmtHUF(Math.round(order.total * 0.48))}</span>
-                </div>
-                <button className="mt-2 text-[11px] text-teal-700 hover:underline inline-flex items-center gap-1">
-                  <Icon name="external" size={11} />Anyaglista megnyitása
-                </button>
-              </div>
-              <div className="bg-white border border-stone-200/70 rounded-lg p-4">
-                <div className="flex items-center justify-between mb-2">
-                  <div className="text-[11.5px] font-semibold text-stone-900">Vágótervek</div>
-                  <span className="text-[10.5px] text-emerald-700 inline-flex items-center gap-1">
-                    <Icon name="check" size={10} />generálva
-                  </span>
-                </div>
-                <div className="flex items-baseline gap-2 mb-1">
-                  <span className="text-[20px] font-semibold tabular-nums text-stone-900">2</span>
-                  <span className="text-[11px] text-stone-500">terv · 5 tábla</span>
-                </div>
-                <div className="text-[11.5px] text-stone-500">
-                  Optimalizálás: <span className="font-medium text-stone-700">86% átlag kihasználás</span>
-                </div>
-                <button className="mt-2 text-[11px] text-teal-700 hover:underline inline-flex items-center gap-1">
-                  <Icon name="external" size={11} />Megnyit szabászaton
-                </button>
-              </div>
+            <div className="space-y-3 mb-3">
+              {/* Material Requisition Table - real API data */}
+              <MaterialRequisitionTable
+                materials={materials}
+                loading={materialsLoading}
+                totalCost={totalCost}
+                isMock={materialsMock}
+              />
+
+              {/* Hardware Specs Card - real API data */}
+              <HardwareSpecsCard
+                specs={specs}
+                loading={specsLoading}
+                isMock={specsMock}
+              />
             </div>
           )}
 

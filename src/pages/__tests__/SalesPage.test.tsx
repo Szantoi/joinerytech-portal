@@ -123,10 +123,10 @@ describe('SalesPage', () => {
     await waitFor(() => expect(screen.getByText(/Azonos/)).toBeTruthy())
   })
 
-  it('switches to customers tab — shows LTV label', async () => {
+  it('switches to customers tab — shows search input', async () => {
     mockFetchError()
     renderSales('customers')
-    await waitFor(() => expect(screen.getAllByText('LTV').length).toBeGreaterThan(0))
+    await waitFor(() => expect(screen.getByPlaceholderText('Ügyfél keresése…')).toBeTruthy())
   })
 
   it('shows rejected filter in quotes', async () => {
@@ -155,10 +155,10 @@ describe('SalesPage', () => {
     expect(skeletons.length).toBeGreaterThan(0)
   })
 
-  it('SalesCustomers: shows mock fallback on fetch error', async () => {
+  it('SalesCustomers: shows empty state on fetch error', async () => {
     mockFetchError()
     renderSales('customers')
-    await waitFor(() => expect(screen.getByText('Bognár Bútor Kft.')).toBeTruthy())
+    await waitFor(() => expect(screen.getByText('Nincs találat')).toBeTruthy())
   })
 
   it('SalesCustomers: shows API data', async () => {
@@ -171,17 +171,17 @@ describe('SalesPage', () => {
   it('SalesCustomers: Új ügyfél opens CreateCustomerSlideOver', async () => {
     mockFetchError()
     renderSales('customers')
-    await waitFor(() => expect(screen.getByText('Bognár Bútor Kft.')).toBeTruthy())
+    await waitFor(() => expect(screen.getByText('Új ügyfél')).toBeTruthy())
     fireEvent.click(screen.getByText('Új ügyfél'))
     expect(screen.getByText('Létrehozás')).toBeTruthy()
   })
 
   // ─── SalesQuotes ───────────────────────────────────────────────────────────
 
-  it('SalesQuotes: shows mock fallback data on error', async () => {
+  it('SalesQuotes: shows empty table on fetch error', async () => {
     mockFetchError()
     renderSales('quotes')
-    await waitFor(() => expect(screen.getByText('Bognár Bútor Kft.')).toBeTruthy())
+    await waitFor(() => expect(screen.getByText('Nincs találat')).toBeTruthy())
   })
 
   it('SalesQuotes: shows API quoteNumber in table', async () => {
@@ -235,7 +235,7 @@ describe('SalesPage', () => {
   it('CreateCustomerSlideOver: shows validation errors on empty submit', async () => {
     mockFetchError()
     renderSales('customers')
-    await waitFor(() => expect(screen.getByText('Bognár Bútor Kft.')).toBeTruthy())
+    await waitFor(() => expect(screen.getByText('Új ügyfél')).toBeTruthy())
     fireEvent.click(screen.getByText('Új ügyfél'))
     // submit without filling required fields
     fireEvent.click(screen.getByText('Létrehozás'))

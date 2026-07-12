@@ -54,7 +54,7 @@ function FinanceTab({ onTrend }: { onTrend: (m: string) => void }) {
 
   return (
     <div className="space-y-4">
-      <div className="grid grid-cols-3 gap-3">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
         <div className="bg-white rounded-2xl border border-stone-200 p-4">
           <div className="text-[22px] font-semibold text-teal-700 leading-none">{last.revenue.toFixed(1)} M Ft</div>
           <div className="text-[12px] font-medium text-stone-700 mt-2">Havi árbevétel</div>
@@ -201,7 +201,7 @@ function ExecBiDashboard() {
       </div>
 
       {/* Tab selector */}
-      <div className="flex gap-1 mb-5 bg-stone-100 rounded-xl p-1 w-fit">
+      <div className="flex flex-wrap gap-1 mb-5 bg-stone-100 rounded-xl p-1">
         {tabs.map((tab) => (
           <button
             key={tab}

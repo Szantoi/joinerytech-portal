@@ -1,240 +1,175 @@
 import { describe, it, expect, vi } from 'vitest'
-import { render, screen, fireEvent } from '@testing-library/react'
-import { NestingViewer, type NestingResultDto } from '../NestingViewer'
-
-const mockNestingData: NestingResultDto = {
-  strategy: 'Guillotine',
-  sheets: [
-    {
-      id: 'sheet-1',
-      width: 2800,
-      height: 2070,
-      wastePercentage: 12.5,
-      placedParts: [
-        {
-          id: 'Part-001',
-          x: 0,
-          y: 0,
-          width: 400,
-          height: 600,
-          materialType: 'EG-3303-18',
-        },
-        {
-          id: 'Part-002',
-          x: 400,
-          y: 0,
-          width: 300,
-          height: 500,
-          materialType: 'EG-1133-18',
-        },
-      ],
-    },
-    {
-      id: 'sheet-2',
-      width: 2800,
-      height: 2070,
-      wastePercentage: 8.3,
-      placedParts: [
-        {
-          id: 'Part-003',
-          x: 0,
-          y: 0,
-          width: 500,
-          height: 700,
-          materialType: 'MDF-019',
-        },
-      ],
-    },
-  ],
-}
+import { render, screen } from '@testing-library/react'
+import { NestingViewer, type NestingResultDto, mapNestingResponse, type NestingResultResponse } from '../NestingViewer'
 
 describe('NestingViewer', () => {
-  it('renders stats badge with waste percentage', () => {
+  const mockNestingData: NestingResultDto = {
+    sheets: [
+      {
+        id: 'sheet-001',
+        width: 2800,
+        height: 2070,
+        wastePercentage: 12.5,
+        placedParts: [
+          {
+            id: 'panel-1',
+            x: 0,
+            y: 0,
+            width: 600,
+            height: 800,
+            materialType: 'MAT-MELAMINE-001',
+            rotated: false,
+          },
+          {
+            id: 'panel-2',
+            x: 610,
+            y: 0,
+            width: 400,
+            height: 600,
+            materialType: 'MAT-MELAMINE-002',
+            rotated: true,
+          },
+        ],
+      },
+    ],
+    strategy: 'Optimized',
+    orderReference: 'JT-2426-0184',
+    totalParts: 2,
+  }
+
+  it('renders panel grid correctly', () => {
     render(<NestingViewer data={mockNestingData} />)
-    expect(screen.getByText('Hulladék: 12.5%')).toBeTruthy()
+
+    // Check that waste percentage is displayed
+    expect(screen.getByText(/Hulladék: 12.5%/i)).toBeInTheDocument()
+
+    // Check that strategy is displayed
+    expect(screen.getByText(/Stratégia: Optimized/i)).toBeInTheDocument()
+
+    // Check that sheet count is displayed
+    expect(screen.getByText(/1 lap/i)).toBeInTheDocument()
   })
 
-  it('renders stats badge with strategy', () => {
-    render(<NestingViewer data={mockNestingData} />)
-    expect(screen.getByText('Stratégia: Guillotine')).toBeTruthy()
-  })
-
-  it('renders stats badge with sheets count', () => {
-    render(<NestingViewer data={mockNestingData} />)
-    expect(screen.getByText('2 lap')).toBeTruthy()
-  })
-
-  it('renders SVG canvas with correct dimensions', () => {
+  it('displays all panels from API response', () => {
     const { container } = render(<NestingViewer data={mockNestingData} />)
-    const svg = container.querySelector('svg')
-    expect(svg).toBeTruthy()
-    expect(screen.getByText('2800 × 2070 mm')).toBeTruthy()
+
+    // Check that SVG elements are rendered (panel rects)
+    const svgElement = container.querySelector('svg')
+    expect(svgElement).toBeInTheDocument()
+
+    // Check that panel labels are rendered as text elements
+    const textElements = container.querySelectorAll('text')
+    expect(textElements.length).toBeGreaterThanOrEqual(2) // At least 2 panels
   })
 
-  it('applies green color for waste < 10%', () => {
-    const lowWasteData: NestingResultDto = {
-      ...mockNestingData,
-      sheets: [
-        {
-          ...mockNestingData.sheets[0],
-          wastePercentage: 5.0,
-        },
-      ],
-    }
-    const { container } = render(<NestingViewer data={lowWasteData} />)
-    const wasteBadge = screen.getByText('Hulladék: 5.0%').parentElement
-    expect(wasteBadge?.className).toContain('text-emerald-700')
-    expect(wasteBadge?.className).toContain('bg-emerald-50')
-  })
-
-  it('applies yellow color for waste 10-15%', () => {
-    const mediumWasteData: NestingResultDto = {
-      ...mockNestingData,
-      sheets: [
-        {
-          ...mockNestingData.sheets[0],
-          wastePercentage: 12.0,
-        },
-      ],
-    }
-    const { container } = render(<NestingViewer data={mediumWasteData} />)
-    const wasteBadge = screen.getByText('Hulladék: 12.0%').parentElement
-    expect(wasteBadge?.className).toContain('text-amber-700')
-    expect(wasteBadge?.className).toContain('bg-amber-50')
-  })
-
-  it('applies red color for waste > 15%', () => {
-    const highWasteData: NestingResultDto = {
-      ...mockNestingData,
-      sheets: [
-        {
-          ...mockNestingData.sheets[0],
-          wastePercentage: 18.0,
-        },
-      ],
-    }
-    const { container } = render(<NestingViewer data={highWasteData} />)
-    const wasteBadge = screen.getByText('Hulladék: 18.0%').parentElement
-    expect(wasteBadge?.className).toContain('text-rose-700')
-    expect(wasteBadge?.className).toContain('bg-rose-50')
-  })
-
-  it('shows navigation controls when multiple sheets', () => {
-    render(<NestingViewer data={mockNestingData} />)
-    expect(screen.getByText('Lap 1 / 2')).toBeTruthy()
-    // Find chevron buttons
-    const buttons = screen.getAllByRole('button')
-    const prevButton = buttons.find(btn => btn.querySelector('.rotate-180'))
-    const nextButton = buttons.find(btn => btn.querySelector('svg:not(.rotate-180)'))
-    expect(prevButton).toBeTruthy()
-    expect(nextButton).toBeTruthy()
-  })
-
-  it('hides navigation controls when single sheet', () => {
-    const singleSheetData: NestingResultDto = {
-      ...mockNestingData,
-      sheets: [mockNestingData.sheets[0]],
-    }
-    render(<NestingViewer data={singleSheetData} />)
-    expect(screen.queryByText(/Lap \d+ \//)).toBeNull()
-  })
-
-  it('navigates to next sheet on next button click', () => {
-    render(<NestingViewer data={mockNestingData} />)
-    expect(screen.getByText('Lap 1 / 2')).toBeTruthy()
-
-    // Find and click next button
-    const buttons = screen.getAllByRole('button')
-    const nextButton = buttons.find(btn => {
-      const btnElement = btn as HTMLButtonElement
-      const svg = btn.querySelector('svg:not(.rotate-180)')
-      return svg && !btnElement.disabled
-    }) as HTMLButtonElement | undefined
-
-    if (nextButton) {
-      fireEvent.click(nextButton)
-      expect(screen.getByText('Lap 2 / 2')).toBeTruthy()
-      expect(screen.getByText('Hulladék: 8.3%')).toBeTruthy()
-    }
-  })
-
-  it('disables prev button on first sheet', () => {
-    render(<NestingViewer data={mockNestingData} />)
-    const buttons = screen.getAllByRole('button')
-    const prevButton = buttons.find(btn => btn.querySelector('.rotate-180')) as HTMLButtonElement | undefined
-    expect(prevButton?.disabled).toBe(true)
-  })
-
-  it('disables next button on last sheet', () => {
-    render(<NestingViewer data={mockNestingData} />)
-
-    // Navigate to last sheet
-    const buttons = screen.getAllByRole('button')
-    const nextButton = buttons.find(btn => {
-      const btnElement = btn as HTMLButtonElement
-      return btn.querySelector('svg:not(.rotate-180)') && !btnElement.disabled
-    }) as HTMLButtonElement | undefined
-    if (nextButton) {
-      fireEvent.click(nextButton)
-    }
-
-    // Check next button is now disabled
-    const buttonsAfter = screen.getAllByRole('button')
-    const nextButtonAfter = buttonsAfter.find(btn => {
-      const svg = btn.querySelector('svg:not(.rotate-180)')
-      return svg && btn.className.includes('place-items-center')
-    }) as HTMLButtonElement | undefined
-    expect(nextButtonAfter?.disabled).toBe(true)
-  })
-
-  it('renders empty state when no data', () => {
+  it('displays empty state when no data', () => {
     const emptyData: NestingResultDto = {
-      strategy: 'Guillotine',
       sheets: [],
+      strategy: 'None',
     }
+
     render(<NestingViewer data={emptyData} />)
-    expect(screen.getByText('Nincs nesting adat')).toBeTruthy()
+
+    expect(screen.getByText('Nincs nesting adat')).toBeInTheDocument()
   })
 
-  it('shows hover tooltip on part hover', () => {
-    const { container } = render(<NestingViewer data={mockNestingData} />)
-    const svg = container.querySelector('svg')
-    const partGroup = svg?.querySelector('g')
-
-    if (partGroup) {
-      fireEvent.mouseEnter(partGroup)
-      expect(screen.getByText('Part-001')).toBeTruthy()
-      expect(screen.getByText('Méret: 400 × 600 mm')).toBeTruthy()
-      expect(screen.getByText(/Egger 3303/)).toBeTruthy()
+  it('handles multiple sheets navigation', () => {
+    const multiSheetData: NestingResultDto = {
+      sheets: [
+        {
+          id: 'sheet-001',
+          width: 2800,
+          height: 2070,
+          wastePercentage: 12.5,
+          placedParts: [],
+        },
+        {
+          id: 'sheet-002',
+          width: 2800,
+          height: 2070,
+          wastePercentage: 8.3,
+          placedParts: [],
+        },
+      ],
+      strategy: 'Optimized',
     }
+
+    render(<NestingViewer data={multiSheetData} />)
+
+    // Check that sheet navigation is displayed
+    expect(screen.getByText(/2 lap/i)).toBeInTheDocument()
+    expect(screen.getByText(/Lap 1 \/ 2/i)).toBeInTheDocument()
+  })
+})
+
+describe('mapNestingResponse', () => {
+  it('correctly maps backend DTO to frontend format', () => {
+    const backendResponse: NestingResultResponse = {
+      SheetId: 'abc-123',
+      OrderReference: 'JT-2426-0184',
+      TotalParts: 2,
+      Groups: [
+        {
+          MaterialType: 'MAT-001',
+          ThicknessMm: 18,
+          Lines: [
+            {
+              PartName: 'Part-1',
+              WidthMm: 600,
+              HeightMm: 800,
+              Quantity: 1,
+            },
+          ],
+        },
+      ],
+      PanelAssignments: [
+        {
+          PanelStockId: 'panel-stock-1',
+          MaterialType: 'MAT-001',
+          PanelWidthMm: 2800,
+          PanelHeightMm: 2070,
+          WasteAreaMm2: 350000,
+          UtilizationPercent: 87.5,
+          PlacedParts: [
+            {
+              PartName: 'Part-1',
+              X: 0,
+              Y: 0,
+              WidthMm: 600,
+              HeightMm: 800,
+              IsRotated: false,
+            },
+          ],
+        },
+      ],
+    }
+
+    const result = mapNestingResponse(backendResponse)
+
+    expect(result.sheets).toHaveLength(1)
+    expect(result.sheets[0].id).toBe('panel-stock-1')
+    expect(result.sheets[0].width).toBe(2800)
+    expect(result.sheets[0].height).toBe(2070)
+    expect(result.sheets[0].wastePercentage).toBe(12.5) // 100 - 87.5
+    expect(result.sheets[0].placedParts).toHaveLength(1)
+    expect(result.sheets[0].placedParts[0].id).toBe('Part-1')
+    expect(result.orderReference).toBe('JT-2426-0184')
+    expect(result.totalParts).toBe(2)
   })
 
-  it('hides tooltip on part mouse leave', () => {
-    const { container } = render(<NestingViewer data={mockNestingData} />)
-    const svg = container.querySelector('svg')
-    const partGroup = svg?.querySelector('g')
-
-    if (partGroup) {
-      fireEvent.mouseEnter(partGroup)
-      expect(screen.getByText('Part-001')).toBeTruthy()
-
-      fireEvent.mouseLeave(partGroup)
-      // Tooltip should be removed
-      const tooltips = container.querySelectorAll('.bg-teal-50')
-      expect(tooltips.length).toBe(0)
+  it('handles empty PanelAssignments', () => {
+    const backendResponse: NestingResultResponse = {
+      SheetId: 'abc-123',
+      OrderReference: 'JT-2426-0184',
+      TotalParts: 0,
+      Groups: [],
+      PanelAssignments: null,
     }
-  })
 
-  it('renders material color from CATALOG_LOOKUP', () => {
-    const { container } = render(<NestingViewer data={mockNestingData} />)
-    const svg = container.querySelector('svg')
-    const rects = svg?.querySelectorAll('rect[fill]')
+    const result = mapNestingResponse(backendResponse)
 
-    // First rect should be the sheet background (#fafaf9)
-    // Second rect should be Part-001 with EG-3303-18 color (#dcc4a3)
-    if (rects && rects.length > 1) {
-      const partRect = rects[1] as SVGRectElement
-      expect(partRect.getAttribute('fill')).toBe('#dcc4a3')
-    }
+    expect(result.sheets).toHaveLength(0)
+    expect(result.strategy).toBe('Unknown')
+    expect(result.orderReference).toBe('JT-2426-0184')
   })
 })

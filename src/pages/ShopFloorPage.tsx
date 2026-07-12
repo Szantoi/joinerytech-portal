@@ -1,10 +1,19 @@
-import { useState } from 'react'
+import React, { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Icon } from '../components/ui/Icon'
 import { SHOPFLOOR_MACHINES, SHOPFLOOR_QUEUE, SHOPFLOOR_OPERATORS } from '../mocks/worlds'
 import type { ShopFloorOperator, ShopFloorTask, Machine } from '../types'
 
 type Stage = 'pin' | 'machine' | 'task' | 'problem'
+type TimeLogStatus = 'idle' | 'running' | 'paused'
+
+interface TimeLog {
+  taskId: string
+  status: TimeLogStatus
+  startedAt: number | null
+  pausedAt: number | null
+  totalSeconds: number
+}
 
 export function ShopFloorPage() {
   const navigate = useNavigate()
@@ -13,6 +22,7 @@ export function ShopFloorPage() {
   const [machineId, setMachineId] = useState<string | null>(null)
   const [taskIdx, setTaskIdx] = useState(0)
   const [completedIds, setCompletedIds] = useState<string[]>([])
+  const [timeLogs, setTimeLogs] = useState<Record<string, TimeLog>>({})
 
   const machine = SHOPFLOOR_MACHINES.find((m) => m.id === machineId) ?? null
   const queue = machineId
@@ -38,9 +48,78 @@ export function ShopFloorPage() {
   }
   function handleDone() {
     if (task) {
+      // Stop any running time log
+      handleTimeStop(task.id)
       setCompletedIds((p) => [...p, task.id])
       setTaskIdx(0)
     }
+  }
+
+  // Time logging functions
+  function getTimeLog(taskId: string): TimeLog {
+    return timeLogs[taskId] || { taskId, status: 'idle', startedAt: null, pausedAt: null, totalSeconds: 0 }
+  }
+
+  function handleTimeStart(taskId: string) {
+    const now = Date.now()
+    setTimeLogs((prev) => ({
+      ...prev,
+      [taskId]: {
+        ...getTimeLog(taskId),
+        status: 'running',
+        startedAt: now,
+        pausedAt: null,
+      },
+    }))
+  }
+
+  function handleTimePause(taskId: string) {
+    const log = getTimeLog(taskId)
+    if (log.status !== 'running' || !log.startedAt) return
+    const elapsed = Math.floor((Date.now() - log.startedAt) / 1000)
+    setTimeLogs((prev) => ({
+      ...prev,
+      [taskId]: {
+        ...log,
+        status: 'paused',
+        pausedAt: Date.now(),
+        totalSeconds: log.totalSeconds + elapsed,
+        startedAt: null,
+      },
+    }))
+  }
+
+  function handleTimeResume(taskId: string) {
+    const log = getTimeLog(taskId)
+    if (log.status !== 'paused') return
+    setTimeLogs((prev) => ({
+      ...prev,
+      [taskId]: {
+        ...log,
+        status: 'running',
+        startedAt: Date.now(),
+        pausedAt: null,
+      },
+    }))
+  }
+
+  function handleTimeStop(taskId: string) {
+    const log = getTimeLog(taskId)
+    if (log.status === 'idle') return
+    let total = log.totalSeconds
+    if (log.status === 'running' && log.startedAt) {
+      total += Math.floor((Date.now() - log.startedAt) / 1000)
+    }
+    setTimeLogs((prev) => ({
+      ...prev,
+      [taskId]: {
+        ...log,
+        status: 'idle',
+        startedAt: null,
+        pausedAt: null,
+        totalSeconds: total,
+      },
+    }))
   }
 
   return (
@@ -88,10 +167,15 @@ export function ShopFloorPage() {
                 machine={machine}
                 taskIdx={taskIdx}
                 totalTasks={queue.length}
+                timeLog={getTimeLog(task.id)}
                 onPrev={() => setTaskIdx((i) => Math.max(0, i - 1))}
                 onNext={() => setTaskIdx((i) => Math.min(queue.length - 1, i + 1))}
                 onDone={handleDone}
                 onProblem={() => setStage('problem')}
+                onTimeStart={() => handleTimeStart(task.id)}
+                onTimePause={() => handleTimePause(task.id)}
+                onTimeResume={() => handleTimeResume(task.id)}
+                onTimeStop={() => handleTimeStop(task.id)}
               />
             )
             : <NoMoreTasks onChangeMachine={() => setStage('machine')} />
@@ -247,25 +331,60 @@ function MachinePickStage({
   )
 }
 
+function formatTime(seconds: number): string {
+  const h = Math.floor(seconds / 3600)
+  const m = Math.floor((seconds % 3600) / 60)
+  const s = seconds % 60
+  if (h > 0) return `${h}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`
+  return `${m}:${String(s).padStart(2, '0')}`
+}
+
 function TaskStage({
   task,
   machine,
   taskIdx,
   totalTasks,
+  timeLog,
   onPrev,
   onNext,
   onDone,
   onProblem,
+  onTimeStart,
+  onTimePause,
+  onTimeResume,
+  onTimeStop,
 }: {
   task: ShopFloorTask
   machine: Machine
   taskIdx: number
   totalTasks: number
+  timeLog: TimeLog
   onPrev: () => void
   onNext: () => void
   onDone: () => void
   onProblem: () => void
+  onTimeStart: () => void
+  onTimePause: () => void
+  onTimeResume: () => void
+  onTimeStop: () => void
 }) {
+  // Live elapsed time calculation
+  const [tick, setTick] = useState(0)
+
+  React.useEffect(() => {
+    if (timeLog.status === 'running') {
+      const interval = setInterval(() => setTick((t) => t + 1), 1000)
+      return () => clearInterval(interval)
+    }
+  }, [timeLog.status])
+
+  const liveElapsed = React.useMemo(() => {
+    let total = timeLog.totalSeconds
+    if (timeLog.status === 'running' && timeLog.startedAt) {
+      total += Math.floor((Date.now() - timeLog.startedAt) / 1000)
+    }
+    return total
+  }, [timeLog, tick])
   return (
     <div className="flex-1 p-6 flex flex-col gap-4 max-w-[1400px] mx-auto w-full">
       <div className="flex items-center justify-between flex-wrap gap-3">
@@ -356,6 +475,77 @@ function TaskStage({
             </>
           )}
           <div className="mt-4 text-[10.5px] text-stone-500">{machine.name} · {machine.facility}</div>
+        </div>
+      </div>
+
+      {/* Time logging controls */}
+      <div className="rounded-2xl bg-stone-800 border border-stone-700 p-4 flex items-center justify-between gap-4">
+        <div className="flex items-center gap-4">
+          <div className="text-center">
+            <div className="text-[10.5px] uppercase tracking-wide text-stone-500 mb-1">Eltelt idő</div>
+            <div className={`text-[32px] font-mono font-bold tabular-nums ${
+              timeLog.status === 'running' ? 'text-emerald-400' : timeLog.status === 'paused' ? 'text-amber-400' : 'text-stone-400'
+            }`}>
+              {formatTime(liveElapsed)}
+            </div>
+          </div>
+          <div className={`px-3 h-8 rounded-full inline-flex items-center gap-1.5 text-[11px] font-medium ${
+            timeLog.status === 'running' ? 'bg-emerald-600/20 text-emerald-300' :
+            timeLog.status === 'paused' ? 'bg-amber-600/20 text-amber-300' : 'bg-stone-700 text-stone-400'
+          }`}>
+            <span className={`w-2 h-2 rounded-full ${
+              timeLog.status === 'running' ? 'bg-emerald-400 animate-pulse' :
+              timeLog.status === 'paused' ? 'bg-amber-400' : 'bg-stone-500'
+            }`} />
+            {timeLog.status === 'running' ? 'Fut' : timeLog.status === 'paused' ? 'Szünet' : 'Nincs elindítva'}
+          </div>
+        </div>
+        <div className="flex items-center gap-2">
+          {timeLog.status === 'idle' && (
+            <button
+              onClick={onTimeStart}
+              className="h-14 px-6 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-[14px] font-semibold inline-flex items-center gap-2.5"
+            >
+              <Icon name="bolt" size={18} />
+              Munka indítása
+            </button>
+          )}
+          {timeLog.status === 'running' && (
+            <>
+              <button
+                onClick={onTimePause}
+                className="h-14 px-5 rounded-xl bg-amber-600 hover:bg-amber-500 text-white text-[14px] font-semibold inline-flex items-center gap-2"
+              >
+                <Icon name="clock" size={18} />
+                Szünet
+              </button>
+              <button
+                onClick={onTimeStop}
+                className="h-14 px-5 rounded-xl bg-rose-600 hover:bg-rose-500 text-white text-[14px] font-semibold inline-flex items-center gap-2"
+              >
+                <Icon name="x" size={18} />
+                Megállít
+              </button>
+            </>
+          )}
+          {timeLog.status === 'paused' && (
+            <>
+              <button
+                onClick={onTimeResume}
+                className="h-14 px-5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-[14px] font-semibold inline-flex items-center gap-2"
+              >
+                <Icon name="bolt" size={18} />
+                Folytatás
+              </button>
+              <button
+                onClick={onTimeStop}
+                className="h-14 px-5 rounded-xl bg-rose-600 hover:bg-rose-500 text-white text-[14px] font-semibold inline-flex items-center gap-2"
+              >
+                <Icon name="x" size={18} />
+                Megállít
+              </button>
+            </>
+          )}
         </div>
       </div>
 

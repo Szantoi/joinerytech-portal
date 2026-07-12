@@ -84,6 +84,12 @@ export function LandingPage() {
 
         <div className="mt-10 flex flex-col sm:flex-row items-center gap-3">
           <button
+            onClick={() => navigate('/quote-request')}
+            className="h-12 px-8 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-[15px] font-semibold transition shadow-lg shadow-emerald-600/20 w-full sm:w-auto"
+          >
+            Ingyenes árajánlat kérése
+          </button>
+          <button
             onClick={() => navigate('/login')}
             className="h-12 px-8 rounded-xl bg-teal-600 hover:bg-teal-500 text-white text-[15px] font-semibold transition shadow-lg shadow-teal-600/20 w-full sm:w-auto"
           >

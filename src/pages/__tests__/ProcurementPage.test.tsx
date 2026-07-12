@@ -24,11 +24,9 @@ describe('ProcurementPage', () => {
     expect(screen.getByText('\u00d6sszeg')).toBeTruthy()
   })
 
-  it('renders supplier ratings', () => {
+  it('renders empty state when no API data', () => {
     render(<ProcurementPage />)
-    const eggerMatches = screen.getAllByText(/Egger/)
-    expect(eggerMatches.length).toBeGreaterThan(0)
-    const stars = screen.getAllByText(/★/)
-    expect(stars.length).toBeGreaterThan(0)
+    // Without API token, suppliers list is empty
+    expect(screen.getByText('Szállítók')).toBeTruthy()
   })
 })

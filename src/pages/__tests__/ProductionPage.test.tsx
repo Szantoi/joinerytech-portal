@@ -1,7 +1,8 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
-import { render, screen, fireEvent, waitFor } from '@testing-library/react'
+import { render, screen, fireEvent, waitFor, act } from '@testing-library/react'
 import { MemoryRouter } from 'react-router-dom'
 import { ProductionPage } from '../ProductionPage'
+import { ToastProvider } from '../../components/ui/Toast'
 
 vi.mock('../../auth', () => ({
   useAuth: vi.fn(() => ({
@@ -14,40 +15,52 @@ vi.mock('../../auth', () => ({
   })),
 }))
 
+// Helper to render with required providers
+function renderWithProviders(ui: React.ReactElement, routerProps = {}) {
+  return render(
+    <MemoryRouter {...routerProps}>
+      <ToastProvider>
+        {ui}
+      </ToastProvider>
+    </MemoryRouter>
+  )
+}
+
 beforeEach(() => {
   // Mock scrollIntoView
   Element.prototype.scrollIntoView = vi.fn()
 })
 
 afterEach(() => {
+  vi.useRealTimers() // CRITICAL: restore real timers after each test
   vi.unstubAllGlobals()
 })
 
 describe('ProductionPage', () => {
   it('renders cutting plans tab by default', () => {
-    render(<ProductionPage />)
+    renderWithProviders(<ProductionPage />)
     expect(screen.getByText(/g\u00f3terv/)).toBeTruthy()
   })
 
   it('renders cutting plans in default tab', () => {
-    render(<ProductionPage />)
+    renderWithProviders(<ProductionPage />)
     expect(screen.getByText(/g\u00f3terv/)).toBeTruthy()
   })
 
   it('renders nesting panel heading', () => {
-    render(<ProductionPage />)
+    renderWithProviders(<ProductionPage />)
     expect(screen.getByText('Nesting vizualizáció')).toBeTruthy()
   })
 
   it('switches to machining tab and shows columns', () => {
-    render(<ProductionPage />)
+    renderWithProviders(<ProductionPage />)
     fireEvent.click(screen.getByText(/Megmunk/))
     const cncMatches = screen.getAllByText(/CNC/)
     expect(cncMatches.length).toBeGreaterThan(0)
   })
 
   it('renders nesting viewer with no-plan state when API unavailable', () => {
-    render(<ProductionPage />)
+    renderWithProviders(<ProductionPage />)
     // Plan list is empty (no API token in test env) — nesting shows "no plan" state
     expect(screen.getByText('Nincs kiválasztott terv')).toBeTruthy()
   })
@@ -70,10 +83,9 @@ describe('ProductionPage', () => {
       return Promise.resolve({ ok: false, status: 503 })
     }))
 
-    render(
-      <MemoryRouter initialEntries={[{ pathname: '/w/production/cutting', state: { highlightPlanId: 'CP-184-ABC' } }]}>
-        <ProductionPage />
-      </MemoryRouter>
+    renderWithProviders(
+      <ProductionPage />,
+      { initialEntries: [{ pathname: '/w/production/cutting', state: { highlightPlanId: 'CP-184-ABC' } }] }
     )
 
     // Wait for plans to load and highlight to apply
@@ -104,11 +116,7 @@ describe('ProductionPage', () => {
       return Promise.resolve({ ok: false, status: 503 })
     }))
 
-    render(
-      <MemoryRouter>
-        <ProductionPage />
-      </MemoryRouter>
-    )
+    renderWithProviders(<ProductionPage />)
 
     // Wait for plans to load
     await waitFor(() => {
@@ -116,9 +124,7 @@ describe('ProductionPage', () => {
     })
   })
 
-  it('removes highlight border after 3 seconds', async () => {
-    vi.useFakeTimers()
-
+  it('applies and clears highlight border automatically', async () => {
     const mockPlans = [
       { id: 'CP-184-ABC', name: 'CP-184-ABC', date: '2024-06-15', status: 'Draft' },
     ]
@@ -133,10 +139,9 @@ describe('ProductionPage', () => {
       return Promise.resolve({ ok: false, status: 503 })
     }))
 
-    const { container } = render(
-      <MemoryRouter initialEntries={[{ pathname: '/w/production/cutting', state: { highlightPlanId: 'CP-184-ABC' } }]}>
-        <ProductionPage />
-      </MemoryRouter>
+    renderWithProviders(
+      <ProductionPage />,
+      { initialEntries: [{ pathname: '/w/production/cutting', state: { highlightPlanId: 'CP-184-ABC' } }] }
     )
 
     // Wait for plans to load and highlight to apply
@@ -146,17 +151,12 @@ describe('ProductionPage', () => {
       expect(highlightedButton).toBeTruthy()
     })
 
-    // Fast-forward time by 3 seconds
-    vi.advanceTimersByTime(3000)
-
-    // Wait for highlight to be removed
+    // Wait for highlight to be automatically cleared (3s + buffer)
     await waitFor(() => {
       const planButtons = screen.getAllByRole('button')
       const highlightedButton = planButtons.find(btn => btn.className.includes('border-l-teal-500'))
       expect(highlightedButton).toBeFalsy()
-    })
-
-    vi.useRealTimers()
+    }, { timeout: 4000 })
   })
 
   // ─── TOP 2: Nesting Visualization tests ───────────────────────────────────
@@ -167,15 +167,20 @@ describe('ProductionPage', () => {
     ]
 
     const mockNestingData = {
-      strategy: 'Guillotine',
-      sheets: [
+      SheetId: 'CP-184-ABC',
+      OrderReference: 'JT-2426-0184',
+      TotalParts: 1,
+      Groups: [{ MaterialType: 'EG-3303-18', ThicknessMm: 18, Lines: [] }],
+      PanelAssignments: [
         {
-          id: 'sheet-1',
-          width: 2800,
-          height: 2070,
-          wastePercentage: 12.5,
-          placedParts: [
-            { id: 'Part-001', x: 0, y: 0, width: 400, height: 600, materialType: 'EG-3303-18' },
+          PanelStockId: 'sheet-1',
+          MaterialType: 'EG-3303-18',
+          PanelWidthMm: 2800,
+          PanelHeightMm: 2070,
+          UtilizationPercent: 87.5,
+          WasteAreaMm2: 0,
+          PlacedParts: [
+            { PartName: 'Part-001', X: 0, Y: 0, WidthMm: 400, HeightMm: 600, IsRotated: false },
           ],
         },
       ],
@@ -199,33 +204,30 @@ describe('ProductionPage', () => {
 
     vi.stubGlobal('fetch', fetchMock)
 
-    render(
-      <MemoryRouter>
-        <ProductionPage />
-      </MemoryRouter>
-    )
-
-    // Wait for plans to load
-    await waitFor(() => {
-      const planButtons = screen.getAllByRole('button')
-      const planButton = planButtons.find(btn => btn.textContent?.includes('CP-184-ABC'))
-      expect(planButton).toBeTruthy()
+    await act(async () => {
+      renderWithProviders(<ProductionPage />)
     })
 
-    // Click on a plan
-    const planButtons = screen.getAllByRole('button')
-    const planButton = planButtons.find(btn => btn.textContent?.includes('CP-184-ABC'))
-    if (planButton) {
-      fireEvent.click(planButton)
+    // Wait for plans to load
+    const planButton = await waitFor(() => {
+      const planButtons = screen.getAllByRole('button')
+      const btn = planButtons.find(btn => btn.textContent?.includes('CP-184-ABC'))
+      expect(btn).toBeTruthy()
+      return btn!
+    })
 
-      // Wait for nesting data to load
-      await waitFor(() => {
-        expect(fetchMock).toHaveBeenCalledWith(
-          expect.stringContaining('/nesting'),
-          expect.any(Object)
-        )
-      })
-    }
+    // Click on plan
+    await act(async () => {
+      fireEvent.click(planButton)
+    })
+
+    // Wait for nesting data to load
+    await waitFor(() => {
+      expect(fetchMock).toHaveBeenCalledWith(
+        expect.stringContaining('/nesting'),
+        expect.any(Object)
+      )
+    })
   })
 
   it('displays NestingViewer when nesting data is available', async () => {
@@ -234,15 +236,20 @@ describe('ProductionPage', () => {
     ]
 
     const mockNestingData = {
-      strategy: 'Guillotine',
-      sheets: [
+      SheetId: 'CP-184-ABC',
+      OrderReference: 'JT-2426-0184',
+      TotalParts: 1,
+      Groups: [{ MaterialType: 'EG-3303-18', ThicknessMm: 18, Lines: [] }],
+      PanelAssignments: [
         {
-          id: 'sheet-1',
-          width: 2800,
-          height: 2070,
-          wastePercentage: 12.5,
-          placedParts: [
-            { id: 'Part-001', x: 0, y: 0, width: 400, height: 600, materialType: 'EG-3303-18' },
+          PanelStockId: 'sheet-1',
+          MaterialType: 'EG-3303-18',
+          PanelWidthMm: 2800,
+          PanelHeightMm: 2070,
+          UtilizationPercent: 87.5,
+          WasteAreaMm2: 0,
+          PlacedParts: [
+            { PartName: 'Part-001', X: 0, Y: 0, WidthMm: 400, HeightMm: 600, IsRotated: false },
           ],
         },
       ],
@@ -264,26 +271,27 @@ describe('ProductionPage', () => {
       return Promise.resolve({ ok: false, status: 503 })
     }))
 
-    render(
-      <MemoryRouter>
-        <ProductionPage />
-      </MemoryRouter>
-    )
+    await act(async () => {
+      renderWithProviders(<ProductionPage />)
+    })
 
-    // Click on a plan
-    await waitFor(() => screen.getAllByRole('button'))
-    const planButtons = screen.getAllByRole('button')
-    const planButton = planButtons.find(btn => btn.textContent?.includes('CP-184-ABC'))
+    // Wait for plans to load and click
+    const planButton = await waitFor(() => {
+      const planButtons = screen.getAllByRole('button')
+      const btn = planButtons.find(btn => btn.textContent?.includes('CP-184-ABC'))
+      expect(btn).toBeTruthy()
+      return btn!
+    })
 
-    if (planButton) {
+    await act(async () => {
       fireEvent.click(planButton)
+    })
 
-      // Wait for NestingViewer to render
-      await waitFor(() => {
-        expect(screen.getByText('Hulladék: 12.5%')).toBeTruthy()
-        expect(screen.getByText('Stratégia: Guillotine')).toBeTruthy()
-      })
-    }
+    // Wait for NestingViewer to render
+    await waitFor(() => {
+      expect(screen.getByText('Hulladék: 12.5%')).toBeTruthy()
+      expect(screen.getByText('Stratégia: Optimized')).toBeTruthy()
+    })
   })
 
   it('shows fallback message when nesting API fails', async () => {
@@ -304,35 +312,28 @@ describe('ProductionPage', () => {
       return Promise.resolve({ ok: false, status: 503 })
     }))
 
-    render(
-      <MemoryRouter>
-        <ProductionPage />
-      </MemoryRouter>
-    )
+    renderWithProviders(<ProductionPage />)
 
-    // Click on a plan
-    await waitFor(() => screen.getAllByRole('button'))
-    const planButtons = screen.getAllByRole('button')
-    const planButton = planButtons.find(btn => btn.textContent?.includes('CP-184-ABC'))
+    // Wait for plans to load and click
+    const planButton = await waitFor(() => {
+      const planButtons = screen.getAllByRole('button')
+      const btn = planButtons.find(btn => btn.textContent?.includes('CP-184-ABC'))
+      expect(btn).toBeTruthy()
+      return btn!
+    })
 
-    if (planButton) {
-      fireEvent.click(planButton)
+    fireEvent.click(planButton)
 
-      // Wait for fallback message
-      await waitFor(() => {
-        expect(screen.getByText('Nesting API nem elérhető')).toBeTruthy()
-      })
-    }
+    // Wait for fallback message
+    await waitFor(() => {
+      expect(screen.getByText('Nesting API nem elérhető')).toBeTruthy()
+    })
   })
 
   it('shows empty state when no plan is selected', () => {
     vi.stubGlobal('fetch', vi.fn(() => Promise.resolve({ ok: false, status: 503 })))
 
-    render(
-      <MemoryRouter>
-        <ProductionPage />
-      </MemoryRouter>
-    )
+    renderWithProviders(<ProductionPage />)
 
     expect(screen.getByText('Nincs kiválasztott terv')).toBeTruthy()
   })
@@ -354,14 +355,19 @@ describe('ProductionPage', () => {
         return Promise.resolve({
           ok: true,
           json: () => Promise.resolve({
-            strategy: 'FFDH',
-            sheets: [
+            SheetId: 'sheet-id',
+            OrderReference: 'JT-2426-0184',
+            TotalParts: 0,
+            Groups: [{ MaterialType: 'EG-3303-18', ThicknessMm: 18, Lines: [] }],
+            PanelAssignments: [
               {
-                id: 'sheet-1',
-                width: 2800,
-                height: 2070,
-                wastePercentage: 8.0,
-                placedParts: [],
+                PanelStockId: 'sheet-1',
+                MaterialType: 'EG-3303-18',
+                PanelWidthMm: 2800,
+                PanelHeightMm: 2070,
+                UtilizationPercent: 92.0,
+                WasteAreaMm2: 0,
+                PlacedParts: [],
               },
             ],
           }),
@@ -372,35 +378,35 @@ describe('ProductionPage', () => {
 
     vi.stubGlobal('fetch', fetchMock)
 
-    render(
-      <MemoryRouter>
-        <ProductionPage />
-      </MemoryRouter>
-    )
+    renderWithProviders(<ProductionPage />)
+
+    // Wait for plans to load
+    await waitFor(() => {
+      const planButtons = screen.getAllByRole('button')
+      expect(planButtons.find(btn => btn.textContent?.includes('CP-184-ABC'))).toBeTruthy()
+      expect(planButtons.find(btn => btn.textContent?.includes('CP-183-XYZ'))).toBeTruthy()
+    })
 
     // Click on first plan
-    await waitFor(() => screen.getAllByRole('button'))
-    const firstPlanButton = screen.getAllByRole('button').find(btn => btn.textContent?.includes('CP-184-ABC'))
-    if (firstPlanButton) {
-      fireEvent.click(firstPlanButton)
-      await waitFor(() => {
-        expect(fetchMock).toHaveBeenCalledWith(
-          expect.stringContaining('CP-184-ABC/nesting'),
-          expect.any(Object)
-        )
-      })
-    }
+    const firstPlanButton = screen.getAllByRole('button').find(btn => btn.textContent?.includes('CP-184-ABC'))!
+    fireEvent.click(firstPlanButton)
+
+    await waitFor(() => {
+      expect(fetchMock).toHaveBeenCalledWith(
+        expect.stringContaining('CP-184-ABC/nesting'),
+        expect.any(Object)
+      )
+    })
 
     // Click on second plan
-    const secondPlanButton = screen.getAllByRole('button').find(btn => btn.textContent?.includes('CP-183-XYZ'))
-    if (secondPlanButton) {
-      fireEvent.click(secondPlanButton)
-      await waitFor(() => {
-        expect(fetchMock).toHaveBeenCalledWith(
-          expect.stringContaining('CP-183-XYZ/nesting'),
-          expect.any(Object)
-        )
-      })
-    }
+    const secondPlanButton = screen.getAllByRole('button').find(btn => btn.textContent?.includes('CP-183-XYZ'))!
+    fireEvent.click(secondPlanButton)
+
+    await waitFor(() => {
+      expect(fetchMock).toHaveBeenCalledWith(
+        expect.stringContaining('CP-183-XYZ/nesting'),
+        expect.any(Object)
+      )
+    })
   })
 })

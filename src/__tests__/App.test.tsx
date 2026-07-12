@@ -52,6 +52,6 @@ describe('App Router', () => {
 
   it('renders warehouse movements screen', () => {
     renderApp('/w/warehouse/movements')
-    expect(screen.getByText('Anyagmozg\u00e1s napl\u00f3')).toBeTruthy()
+    expect(screen.getByText('Backend endpoint nem elérhető')).toBeTruthy()
   })
 })

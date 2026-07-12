@@ -4,9 +4,19 @@ import { Card, Icon } from '../components/ui'
 import { SlideOver } from '../components/ui/SlideOver'
 import { WorldShell } from '../components/layout/WorldShell'
 import {
-  RELEASE_ITEMS, DATASHEETS, RELEASE_STATUS_META, DATASHEET_STATUS_META,
+  RELEASE_STATUS_META, DATASHEET_STATUS_META,
   type ReleaseItem, type MfgDatasheet, type ReleaseStatus,
 } from '../mocks/mfgprep'
+
+function EndpointPending({ endpoint }: { endpoint: string }) {
+  return (
+    <div className="rounded-xl border-2 border-dashed border-amber-200 bg-amber-50/60 px-6 py-10 flex flex-col items-center gap-2 text-center">
+      <div className="text-[13px] font-semibold text-amber-700">Backend endpoint nem elérhető</div>
+      <code className="text-[11px] text-amber-600 bg-amber-100 rounded px-2 py-0.5">{endpoint}</code>
+      <div className="text-[11px] text-stone-500 mt-1">Az endpoint implementálása után lesz élő adat</div>
+    </div>
+  )
+}
 
 // ── Helpers ────────────────────────────────────────────────────────────────
 function ReleaseStatusPill({ status }: { status: ReleaseStatus }) {
@@ -144,7 +154,6 @@ function DatasheetSlideOver({ ds, onClose }: { ds: MfgDatasheet | null; onClose:
 
 // ── Release Queue ──────────────────────────────────────────────────────────
 function ReleaseQueue() {
-  const [selected, setSelected] = useState<ReleaseItem | null>(null)
   const [filter, setFilter] = useState<ReleaseStatus | 'all'>('all')
 
   const STATUS_FILTERS: Array<{ k: ReleaseStatus | 'all'; l: string }> = [
@@ -155,7 +164,6 @@ function ReleaseQueue() {
     { k: 'ready', l: 'Kész' },
     { k: 'blocked', l: 'Blokkolt' },
   ]
-  const rows = filter === 'all' ? RELEASE_ITEMS : RELEASE_ITEMS.filter((r) => r.status === filter)
 
   return (
     <div className="px-4 md:px-7 py-5 md:py-6 max-w-[1200px] mx-auto">
@@ -172,78 +180,29 @@ function ReleaseQueue() {
         ))}
       </div>
 
-      <div className="space-y-2">
-        {rows.map((item) => (
-          <button key={item.id} onClick={() => setSelected(item)}
-            className="w-full text-left bg-white rounded-xl border border-stone-200 px-4 py-3 hover:shadow-sm hover:border-orange-200 transition flex items-center gap-3">
-            <div className="min-w-0 flex-1">
-              <div className="flex items-center gap-2 flex-wrap">
-                <span className="text-[13px] font-semibold text-stone-900 truncate">{item.project}</span>
-                <PriorityBadge p={item.priority} />
-              </div>
-              <div className="text-[11.5px] text-stone-500 mt-0.5">{item.customer} · {item.orderId}</div>
-              <div className="text-[11px] text-stone-400 mt-1 inline-flex items-center gap-1">
-                <Icon name="calendar" size={11} />{item.dueDate} · {item.productCount} termék
-                {item.assignedTo && <span className="ml-2">· {item.assignedTo}</span>}
-              </div>
-            </div>
-            <div className="shrink-0 flex flex-col items-end gap-1.5">
-              <ReleaseStatusPill status={item.status} />
-              <div className="text-[10.5px] text-stone-400">
-                {item.checklist.filter((c) => c.done).length}/{item.checklist.length} kész
-              </div>
-            </div>
-          </button>
-        ))}
-        {rows.length === 0 && (
-          <div className="py-12 text-center text-[13px] text-stone-400">Nincs elem ebben a szűrőben.</div>
-        )}
-      </div>
-
-      <ReleaseDetailSlideOver item={selected} onClose={() => setSelected(null)} />
+      <EndpointPending endpoint={`GET /joinery/api/orders?status=${filter === 'all' ? 'pending_release' : filter} [?]`} />
     </div>
   )
 }
 
 // ── Datasheets List ────────────────────────────────────────────────────────
 function DatasheetList() {
-  const [selected, setSelected] = useState<MfgDatasheet | null>(null)
-
   return (
     <div className="px-4 md:px-7 py-5 md:py-6 max-w-[1200px] mx-auto">
       <div className="mb-4">
         <h1 className="text-[20px] md:text-[24px] font-semibold tracking-tight text-stone-900">Munkalapok</h1>
       </div>
-      <div className="space-y-2">
-        {DATASHEETS.map((ds) => {
-          const m = DATASHEET_STATUS_META[ds.status]
-          return (
-            <button key={ds.id} onClick={() => setSelected(ds)}
-              className="w-full text-left bg-white rounded-xl border border-stone-200 px-4 py-3 hover:shadow-sm hover:border-orange-200 transition flex items-center gap-3">
-              <div className="min-w-0 flex-1">
-                <div className="text-[13px] font-semibold text-stone-900">{ds.customer}</div>
-                <div className="text-[11.5px] text-stone-500 mt-0.5">{ds.id} · {ds.team}</div>
-                <div className="text-[11px] text-stone-400 mt-1">{ds.startDate} → {ds.dueDate} · {ds.productCount} termék</div>
-              </div>
-              <span className={`shrink-0 inline-flex items-center gap-1.5 px-2 h-6 rounded-full text-[10.5px] font-medium ${m.bg} ${m.fg}`}>
-                <span className={`w-1.5 h-1.5 rounded-full ${m.dot}`} />{m.label}
-              </span>
-            </button>
-          )
-        })}
-      </div>
-      <DatasheetSlideOver ds={selected} onClose={() => setSelected(null)} />
+      <EndpointPending endpoint="GET /joinery/api/manufacturing-sheets [?]" />
     </div>
   )
 }
 
 // ── Dashboard ──────────────────────────────────────────────────────────────
 function MfgPrepDashboard({ onScreen }: { onScreen: (s: string) => void }) {
-  const [selected, setSelected] = useState<ReleaseItem | null>(null)
-  const pending    = RELEASE_ITEMS.filter((r) => r.status === 'pending').length
-  const inProd     = RELEASE_ITEMS.filter((r) => r.status === 'in_production').length
-  const ready      = RELEASE_ITEMS.filter((r) => r.status === 'ready').length
-  const blocked    = RELEASE_ITEMS.filter((r) => r.status === 'blocked').length
+  const pending = 0
+  const inProd  = 0
+  const ready   = 0
+  const blocked = 0
 
   const KpiCard = ({ label, value, sub, tone, icon }: { label: string; value: number; sub: string; tone: string; icon: string }) => (
     <div className="bg-white rounded-2xl border border-stone-200 p-4">
@@ -282,17 +241,8 @@ function MfgPrepDashboard({ onScreen }: { onScreen: (s: string) => void }) {
           <div className="px-4 py-2.5 border-b border-stone-100 flex items-center justify-between">
             <span className="text-[12.5px] font-semibold text-stone-800">Sürgős kiadásra vár</span>
           </div>
-          <div className="divide-y divide-stone-50">
-            {RELEASE_ITEMS.filter((r) => r.status === 'pending' || r.status === 'blocked').map((item) => (
-              <button key={item.id} onClick={() => setSelected(item)}
-                className="w-full text-left px-4 py-3 hover:bg-stone-50/60 flex items-center gap-3">
-                <div className="min-w-0 flex-1">
-                  <div className="text-[12.5px] font-semibold text-stone-900 truncate">{item.project}</div>
-                  <div className="text-[11px] text-stone-500 mt-0.5">{item.customer} · {item.dueDate}</div>
-                </div>
-                <ReleaseStatusPill status={item.status} />
-              </button>
-            ))}
+          <div className="px-4 py-4 text-center text-[12px] text-stone-400">
+            Adatok nem elérhetők · endpoint fejlesztés alatt
           </div>
         </Card>
 
@@ -300,26 +250,12 @@ function MfgPrepDashboard({ onScreen }: { onScreen: (s: string) => void }) {
           <div className="px-4 py-2.5 border-b border-stone-100">
             <span className="text-[12.5px] font-semibold text-stone-800">Munkalapok</span>
           </div>
-          <div className="divide-y divide-stone-50">
-            {DATASHEETS.filter((d) => d.status === 'active' || d.status === 'draft').map((ds) => {
-              const m = DATASHEET_STATUS_META[ds.status]
-              return (
-                <div key={ds.id} className="px-4 py-3 flex items-center gap-3">
-                  <div className="min-w-0 flex-1">
-                    <div className="text-[12.5px] font-semibold text-stone-900 truncate">{ds.customer}</div>
-                    <div className="text-[11px] text-stone-500 mt-0.5">{ds.team} · {ds.dueDate}</div>
-                  </div>
-                  <span className={`shrink-0 inline-flex items-center gap-1 px-2 h-5 rounded-full text-[10px] font-medium ${m.bg} ${m.fg}`}>
-                    <span className={`w-1 h-1 rounded-full ${m.dot}`} />{m.label}
-                  </span>
-                </div>
-              )
-            })}
+          <div className="px-4 py-4 text-center text-[12px] text-stone-400">
+            Adatok nem elérhetők · endpoint fejlesztés alatt
           </div>
         </Card>
       </div>
 
-      <ReleaseDetailSlideOver item={selected} onClose={() => setSelected(null)} />
     </div>
   )
 }

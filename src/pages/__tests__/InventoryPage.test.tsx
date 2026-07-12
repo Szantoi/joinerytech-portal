@@ -1,6 +1,10 @@
-import { describe, it, expect } from 'vitest'
+import { describe, it, expect, vi } from 'vitest'
 import { render, screen, fireEvent } from '@testing-library/react'
 import { InventoryPage } from '../InventoryPage'
+
+vi.mock('../../auth', () => ({
+  useAuth: vi.fn(() => ({ token: null, isAuthenticated: false, isLoading: false, roles: [] })),
+}))
 
 describe('InventoryPage', () => {
   it('renders materials tab button', () => {
@@ -9,15 +13,9 @@ describe('InventoryPage', () => {
     expect(matches.length).toBeGreaterThan(0)
   })
 
-  it('renders summary cards in materials tab', () => {
+  it('renders empty state when no API data', () => {
     render(<InventoryPage />)
-    expect(screen.getByText('Riasztások')).toBeTruthy()
-    expect(screen.getByText('Becsült érték')).toBeTruthy()
-  })
-
-  it('renders material cards', () => {
-    render(<InventoryPage />)
-    expect(screen.getByText('Bükk 18mm')).toBeTruthy()
+    expect(screen.getByText('Nincs adat az Inventory API-ból')).toBeTruthy()
   })
 
   it('switches to offcuts tab', () => {
@@ -26,9 +24,9 @@ describe('InventoryPage', () => {
     expect(screen.getByText(/nyilv\u00e1ntart\u00e1s/)).toBeTruthy()
   })
 
-  it('switches to movements tab', () => {
+  it('switches to movements tab shows pending banner', () => {
     render(<InventoryPage />)
     fireEvent.click(screen.getByText(/K\u00e9szletmozg/))
-    expect(screen.getByText(/Anyagmozg/)).toBeTruthy()
+    expect(screen.getByText('Backend endpoint nem elérhető')).toBeTruthy()
   })
 })

@@ -1,41 +1,59 @@
+import { useEffect } from 'react'
 import { Card } from '../../components/ui/Card'
 import { Icon } from '../../components/ui/Icon'
-import { SHOPFLOOR_MACHINES, SHOPFLOOR_QUEUE } from '../../mocks/worlds'
+import { useApi, API_BASE } from '../../hooks/useApi'
+
+interface ApiCuttingPlan {
+  id: string
+  name: string
+  date: string
+  status: string
+}
+
+interface ApiDoorOrder {
+  id: string
+  projectId: string
+  projectName: string
+  status: string
+  itemCount: number
+  deliveryDate: string | null
+  createdAt: string
+}
+
+interface ApiOrdersPage {
+  items: ApiDoorOrder[]
+  totalCount: number
+}
 
 interface ProductionDashboardPageProps {
   onScreen?: (key: string) => void
 }
 
-interface OrderProgress {
-  id: string
-  customer: string
-  sheets: number
-  done: number
-  stage: string
+const PLAN_STATUS_MAP: Record<string, string> = {
+  Draft: 'draft', Planned: 'planned', Running: 'running', Done: 'done',
+}
+
+const ORDER_STATUS_STAGE: Record<string, string> = {
+  InProduction: 'cutting', Calculated: 'cutting', Submitted: 'edgeband',
 }
 
 export function ProductionDashboardPage({ onScreen }: ProductionDashboardPageProps) {
-  const machines = SHOPFLOOR_MACHINES
-  const running = machines.filter((m) => m.state === 'running').length
-  const idle = machines.length - running
+  const { data: apiPlans, refetch: fetchPlans } = useApi<ApiCuttingPlan[]>(
+    `${API_BASE.cutting}/api/cutting/plans`
+  )
+  const { data: apiOrdersPage, refetch: fetchOrders } = useApi<ApiOrdersPage>(
+    `${API_BASE.joinery}/api/orders?pageSize=50`
+  )
+  useEffect(() => { fetchPlans(); fetchOrders() }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
-  const allTasks = Object.values(SHOPFLOOR_QUEUE).flat()
-  const cuttingTasks = allTasks.filter((t) => t.kind === 'cutting')
-  const totalSheets = cuttingTasks.reduce((a, t) => a + (t.sheets || 0), 0)
-  const completedSheets = cuttingTasks.reduce((a, t) => a + (t.currentSheet || 0), 0)
+  const plans = apiPlans ?? []
+  const orders = apiOrdersPage?.items ?? []
 
-  const orderProgress: Record<string, OrderProgress> = {}
-  for (const t of allTasks) {
-    const id = t.order
-    if (!orderProgress[id]) {
-      orderProgress[id] = { id, customer: t.customer, sheets: 0, done: 0, stage: t.kind }
-    }
-    orderProgress[id].sheets += t.sheets || 0
-    orderProgress[id].done += t.currentSheet || 0
-    if (t.runtime > 0) orderProgress[id].stage = t.kind
-  }
-  const activeOrders = Object.values(orderProgress)
-    .filter((o) => o.sheets > 0)
+  const running = plans.filter((p) => PLAN_STATUS_MAP[p.status] === 'running').length
+  const totalPlans = plans.length
+
+  const activeOrders = orders
+    .filter((o) => ['InProduction', 'Calculated', 'Submitted'].includes(o.status))
     .slice(0, 5)
 
   return (
@@ -45,56 +63,55 @@ export function ProductionDashboardPage({ onScreen }: ProductionDashboardPagePro
         <Card className="p-4">
           <div className="text-[10.5px] uppercase tracking-wide text-stone-500 font-medium">Napi terv</div>
           <div className="text-[28px] font-semibold tracking-tight text-stone-900 mt-1 tabular-nums">
-            {cuttingTasks.length}
+            {totalPlans > 0 ? totalPlans : '—'}
             <span className="text-[14px] text-stone-400 font-normal ml-1">vágóterv</span>
           </div>
           <div className="text-[10.5px] text-stone-500 mt-1">
-            {totalSheets} tábla összesen · {completedSheets} kész
+            {totalPlans > 0 ? `${running} futó · ${totalPlans - running} egyéb` : 'API adat szükséges'}
           </div>
         </Card>
         <Card className="p-4">
-          <div className="text-[10.5px] uppercase tracking-wide text-stone-500 font-medium">Aktív gépek</div>
+          <div className="text-[10.5px] uppercase tracking-wide text-stone-500 font-medium">Aktív vágótervek</div>
           <div className="text-[28px] font-semibold tracking-tight text-stone-900 mt-1 tabular-nums">
-            {running}
-            <span className="text-[14px] text-stone-400 font-normal ml-1">/ {machines.length}</span>
+            {running > 0 ? running : '—'}
+            <span className="text-[14px] text-stone-400 font-normal ml-1">/ {totalPlans || '—'}</span>
           </div>
           <div className="text-[10.5px] mt-1">
-            <span className="text-emerald-700">{running} fut</span>
-            <span className="text-stone-400 mx-1">·</span>
-            <span className="text-stone-500">{idle} szabad</span>
+            {totalPlans > 0
+              ? <><span className="text-emerald-700">{running} fut</span><span className="text-stone-400 mx-1">·</span><span className="text-stone-500">{totalPlans - running} egyéb</span></>
+              : <span className="text-stone-400">Nincs API adat</span>
+            }
           </div>
         </Card>
         <Card className="p-4">
           <div className="text-[10.5px] uppercase tracking-wide text-stone-500 font-medium">Hulladék</div>
           <div className="text-[28px] font-semibold tracking-tight text-stone-900 mt-1 tabular-nums">
-            4.2
+            —
             <span className="text-[16px] text-stone-400 ml-0.5">%</span>
           </div>
-          <div className="text-[10.5px] text-emerald-700 mt-1 inline-flex items-center gap-1">
-            <span>↓ 0.4pp</span>
-            <span className="text-stone-400">előző hét</span>
+          <div className="text-[10.5px] text-stone-400 mt-1">
+            {/* [?] GET /cutting/api/cutting/waste nem ad gépenként bontást */}
+            Összesített adat szükséges
           </div>
         </Card>
         <Card className="p-4">
-          <div className="text-[10.5px] uppercase tracking-wide text-stone-500 font-medium">OEE</div>
+          <div className="text-[10.5px] uppercase tracking-wide text-stone-500 font-medium">Aktív rendelések</div>
           <div className="text-[28px] font-semibold tracking-tight text-stone-900 mt-1 tabular-nums">
-            87
-            <span className="text-[16px] text-stone-400 ml-0.5">%</span>
+            {activeOrders.length > 0 ? activeOrders.length : '—'}
           </div>
-          <div className="text-[10.5px] text-emerald-700 mt-1 inline-flex items-center gap-1">
-            <span>↑ 3pp</span>
-            <span className="text-stone-400">előző hét</span>
+          <div className="text-[10.5px] text-stone-500 mt-1">
+            {activeOrders.length > 0 ? 'gyártásban' : 'Nincs aktív rendelés'}
           </div>
         </Card>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        {/* Machine load */}
+        {/* Cutting plan list */}
         <Card className="p-0 overflow-hidden">
           <div className="px-5 py-3 border-b border-stone-100 flex items-center justify-between">
             <div>
-              <div className="text-[13px] font-semibold text-stone-900">Gép terhelés</div>
-              <div className="text-[11px] text-stone-500">Élő állapot — minden műhely</div>
+              <div className="text-[13px] font-semibold text-stone-900">Vágótervek</div>
+              <div className="text-[11px] text-stone-500">Élő terv státuszok</div>
             </div>
             <button
               onClick={() => onScreen?.('cutting')}
@@ -103,58 +120,35 @@ export function ProductionDashboardPage({ onScreen }: ProductionDashboardPagePro
               Szabászat →
             </button>
           </div>
-          {machines.map((m) => {
-            const queue = SHOPFLOOR_QUEUE[m.id] ?? []
-            const active = queue.find((q) => (q.runtime || 0) > 0)
-            return (
-              <div
-                key={m.id}
-                className="px-5 py-3 border-b border-stone-50 last:border-0 hover:bg-stone-50/40"
-              >
-                <div className="flex items-center justify-between gap-3">
-                  <div className="flex items-center gap-3 min-w-0">
-                    <span
-                      className={`w-2 h-2 rounded-full ${
-                        m.state === 'running' ? 'bg-emerald-500 animate-pulse' : 'bg-stone-300'
-                      }`}
-                    />
+          {plans.length === 0 ? (
+            <div className="px-5 py-8 text-center text-[12px] text-stone-400">
+              {apiPlans === null ? 'Betöltés...' : 'Nincs vágóterv'}
+            </div>
+          ) : (
+            plans.slice(0, 6).map((p) => {
+              const status = PLAN_STATUS_MAP[p.status] ?? p.status
+              const isRunning = status === 'running'
+              return (
+                <div key={p.id} className="px-5 py-3 border-b border-stone-50 last:border-0 hover:bg-stone-50/40">
+                  <div className="flex items-center justify-between gap-3">
                     <div className="min-w-0">
-                      <div className="text-[12.5px] font-medium text-stone-900 truncate">{m.name}</div>
-                      <div className="text-[10.5px] text-stone-500">
-                        {m.kind} · {m.facility}
+                      <div className="text-[12.5px] font-medium text-stone-900 truncate font-mono">
+                        {p.name || p.id.slice(0, 12).toUpperCase()}
                       </div>
+                      <div className="text-[10.5px] text-stone-500">{p.date}</div>
                     </div>
-                  </div>
-                  <div className="text-right shrink-0">
-                    {m.state === 'running' && active ? (
-                      <>
-                        <div className="text-[11.5px] font-mono text-stone-700">{active.id}</div>
-                        <div className="text-[10.5px] text-stone-500">{active.customer}</div>
-                      </>
-                    ) : (
-                      <>
-                        <div className="text-[11.5px] text-stone-500">⚪ szabad</div>
-                        <div className="text-[10.5px] text-stone-400">{queue.length} feladat vár</div>
-                      </>
-                    )}
+                    <span className={`shrink-0 text-[10px] px-2 py-0.5 rounded-full font-medium ${
+                      isRunning ? 'bg-teal-50 text-teal-700' :
+                      status === 'done' ? 'bg-emerald-50 text-emerald-700' :
+                      'bg-stone-100 text-stone-600'
+                    }`}>
+                      {isRunning ? 'Futó' : status === 'done' ? 'Kész' : status === 'planned' ? 'Tervezett' : 'Vázlat'}
+                    </span>
                   </div>
                 </div>
-                {m.state === 'running' && active && active.sheets > 1 && (
-                  <div className="mt-2 flex items-center gap-2">
-                    <div className="flex-1 h-1.5 rounded-full bg-stone-100 overflow-hidden">
-                      <div
-                        className="h-full bg-teal-500"
-                        style={{ width: `${((active.currentSheet || 0) / active.sheets) * 100}%` }}
-                      />
-                    </div>
-                    <div className="text-[10.5px] font-mono text-stone-500 tabular-nums">
-                      {active.currentSheet || 0}/{active.sheets}
-                    </div>
-                  </div>
-                )}
-              </div>
-            )
-          })}
+              )
+            })
+          )}
         </Card>
 
         {/* Active orders progress */}
@@ -171,30 +165,28 @@ export function ProductionDashboardPage({ onScreen }: ProductionDashboardPagePro
               Munkafolyamat →
             </button>
           </div>
-          {activeOrders.map((o) => {
-            const pct = o.sheets > 0 ? (o.done / o.sheets) * 100 : 0
-            return (
-              <div key={o.id} className="px-5 py-3 border-b border-stone-50 last:border-0 hover:bg-stone-50/40">
-                <div className="flex items-center justify-between gap-3 mb-2">
-                  <div className="min-w-0">
-                    <div className="text-[12.5px] font-medium text-stone-900 truncate">{o.id}</div>
-                    <div className="text-[10.5px] text-stone-500 truncate">{o.customer}</div>
-                  </div>
-                  <span className="px-2 h-6 inline-flex items-center rounded-full text-[10px] font-medium bg-teal-50 text-teal-700">
-                    {o.stage === 'cutting' ? 'Szabászat' : o.stage === 'edgeband' ? 'Élzárás' : 'CNC'}
-                  </span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <div className="flex-1 h-2 rounded-full bg-stone-100 overflow-hidden">
-                    <div className="h-full bg-teal-600 rounded-full" style={{ width: `${pct}%` }} />
-                  </div>
-                  <div className="text-[11px] font-mono text-stone-700 tabular-nums w-14 text-right">
-                    {o.done}/{o.sheets}
+          {activeOrders.length === 0 ? (
+            <div className="px-5 py-8 text-center text-[12px] text-stone-400">
+              {apiOrdersPage === null ? 'Betöltés...' : 'Nincs aktív rendelés'}
+            </div>
+          ) : (
+            activeOrders.map((o) => {
+              const stage = ORDER_STATUS_STAGE[o.status] ?? 'cutting'
+              return (
+                <div key={o.id} className="px-5 py-3 border-b border-stone-50 last:border-0 hover:bg-stone-50/40">
+                  <div className="flex items-center justify-between gap-3 mb-1">
+                    <div className="min-w-0">
+                      <div className="text-[12.5px] font-medium text-stone-900 truncate">{o.projectName}</div>
+                      <div className="text-[10.5px] text-stone-500 truncate font-mono">{o.projectId || o.id.slice(0, 12).toUpperCase()}</div>
+                    </div>
+                    <span className="px-2 h-6 inline-flex items-center rounded-full text-[10px] font-medium bg-teal-50 text-teal-700">
+                      {stage === 'cutting' ? 'Szabászat' : stage === 'edgeband' ? 'Élzárás' : 'CNC'}
+                    </span>
                   </div>
                 </div>
-              </div>
-            )
-          })}
+              )
+            })
+          )}
         </Card>
       </div>
 

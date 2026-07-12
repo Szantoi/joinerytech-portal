@@ -46,9 +46,9 @@ describe('AiPage', () => {
     expect(screen.getAllByText(/AI Chat|Chat/).length).toBeGreaterThan(0)
   })
 
-  it('chat shows mock messages', () => {
+  it('chat shows empty state when no messages', () => {
     renderAi('chat')
-    expect(screen.getAllByText(/gyártási terhelés|Holzma|terhelés/).length).toBeGreaterThan(0)
+    expect(screen.getByText(/Kezdj el egy beszélgetést/)).toBeTruthy()
   })
 
   it('chat shows input field', () => {

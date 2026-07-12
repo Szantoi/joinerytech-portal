@@ -413,6 +413,25 @@ export function Icon({ name, size = 18, className = '' }: IconProps) {
           <line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/>
         </svg>
       )
+    case 'info':
+      return (
+        <svg {...common}>
+          <circle cx="12" cy="12" r="9" />
+          <path d="M12 16v-4M12 8h.01" />
+        </svg>
+      )
+    case 'close':
+      return (
+        <svg {...common}>
+          <path d="M18 6 6 18M6 6l12 12" />
+        </svg>
+      )
+    case 'play':
+      return (
+        <svg {...common}>
+          <polygon points="5,3 19,12 5,21 5,3" fill="currentColor" stroke="none" />
+        </svg>
+      )
     default:
       return null
   }

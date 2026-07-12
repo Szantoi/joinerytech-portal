@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { KpiCard, Card, StatusPill, Icon } from '../components/ui'
 import { MiniKanbanStrip } from '../components/layout/MiniKanbanStrip'
-import { ORDERS, I18N, SPARKS } from '../mocks/data'
+import { I18N } from '../mocks/data'
 import { useApi, API_BASE } from '../hooks/useApi'
 import type { Order, OrderStatus } from '../types'
 
@@ -64,9 +64,7 @@ export function DashboardPage() {
   )
   useEffect(() => { fetchStats(); fetchOrders() }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
-  const recentOrders: Order[] = apiOrdersPage?.items?.length
-    ? apiOrdersPage.items.map(apiOrderToFe)
-    : ORDERS.slice(0, 5)
+  const recentOrders: Order[] = apiOrdersPage?.items?.map(apiOrderToFe) ?? []
 
   const kpis = [
     {
@@ -75,7 +73,7 @@ export function DashboardPage() {
       value: stats ? String(stats.flowEpicCount) : '—',
       unit: 'projekt',
       delta: 0,
-      spark: SPARKS.ordersToday,
+      spark: [],
       color: '#0d9488',
       breakdowns: [
         { label: 'Telephely', value: stats ? String(stats.facilityCount) : '—', note: 'db' },
@@ -89,7 +87,7 @@ export function DashboardPage() {
       value: '28',
       unit: t.common.orders,
       delta: 12,
-      spark: SPARKS.inProduction,
+      spark: [],
       color: '#0d9488',
       breakdowns: [
         { label: 'Holzma HPP380', value: '12', note: '43%' },
@@ -103,7 +101,7 @@ export function DashboardPage() {
       value: '3',
       unit: '',
       delta: -25,
-      spark: SPARKS.stockAlerts,
+      spark: [],
       color: '#b45309',
       breakdowns: [
         { label: 'Tölgy 22mm',   value: '8 / 15',  note: t.status.low },
@@ -117,7 +115,7 @@ export function DashboardPage() {
       value: '7.1',
       unit: '%',
       delta: -9,
-      spark: SPARKS.wasteRate,
+      spark: [],
       color: '#0d9488',
       breakdowns: [
         { label: 'Bükk 18mm',  value: '6.4%' },
@@ -131,7 +129,7 @@ export function DashboardPage() {
       value: '81',
       unit: '%',
       delta: 4,
-      spark: SPARKS.oee,
+      spark: [],
       color: '#0d9488',
       breakdowns: [
         { label: 'Rendelkezés', value: '94%' },
@@ -145,7 +143,7 @@ export function DashboardPage() {
       value: '82',
       unit: '%',
       delta: 7,
-      spark: SPARKS.capacity,
+      spark: [],
       color: '#0d9488',
       breakdowns: [
         { label: 'Szabászat', value: '88%' },
@@ -162,11 +160,11 @@ export function DashboardPage() {
   ]
 
   return (
-    <div className="px-7 py-6 max-w-[1400px] mx-auto">
+    <div className="px-4 md:px-7 py-5 md:py-6 max-w-[1400px] mx-auto">
       {/* Header */}
       <div className="mb-5 flex items-end justify-between gap-4">
         <div>
-          <div className="text-[20px] font-semibold text-stone-900 tracking-tight">{t.dash.greeting}</div>
+          <div className="text-[18px] md:text-[20px] font-semibold text-stone-900 tracking-tight">{t.dash.greeting}</div>
           <div className="text-[12.5px] text-stone-500 mt-0.5">{t.dash.sub}</div>
         </div>
         <div className="flex items-center gap-1 bg-white border border-stone-200 rounded-lg p-0.5">

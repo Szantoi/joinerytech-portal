@@ -1,8 +1,15 @@
 import { useState, useEffect } from 'react'
 import { Card, Icon, GhostBtn, PrimaryBtn } from '../components/ui'
 import { Avatar } from '../components/ui/Avatar'
-import { STAGES, FLOW_EPICS } from '../mocks/extra'
-import type { FlowEpic, FlowPriority } from '../types'
+import type { FlowEpic, FlowPriority, Stage } from '../types'
+
+const STAGES: Stage[] = [
+  { key: 'sales',      hu: 'Értékesítés', en: 'Sales' },
+  { key: 'survey',     hu: 'Felmérés',    en: 'Survey', optional: true },
+  { key: 'production', hu: 'Gyártás',     en: 'Production' },
+  { key: 'delivery',   hu: 'Szállítás',   en: 'Delivery' },
+  { key: 'install',    hu: 'Beszerelés',  en: 'Install' },
+]
 import { useApi, API_BASE } from '../hooks/useApi'
 import { useAuth } from '../hooks/useAuth'
 import { NewOrderDrawer } from '../components/orders/NewOrderDrawer'
@@ -61,7 +68,7 @@ export function WorkflowPage() {
   useEffect(() => { if (facilityId) refetch() }, [facilityId]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const apiEpics = apiData?.items?.map(apiEpicToFe) ?? null
-  const [epics, setEpics] = useState(FLOW_EPICS)
+  const [epics, setEpics] = useState<FlowEpic[]>([])
   const [selected, setSelected] = useState<FlowEpic | null>(null)
   const [search, setSearch] = useState('')
   const [filterAssignee, setFilterAssignee] = useState<string>('all')
@@ -69,7 +76,6 @@ export function WorkflowPage() {
   const [orderDrawerOpen, setOrderDrawerOpen] = useState(false)
   const [epicForOrder, setEpicForOrder] = useState<FlowEpic | null>(null)
 
-  // Replace mock data with API data when available
   const displayEpics = apiEpics ?? epics
   const setDisplayEpics = apiEpics ? (_fn: (prev: FlowEpic[]) => FlowEpic[]) => {} : setEpics
 

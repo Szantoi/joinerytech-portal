@@ -28,6 +28,7 @@
   <script src="data-extra.js?v=4"></script>
   <script src="data-extra-2.js?v=4"></script>
   <script src="data-worlds.js?v=4"></script>
+  <script src="data-prod.js?v=1"></script>
   <script type="text/babel" src="tweaks-panel.jsx"></script>
   <script type="text/babel" src="ui.jsx"></script>
   <script type="text/babel" src="page-dashboard.jsx"></script>
@@ -42,6 +43,7 @@
   <script type="text/babel" src="page-design.jsx"></script>
   <script type="text/babel" src="page-sales.jsx"></script>
   <script type="text/babel" src="page-shopfloor.jsx"></script>
+  <script type="text/babel" src="page-supervisor.jsx"></script>
   <script type="text/babel" src="page-world-pages.jsx"></script>
 
   <script type="text/babel" data-presets="env,react">
@@ -109,6 +111,10 @@
           screen === "machining" ? <ProductionPage t={i18n} initialTab="edge" /> :
           screen === "workflow"  ? <WorkflowPage t={i18n} /> :
           screen === "analytics" ? <AnalyticsPage t={i18n} /> :
+          screen === "supervisor" ? <SupervisorDashboard onScreen={setScreen} /> :
+          screen === "dispatch"  ? <SupervisorDispatch /> :
+          screen === "load"      ? <SupervisorLoad /> :
+          screen === "productivity" ? <SupervisorProductivity /> :
           <ProductionDashboard onScreen={setScreen} />
         );
       } else if (route.world === "sales") {

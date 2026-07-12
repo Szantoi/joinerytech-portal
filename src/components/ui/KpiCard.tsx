@@ -60,9 +60,12 @@ export function KpiCard({
               {unit && <span className="text-[12px] text-stone-500">{unit}</span>}
             </div>
             {deltaText && (
-              <div className={`mt-1.5 flex items-center gap-1 text-[11px] ${deltaPositive ? 'text-emerald-700' : 'text-rose-700'}`}>
-                <Icon name={deltaPositive ? 'up' : 'down'} size={11} />
-                {deltaText}
+              <div className="mt-1.5 flex items-center gap-1.5 text-[11px]">
+                <span className={`inline-flex items-center gap-0.5 ${deltaPositive ? 'text-emerald-700' : 'text-rose-700'}`}>
+                  <Icon name={deltaPositive ? 'up' : 'down'} size={11} />
+                  {deltaText}
+                </span>
+                <span className="text-stone-400">előző héthez</span>
               </div>
             )}
           </div>

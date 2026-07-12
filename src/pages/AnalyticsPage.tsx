@@ -1,7 +1,17 @@
 import { useState, useEffect } from 'react'
 import { Card, Sparkline, GhostBtn, Icon } from '../components/ui'
-import { I18N, SPARKS } from '../mocks/data'
+import { I18N } from '../mocks/data'
 import { useApi, API_BASE } from '../hooks/useApi'
+
+function EndpointPending({ endpoint }: { endpoint: string }) {
+  return (
+    <div className="rounded-xl border-2 border-dashed border-amber-200 bg-amber-50/60 px-6 py-10 flex flex-col items-center gap-2 text-center">
+      <div className="text-[13px] font-semibold text-amber-700">Backend endpoint nem elérhető</div>
+      <code className="text-[11px] text-amber-600 bg-amber-100 rounded px-2 py-0.5">{endpoint}</code>
+      <div className="text-[11px] text-stone-500 mt-1">Az endpoint implementálása után lesz élő adat</div>
+    </div>
+  )
+}
 
 interface WasteReport {
   totalWasteAreaCm2: number
@@ -20,21 +30,13 @@ export function AnalyticsPage() {
 
   const wasteValue = wasteData && wasteData.executionCount > 0
     ? `${(wasteData.averageWastePerExecution * 100).toFixed(1)}%`
-    : '7.1%'
+    : '—'
 
   const cards = [
-    { label: t.ana.waste,    value: wasteValue, delta: -9,  color: '#0d9488', spark: SPARKS.wasteRate },
-    { label: t.ana.capacity, value: '82%',   delta:  7,  color: '#0d9488', spark: SPARKS.capacity },
-    { label: t.ana.oee,      value: '81%',   delta:  4,  color: '#0d9488', spark: SPARKS.oee },
-    { label: t.ana.daily,    value: '284',   unit: t.common.pieces, delta: 12, color: '#b45309', spark: [240, 252, 261, 268, 274, 279, 284] },
-  ]
-
-  const machineRows = [
-    { name: 'Holzma HPP380 · Bükk 18mm',  pct: 6.4 },
-    { name: 'Holzma HPP380 · MDF 19mm',   pct: 5.2 },
-    { name: 'Biesse Selco · Tölgy 40mm',  pct: 8.2 },
-    { name: 'Biesse Selco · Tölgy 22mm',  pct: 7.8 },
-    { name: 'Holzma HPP380 · MDF 16mm',   pct: 5.9 },
+    { label: t.ana.waste,    value: wasteValue, delta: -9,  color: '#0d9488', spark: [] as number[] },
+    { label: t.ana.capacity, value: '82%',   delta:  7,  color: '#0d9488', spark: [] as number[] },
+    { label: t.ana.oee,      value: '81%',   delta:  4,  color: '#0d9488', spark: [] as number[] },
+    { label: t.ana.daily,    value: '284',   unit: t.common.pieces, delta: 12, color: '#b45309', spark: [] as number[] },
   ]
 
   return (
@@ -80,19 +82,7 @@ export function AnalyticsPage() {
       <Card className="p-5">
         <div className="text-[12.5px] font-semibold text-stone-900 mb-1">Gép-szintű hulladék arány (utolsó 30 nap)</div>
         <div className="text-[11.5px] text-stone-500 mb-4">Anyag és gép kombinációjára lebontva</div>
-        <div className="space-y-2.5">
-          {machineRows.map((row, i) => (
-            <div key={i} className="grid grid-cols-[1fr_60px] gap-3 items-center">
-              <div className="flex items-center gap-3">
-                <div className="text-[12px] font-mono text-stone-700 w-[260px] shrink-0 truncate">{row.name}</div>
-                <div className="flex-1 h-2 bg-stone-100 rounded-full overflow-hidden">
-                  <div className="h-full bg-teal-600 rounded-full" style={{ width: `${row.pct * 8}%` }} />
-                </div>
-              </div>
-              <div className="text-[12px] tabular-nums text-stone-700 text-right">{row.pct}%</div>
-            </div>
-          ))}
-        </div>
+        <EndpointPending endpoint="GET /cutting/api/cutting/waste/by-machine [?]" />
       </Card>
     </div>
   )

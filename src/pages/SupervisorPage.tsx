@@ -1,10 +1,11 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { Card, Icon } from '../components/ui'
 import { SlideOver } from '../components/ui/SlideOver'
 import { WorldShell } from '../components/layout/WorldShell'
+import { useApi, API_BASE } from '../hooks/useApi'
 import {
-  WORKSTATIONS, DAY_PLAN, ALERTS, WS_STATE_META, SUP_TODAY,
+  DAY_PLAN, ALERTS, WS_STATE_META, SUP_TODAY,
   type Workstation, type Alert,
 } from '../mocks/supervisor'
 
@@ -112,6 +113,9 @@ function DayPlanSlideOver({ open, onClose }: { open: boolean; onClose: () => voi
 // ── Floor View ─────────────────────────────────────────────────────────────
 function FloorView() {
   const [selected, setSelected] = useState<Workstation | null>(null)
+  const { data: apiWorkstations, refetch } = useApi<Workstation[]>(`${API_BASE.kernel}/tools/workstations`)
+  useEffect(() => { refetch() }, []) // eslint-disable-line react-hooks/exhaustive-deps
+  const workstations: Workstation[] = apiWorkstations ?? []
 
   return (
     <div className="px-4 md:px-7 py-5 md:py-6 max-w-[1200px] mx-auto">
@@ -121,7 +125,7 @@ function FloorView() {
       </div>
 
       <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-3">
-        {WORKSTATIONS.map((ws) => (
+        {workstations.map((ws) => (
           <button key={ws.id} onClick={() => setSelected(ws)}
             className="text-left bg-white rounded-xl border border-stone-200 p-4 hover:shadow-sm hover:border-rose-200 transition">
             <div className="flex items-start justify-between gap-2 mb-3">
@@ -212,9 +216,12 @@ function DayPlanPage() {
 function SupervisorDashboard() {
   const [selected, setSelected] = useState<Workstation | null>(null)
   const [dayPlanOpen, setDayPlanOpen] = useState(false)
+  const { data: apiWorkstations, refetch } = useApi<Workstation[]>(`${API_BASE.kernel}/tools/workstations`)
+  useEffect(() => { refetch() }, []) // eslint-disable-line react-hooks/exhaustive-deps
+  const workstations: Workstation[] = apiWorkstations ?? []
 
-  const working = WORKSTATIONS.filter((w) => w.state === 'working').length
-  const blocked = WORKSTATIONS.filter((w) => w.state === 'blocked').length
+  const working = workstations.filter((w) => w.state === 'working').length
+  const blocked = workstations.filter((w) => w.state === 'blocked').length
   const totalPlanned = DAY_PLAN.reduce((s, i) => s + i.qty, 0)
   const totalDone    = DAY_PLAN.reduce((s, i) => s + i.doneQty, 0)
   const alertCount   = ALERTS.filter((a) => a.severity === 'high').length
@@ -245,7 +252,7 @@ function SupervisorDashboard() {
       </div>
 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-5">
-        <KpiCard label="Dolgozik" value={working} sub={`${WORKSTATIONS.length} állomásból`} tone="emerald" icon="production" />
+        <KpiCard label="Dolgozik" value={working} sub={`${workstations.length} állomásból`} tone="emerald" icon="production" />
         <KpiCard label="Blokkolt" value={blocked} sub="azonnali beavatkozás" tone="rose" icon="alert" />
         <KpiCard label="Napi terv" value={`${totalDone}/${totalPlanned}`} sub="egység teljesítve" tone="sky" icon="analytics" />
         <KpiCard label="Magas prioritású riasztás" value={alertCount} sub="azonnali figyelmet igényel" tone="orange" icon="bell" />
@@ -276,7 +283,7 @@ function SupervisorDashboard() {
 
       {/* Workstations */}
       <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-3">
-        {WORKSTATIONS.map((ws) => (
+        {workstations.map((ws) => (
           <button key={ws.id} onClick={() => setSelected(ws)}
             className="text-left bg-white rounded-xl border border-stone-200 p-3 hover:shadow-sm hover:border-rose-200 transition">
             <div className="flex items-center justify-between gap-2 mb-1.5">
