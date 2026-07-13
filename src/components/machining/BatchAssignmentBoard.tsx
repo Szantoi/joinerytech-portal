@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { Card, Icon, StatusPill } from '../ui'
 import { useApi, useMutation, API_BASE } from '../../hooks/useApi'
 import { useAuth } from '../../hooks/useAuth'
-import { checkTransition } from '../../lib/fsm'
+import { checkTransition, availableTransitions } from '../../lib/fsm'
 import { batchFsm } from '../../lib/fsmDefinitions'
 
 // ─── TypeScript Interfaces ────────────────────────────────────────────────────
@@ -77,7 +77,8 @@ interface BatchCardProps {
   batch: MachineBatch
   isDragging?: boolean
   canAssign?: boolean
-  canExecute?: boolean
+  /** Current user's roles — drives FSM-gated action visibility. */
+  roles?: string[]
   onDragStart?: () => void
   onDragEnd?: () => void
   onAssign?: (request: AssignBatchRequest) => void
@@ -89,13 +90,20 @@ function BatchCard({
   batch,
   isDragging,
   canAssign,
-  canExecute,
+  roles = [],
   onDragStart,
   onDragEnd,
   onAssign,
   onStart,
   onComplete
 }: BatchCardProps) {
+  // FSM-gated actions: show exactly the transitions this user's role permits from
+  // the batch's current status (config-driven batchFsm) — no hardcoded status/role
+  // checks, and no button the rules forbid.
+  const allowedNext = availableTransitions(batchFsm, batch.status, roles).map(t => t.to)
+  const canStart = allowedNext.includes('running')
+  const canComplete = allowedNext.includes('completed')
+
   const [showAssignForm, setShowAssignForm] = useState(false)
   const [operatorName, setOperatorName] = useState(batch.assignedOperator || '')
   const [selectedOperatorId, setSelectedOperatorId] = useState(batch.assignedOperatorId || '')
@@ -256,9 +264,9 @@ function BatchCard({
       )}
 
       {/* FSM quick actions (assigned or running batches) */}
-      {!showAssignForm && batch.status !== 'unassigned' && batch.status !== 'completed' && canExecute && (
+      {!showAssignForm && (canStart || canComplete) && (
         <div className="flex items-center gap-2 pt-2 border-t border-stone-200/70">
-          {batch.status === 'assigned' && (
+          {canStart && (
             <button
               onClick={onStart}
               className="flex-1 inline-flex items-center justify-center gap-1.5 px-3 py-1.5 bg-teal-600 text-white text-[10.5px] font-medium rounded-lg hover:bg-teal-700 transition"
@@ -267,7 +275,7 @@ function BatchCard({
               Indítás
             </button>
           )}
-          {batch.status === 'running' && (
+          {canComplete && (
             <button
               onClick={onComplete}
               className="flex-1 inline-flex items-center justify-center gap-1.5 px-3 py-1.5 bg-emerald-600 text-white text-[10.5px] font-medium rounded-lg hover:bg-emerald-700 transition"
@@ -340,7 +348,6 @@ export function BatchAssignmentBoard({ date, batches, onAssignSuccess }: BatchAs
 
   // RBAC: Check if user can assign or execute
   const canAssign = roles?.includes('Admin') || roles?.includes('Joiner')
-  const canExecute = roles?.includes('Admin') || roles?.includes('Joiner')
 
   // Machine columns
   const machines: MachineColumn[] = [
@@ -435,7 +442,7 @@ export function BatchAssignmentBoard({ date, batches, onAssignSuccess }: BatchAs
               batch={batch}
               isDragging={draggedBatch?.id === batch.id}
               canAssign={canAssign}
-              canExecute={canExecute}
+              roles={roles}
               onDragStart={() => handleDragStart(batch)}
               onDragEnd={handleDragEnd}
             />
@@ -465,7 +472,7 @@ export function BatchAssignmentBoard({ date, batches, onAssignSuccess }: BatchAs
                   key={batch.id}
                   batch={batch}
                   canAssign={canAssign}
-                  canExecute={canExecute}
+                  roles={roles}
                   onAssign={handleAssign}
                   onStart={() => handleStart(batch.id)}
                   onComplete={() => handleComplete(batch.id)}
