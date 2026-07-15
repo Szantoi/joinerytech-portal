@@ -182,15 +182,15 @@ export const WORLDS: Record<string, World> = {
   },
   maintenance: {
     key: "maintenance", hu: "Karbantartás", en: "Maintenance",
-    sub: "Gépek, karbantartási jegyek, ütemezés",
+    sub: "Eszközök, munkalapok, megelőző karbantartás",
     icon: "wrench", accent: "cyan",
     screens: [
       { key: "dash", hu: "Áttekintés" },
       { key: "assets", hu: "Eszközök" },
-      { key: "tickets", hu: "Jegyek" },
+      { key: "workorders", hu: "Munkalapok" },
       { key: "schedule", hu: "Ütemterv" },
     ],
-    badge: "2 jegy",
+    badge: "5 nyitott",
   },
   quality: {
     key: "quality", hu: "Minőség", en: "Quality",

@@ -7,6 +7,7 @@ import { ehsApiHandlers } from './ehsApi'
 import { crmApiHandlers } from './crmApi'
 import { controllingApiHandlers } from './controllingApi'
 import { hrApiHandlers } from './hrApi'
+import { maintenanceApiHandlers } from './maintenanceApi'
 
 export const handlers = [
   // EHS modul-API (openapi-tükör, állapottartó store + FSM guardok) — ld. ./ehsApi
@@ -20,6 +21,9 @@ export const handlers = [
 
   // HR modul-API (MSW-first kontraktus, állapottartó store + távollét-FSM guardok) — ld. ./hrApi
   ...hrApiHandlers,
+
+  // Maintenance modul-API (MSW-first kontraktus, számított eszköz-státusz + munkalap-FSM guardok) — ld. ./maintenanceApi
+  ...maintenanceApiHandlers,
 
   // POST /api/products/configure
   http.post('/api/products/configure', async ({ request }) => {
