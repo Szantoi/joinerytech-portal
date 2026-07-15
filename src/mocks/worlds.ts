@@ -194,15 +194,15 @@ export const WORLDS: Record<string, World> = {
   },
   quality: {
     key: "quality", hu: "Minőség", en: "Quality",
-    sub: "NCR-ek, ellenőrzőlisták, auditok",
+    sub: "Átvizsgálások, hibajegyek, minőség-trend",
     icon: "check", accent: "lime",
     screens: [
       { key: "dash", hu: "Áttekintés" },
-      { key: "ncr", hu: "NCR-ek" },
-      { key: "templates", hu: "Sablonok" },
-      { key: "audits", hu: "Auditok" },
+      { key: "inspections", hu: "Átvizsgálások" },
+      { key: "tickets", hu: "Hibajegyek" },
+      { key: "trend", hu: "Trend" },
     ],
-    badge: "3 nyitott",
+    badge: "4 nyitott",
   },
   ehs: {
     key: "ehs", hu: "EHS", en: "EHS",
