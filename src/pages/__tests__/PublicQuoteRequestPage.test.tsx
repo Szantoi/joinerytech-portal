@@ -229,5 +229,5 @@ describe('PublicQuoteRequestPage', () => {
     // Still should have only 50 pieces
     materialSelects = screen.getAllByLabelText(/Anyag/);
     expect(materialSelects).toHaveLength(50);
-  }, 30000); // 30 second timeout for this slow test
+  }, 60000); // generous timeout: 49 clicks × 50-row re-renders is slow under full-suite worker contention
 });

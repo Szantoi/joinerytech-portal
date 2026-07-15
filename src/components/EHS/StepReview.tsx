@@ -1,4 +1,5 @@
 import { useIncidentDraftStore } from '../../stores/incidentDraftStore';
+import { useEhsLocations } from '../../services/ehs';
 
 const INCIDENT_TYPE_LABELS: Record<string, string> = {
   'near-miss': 'Near Miss',
@@ -6,22 +7,14 @@ const INCIDENT_TYPE_LABELS: Record<string, string> = {
   'property': 'Property Damage'
 };
 
-// Mock locations (same as StepDetails)
-const LOCATIONS = [
-  { id: 'loc-001', name: 'Main Workshop — Hall A' },
-  { id: 'loc-002', name: 'Main Workshop — Hall B' },
-  { id: 'loc-003', name: 'Main Workshop — Hall C' },
-  { id: 'loc-004', name: 'Warehouse' },
-  { id: 'loc-005', name: 'Yard' },
-  { id: 'loc-006', name: 'Office' }
-];
-
 export function StepReview() {
   const { currentDraft } = useIncidentDraftStore();
+  // A StepDetails már betöltötte — itt cache-találat (locations API, nem mock-lista)
+  const { data: locationList } = useEhsLocations({ activeOnly: true });
 
   if (!currentDraft) return null;
 
-  const location = LOCATIONS.find(l => l.id === currentDraft.locationId);
+  const location = locationList?.find(l => l.locationId === currentDraft.locationId);
   const formattedDate = new Date(currentDraft.timestamp).toLocaleString('en-US', {
     year: 'numeric',
     month: 'short',

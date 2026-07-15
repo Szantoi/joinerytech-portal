@@ -1,20 +1,21 @@
 import { useIncidentDraftStore } from '../../stores/incidentDraftStore';
-import { useState, useRef } from 'react';
-
-// Mock locations (TODO: replace with API call when backend is ready)
-const LOCATIONS = [
-  { id: 'loc-001', name: 'Main Workshop — Hall A' },
-  { id: 'loc-002', name: 'Main Workshop — Hall B' },
-  { id: 'loc-003', name: 'Main Workshop — Hall C' },
-  { id: 'loc-004', name: 'Warehouse' },
-  { id: 'loc-005', name: 'Yard' },
-  { id: 'loc-006', name: 'Office' }
-];
+import { useState, useRef, useEffect } from 'react';
+import { useEhsLocations } from '../../services/ehs';
+import { useToast } from '../../components/ui';
 
 export function StepDetails() {
   const { currentDraft, updateDraft } = useIncidentDraftStore();
   const [photoPreview, setPhotoPreview] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Helyszínek az EHS locations API-ból (a korábbi hardcode-olt mock-lista helyett)
+  const locations = useEhsLocations({ activeOnly: true });
+  const { addToast } = useToast();
+  useEffect(() => {
+    if (locations.isError) {
+      addToast('A helyszínek betöltése nem sikerült — próbáld újra később', 'error');
+    }
+  }, [locations.isError, addToast]);
 
   const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -58,10 +59,18 @@ export function StepDetails() {
           onChange={(e) => updateDraft({ locationId: e.target.value })}
           className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-rose-500 focus:ring-rose-500 px-3 py-2 border"
           required
+          disabled={locations.isPending || locations.isError}
+          aria-busy={locations.isPending || undefined}
         >
-          <option value="">Select location...</option>
-          {LOCATIONS.map((loc) => (
-            <option key={loc.id} value={loc.id}>
+          <option value="">
+            {locations.isPending
+              ? 'Helyszínek betöltése…'
+              : locations.isError
+                ? 'A helyszínek nem érhetők el'
+                : 'Select location...'}
+          </option>
+          {locations.data?.map((loc) => (
+            <option key={loc.locationId} value={loc.locationId}>
               {loc.name}
             </option>
           ))}

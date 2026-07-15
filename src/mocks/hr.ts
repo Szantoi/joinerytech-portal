@@ -1,4 +1,11 @@
 // HR / MUNKAERŐ-KAPACITÁS világ — mock adatok
+//
+// F2-HR-FE óta: az EMPLOYEES (+ HR_PAY_GRADE_META) a mocks/hrApi/seed.ts
+// seed-forrása (állapottartó MSW store) — a HR UI már NEM importálja
+// közvetlenül ezt a fájlt. A dátumos adatok (ABSENCES, HR_ASSIGNMENTS) és a
+// lenti hr-engine függvények legacy-k: a kanonikus számítás a
+// services/hr/calc.ts-ben él (a *_META pill-osztályok szintén legacy —
+// a UI a StatusPill tónusait + pages/hr/labels.ts címkéit használja).
 
 export type HrDeptKey = 'gyartas' | 'szereles' | 'logisztika' | 'tervezes' | 'ertekesites' | 'iroda'
 export type HrPayGrade = 'seged' | 'szakmunkas' | 'mester' | 'mernok' | 'vezeto'

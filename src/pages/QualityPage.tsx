@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
-import { Card, Icon } from '../components/ui'
+import { Card, Icon, StatusPill } from '../components/ui'
 import { SlideOver } from '../components/ui/SlideOver'
 import { WorldShell } from '../components/layout/WorldShell'
 import {
@@ -19,14 +19,7 @@ function EndpointPending({ endpoint }: { endpoint: string }) {
 }
 
 // ── Helpers ────────────────────────────────────────────────────────────────
-function NcrStatusPill({ status }: { status: NcrStatus }) {
-  const m = NCR_STATUS_META[status]
-  return (
-    <span className={`inline-flex items-center gap-1.5 px-2 h-6 rounded-full text-[10.5px] font-medium ${m.bg} ${m.fg}`}>
-      <span className={`w-1.5 h-1.5 rounded-full ${m.dot}`} />{m.label}
-    </span>
-  )
-}
+// NCR // státusz-pill: közös StatusPill + FSM_TONES — a per-modul pill-másolat kivezetve (F1-A)
 
 function NcrSeverityBadge({ severity }: { severity: NcrSeverity }) {
   const m = NCR_SEVERITY_META[severity]
@@ -55,7 +48,7 @@ function NcrDetailSlideOver({ ncr, onClose }: { ncr: QualityNcr | null; onClose:
       <div className="space-y-5 px-5 py-5">
         <div className="flex items-center gap-3 flex-wrap">
           <NcrSeverityBadge severity={ncr.severity} />
-          <NcrStatusPill status={currentStatus} />
+          <StatusPill fsm="qaEllenorzes" status={currentStatus} label={NCR_STATUS_META[currentStatus].label} />
           <span className="text-[11.5px] text-stone-500">{ncr.reportedBy} · {ncr.reportedAt}</span>
         </div>
 

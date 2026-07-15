@@ -2,7 +2,12 @@ import { useState } from 'react';
 import { useIncidentDraftStore } from '../../stores/incidentDraftStore';
 import { IncidentReportWizard } from './IncidentReportWizard';
 
-export function IncidentReportFAB() {
+interface IncidentReportFABProps {
+  /** Sikeres beküldés után hívódik (pl. toast + esemény-lista invalidálás). */
+  onSuccess?: (eventId: string) => void;
+}
+
+export function IncidentReportFAB({ onSuccess }: IncidentReportFABProps) {
   const [isWizardOpen, setIsWizardOpen] = useState(false);
   const { startNewDraft, drafts } = useIncidentDraftStore();
 
@@ -18,18 +23,19 @@ export function IncidentReportFAB() {
   };
 
   const handleSuccess = (eventId: string) => {
-    console.log('Incident submitted successfully:', eventId);
-    // TODO: Show toast notification or success modal
     setIsWizardOpen(false);
+    onSuccess?.(eventId);
   };
 
   return (
     <>
-      {/* Floating Action Button */}
+      {/* Floating Action Button — csak mobilon (spec 3.2): a bottom nav (58px) FÖLÖTT,
+          desktopon nem renderel (ott a lista-fejléc primary buttonja a helye).
+          Szín: world-akcent (EHS), NEM a danger-tónusú rose. */}
       <button
         onClick={handleOpenWizard}
-        className="fixed bottom-6 right-6 md:bottom-6 md:right-6 z-40 w-14 h-14 bg-rose-600 hover:bg-rose-700 text-white rounded-full shadow-lg hover:shadow-xl transition-all flex items-center justify-center group"
-        aria-label="Report incident"
+        className="fixed bottom-[calc(58px+env(safe-area-inset-bottom)+16px)] right-4 z-40 md:hidden w-14 h-14 bg-world hover:bg-world-hover text-world-fg rounded-full shadow-lg hover:shadow-xl transition-all flex items-center justify-center group"
+        aria-label="Baleset bejelentése"
       >
         {failedDraftsCount > 0 && (
           <span className="absolute -top-1 -right-1 w-5 h-5 bg-amber-500 text-white text-xs font-bold rounded-full flex items-center justify-center">

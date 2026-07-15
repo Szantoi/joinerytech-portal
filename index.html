@@ -5,6 +5,17 @@
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>jt-temp</title>
+    <!-- Téma no-flash script (DESIGN_SYSTEM_SPEC_V1 4.1): a bundle előtt fut,
+         hogy dark preferenciánál ne villanjon fel a light UI (FOUC). -->
+    <script>
+      (function () {
+        var t = localStorage.getItem('jt-theme');
+        var dark = t === 'dark' ||
+          ((!t || t === 'system') &&
+            window.matchMedia('(prefers-color-scheme: dark)').matches);
+        document.documentElement.classList.toggle('dark', dark);
+      })();
+    </script>
   </head>
   <body>
     <div id="root"></div>

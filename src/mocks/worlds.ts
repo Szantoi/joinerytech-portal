@@ -77,12 +77,13 @@ export const WORLDS: Record<string, World> = {
   crm: {
     key: "crm", hu: "CRM", en: "CRM",
     sub: "Lead pipeline, lehetőségek, ügyféljárás",
-    icon: "briefcase", accent: "indigo",
+    icon: "briefcase", accent: "blue",
     screens: [
       { key: "dash", hu: "Áttekintés", en: "Overview" },
       { key: "pipeline", hu: "Pipeline", en: "Pipeline" },
       { key: "leads", hu: "Leadek", en: "Leads" },
       { key: "opps", hu: "Lehetőségek", en: "Opportunities" },
+      { key: "tasks", hu: "Feladatok", en: "Tasks" },
       { key: "forecast", hu: "Forecast", en: "Forecast" },
     ],
     badge: "4 nyitott",
@@ -182,7 +183,7 @@ export const WORLDS: Record<string, World> = {
   maintenance: {
     key: "maintenance", hu: "Karbantartás", en: "Maintenance",
     sub: "Gépek, karbantartási jegyek, ütemezés",
-    icon: "wrench", accent: "amber",
+    icon: "wrench", accent: "cyan",
     screens: [
       { key: "dash", hu: "Áttekintés" },
       { key: "assets", hu: "Eszközök" },
@@ -194,7 +195,7 @@ export const WORLDS: Record<string, World> = {
   quality: {
     key: "quality", hu: "Minőség", en: "Quality",
     sub: "NCR-ek, ellenőrzőlisták, auditok",
-    icon: "check", accent: "emerald",
+    icon: "check", accent: "lime",
     screens: [
       { key: "dash", hu: "Áttekintés" },
       { key: "ncr", hu: "NCR-ek" },
@@ -206,12 +207,14 @@ export const WORLDS: Record<string, World> = {
   ehs: {
     key: "ehs", hu: "EHS", en: "EHS",
     sub: "Munkavédelem, balesetek, kockázatok",
-    icon: "shield", accent: "rose",
+    icon: "shield", accent: "red",
     screens: [
       { key: "dash", hu: "Áttekintés" },
       { key: "incidents", hu: "Események" },
       { key: "risks", hu: "Kockázatok" },
-      { key: "actions", hu: "Intézkedések" },
+      { key: "sds", hu: "Veszélyes anyagok" },
+      { key: "ppe", hu: "EVE kiadások" },
+      { key: "walks", hu: "Bejárások" },
     ],
     badge: "1 nyitott",
   },
@@ -241,7 +244,7 @@ export const WORLDS: Record<string, World> = {
   docs: {
     key: "docs", hu: "Dokumentumtár", en: "Docs",
     sub: "Verziózott dokumentumok, rajzok, szerződések",
-    icon: "file", accent: "amber",
+    icon: "file", accent: "violet",
     screens: [
       { key: "dash", hu: "Áttekintés" },
       { key: "files", hu: "Dokumentumok" },
@@ -289,18 +292,22 @@ export const WORLDS: Record<string, World> = {
     screens: [
       { key: 'dash', hu: 'Áttekintés' },
       { key: 'people', hu: 'Dolgozók' },
-      { key: 'capacity', hu: 'Kapacitás-naptár' },
-      { key: 'absences', hu: 'Távollétek' },
+      { key: 'capacity', hu: 'Kapacitás', en: 'Capacity' },
+      { key: 'absences', hu: 'Távollét', en: 'Absence' },
+      { key: 'skills', hu: 'Készségek', en: 'Skills' },
     ],
   },
   kontrolling: {
     key: 'kontrolling', hu: 'Kontrolling', en: 'Controlling',
     sub: 'Projekt-jövedelmezőség, terv vs. tény',
     icon: 'analytics', accent: 'slate',
-    badge: '4 projekt',
+    badge: '6 projekt',
     screens: [
-      { key: 'dash', hu: 'Áttekintés' },
-      { key: 'projects', hu: 'Projekt-fedezet' },
+      { key: 'dash', hu: 'Áttekintés', en: 'Overview' },
+      { key: 'portfolio', hu: 'Portfólió', en: 'Portfolio' },
+      { key: 'projects', hu: 'Projekt-fedezet', en: 'Margin' },
+      { key: 'variance', hu: 'Eltérés-elemzés', en: 'Variance' },
+      { key: 'adjustments', hu: 'Utókalkuláció', en: 'Adjustments' },
     ],
   },
   service: {
@@ -471,6 +478,9 @@ export const SHOPFLOOR_OPERATORS: ShopFloorOperator[] = [
 ]
 
 // ── CRM mock adatok ────────────────────────────────────────────────────────────
+// F2-CRM-FE óta: a LEADS/OPPS/CRM_TASKS a mocks/crmApi/seed.ts seed-forrása
+// (állapottartó MSW store) — a CRM UI már NEM importálja közvetlenül.
+// A *_STATUS_META pill-osztályai legacy; a UI a StatusPill+FSM_TONES-t használja.
 export type LeadStatus = 'uj' | 'kapcsolat' | 'minosites' | 'nurturing' | 'konvertalva' | 'elvetve'
 export type OppStatus = 'nyitott' | 'igenyfelmeres' | 'osszeallitas' | 'ajanlat' | 'targyalas' | 'megnyert' | 'elveszett'
 export type CrmSource = 'telefon' | 'ajanlas' | 'email' | 'kiallitas' | 'weboldal' | 'webshop' | 'belsoepitesz'

@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
-import { Icon } from '../components/ui'
+import { Icon, StatusPill } from '../components/ui'
 import { SlideOver } from '../components/ui/SlideOver'
 import { WorldShell } from '../components/layout/WorldShell'
 import {
@@ -47,14 +47,7 @@ function SkillChip({ sk }: { sk: { key: string; level: 1 | 2 | 3 } }) {
   )
 }
 
-function AbsStatusPill({ status }: { status: HrAbsence['status'] }) {
-  const m = ABS_STATUS_META[status]
-  return (
-    <span className={`inline-flex items-center gap-1.5 rounded-full border px-2 h-6 text-[10.5px] font-medium ${m.pill}`}>
-      <span className={`w-1.5 h-1.5 rounded-full ${m.dot}`} />{m.label}
-    </span>
-  )
-}
+// Távollét // státusz-pill: közös StatusPill + FSM_TONES — a per-modul pill-másolat kivezetve (F1-A)
 
 function AbsTypeBadge({ type }: { type: HrAbsence['type'] }) {
   const m = ABS_TYPE_META[type]
@@ -139,7 +132,7 @@ function EmployeeDetailSlideOver({ emp, onClose }: { emp: Employee | null; onClo
                     <AbsTypeBadge type={a.type} />
                     <div className="text-[10.5px] text-stone-400 mt-0.5">{a.start} – {a.end} · {a.days} munkanap</div>
                   </div>
-                  <AbsStatusPill status={a.status} />
+                  <StatusPill fsm="hrTavollet" status={a.status} label={ABS_STATUS_META[a.status].label} />
                 </div>
               ))}
             </div>
@@ -265,7 +258,7 @@ function HrDashboard({ onScreen }: { onScreen: (s: string) => void }) {
                       </div>
                       <div className="text-[10.5px] text-stone-400">{a.start} – {a.end} · {a.days} nap</div>
                     </div>
-                    <AbsStatusPill status={a.status} />
+                    <StatusPill fsm="hrTavollet" status={a.status} label={ABS_STATUS_META[a.status].label} />
                   </div>
                 )
               })}
@@ -505,7 +498,7 @@ function HrAbsences() {
                 </div>
                 <div className="text-[10.5px] text-stone-400">{a.start} – {a.end} · {a.days} munkanap{a.reason ? ' · ' + a.reason : ''}</div>
               </div>
-              <AbsStatusPill status={a.status} />
+              <StatusPill fsm="hrTavollet" status={a.status} label={ABS_STATUS_META[a.status].label} />
             </div>
           )
         })}

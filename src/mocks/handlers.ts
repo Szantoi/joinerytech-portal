@@ -3,8 +3,24 @@ import {
   mockConfigureResponse,
   mockWorkOrderResponse
 } from './configuratorMocks'
+import { ehsApiHandlers } from './ehsApi'
+import { crmApiHandlers } from './crmApi'
+import { controllingApiHandlers } from './controllingApi'
+import { hrApiHandlers } from './hrApi'
 
 export const handlers = [
+  // EHS modul-API (openapi-tükör, állapottartó store + FSM guardok) — ld. ./ehsApi
+  ...ehsApiHandlers,
+
+  // CRM modul-API (MSW-first kontraktus, állapottartó store + FSM guardok) — ld. ./crmApi
+  ...crmApiHandlers,
+
+  // Kontrolling modul-API (backend-kontraktus tükör, számított EAC/variance) — ld. ./controllingApi
+  ...controllingApiHandlers,
+
+  // HR modul-API (MSW-first kontraktus, állapottartó store + távollét-FSM guardok) — ld. ./hrApi
+  ...hrApiHandlers,
+
   // POST /api/products/configure
   http.post('/api/products/configure', async ({ request }) => {
     const body = await request.json()
@@ -68,24 +84,11 @@ export const handlers = [
     return new HttpResponse(null, { status: 200 })
   }),
 
-  // EHS: POST /api/ehs/events
-  http.post('/api/ehs/events', async ({ request }) => {
-    const body = await request.json()
-    console.log('MSW: POST /api/ehs/events', body)
-
-    await new Promise((resolve) => setTimeout(resolve, 400))
-
-    return HttpResponse.json({
-      eventId: crypto.randomUUID(),
-      sequence: 42,
-      status: 'accepted',
-      serverTimestamp: new Date().toISOString()
-    }, { status: 201 })
-  }),
+  // EHS: POST /api/ehs/events → az ehsApi incidens-handlere kezeli (store-ba ír)
 
   // Assembly: PATCH /api/v1/work-orders/:id/assembly-sequence
   http.patch('/api/v1/work-orders/:id/assembly-sequence', async ({ request, params }) => {
-    const body = await request.json() as any
+    const body = (await request.json()) as { operations: Record<string, unknown>[] }
     console.log('MSW: PATCH /api/v1/work-orders/:id/assembly-sequence', params, body)
 
     // Simulate network delay
@@ -93,7 +96,7 @@ export const handlers = [
 
     // Mock successful response
     return HttpResponse.json({
-      updated_operations: body.operations.map((op: any) => ({
+      updated_operations: body.operations.map((op) => ({
         ...op,
         last_modified: new Date().toISOString()
       })),

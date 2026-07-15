@@ -1,6 +1,10 @@
-import { describe, it, expect, vi } from 'vitest'
-import { render, screen, fireEvent } from '@testing-library/react'
+import { describe, it, expect, vi, beforeAll, afterAll, beforeEach, afterEach } from 'vitest'
+import { render, screen, fireEvent, within } from '@testing-library/react'
 import { MemoryRouter, Route, Routes } from 'react-router-dom'
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import { setupServer } from 'msw/node'
+import { ToastProvider } from '../../components/ui'
+import { crmApiHandlers, resetCrmDb } from '../../mocks/crmApi'
 import { CrmWorldPage } from '../CrmPage'
 
 vi.mock('../../auth', () => ({
@@ -10,109 +14,88 @@ vi.mock('../../auth', () => ({
   })),
 }))
 
+const server = setupServer(...crmApiHandlers)
+
+beforeAll(() => server.listen())
+beforeEach(() => resetCrmDb())
+afterEach(() => server.resetHandlers())
+afterAll(() => server.close())
+
 function renderCrm(path = '') {
   const url = path ? `/w/crm/${path}` : '/w/crm'
+  const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } })
   return render(
-    <MemoryRouter initialEntries={[url]}>
-      <Routes>
-        <Route path="/w/crm" element={<CrmWorldPage />} />
-        <Route path="/w/crm/:screen" element={<CrmWorldPage />} />
-      </Routes>
-    </MemoryRouter>
+    <QueryClientProvider client={queryClient}>
+      <ToastProvider>
+        <MemoryRouter initialEntries={[url]}>
+          <Routes>
+            <Route path="/w/crm" element={<CrmWorldPage />} />
+            <Route path="/w/crm/:screen" element={<CrmWorldPage />} />
+          </Routes>
+        </MemoryRouter>
+      </ToastProvider>
+    </QueryClientProvider>
   )
 }
 
-describe('CrmPage', () => {
-  it('renders CRM dashboard with KPI cards', () => {
+describe('CrmPage (route-diszpécser, API-vezérelt képernyők)', () => {
+  it('renders CRM dashboard with KPI cards from the API', async () => {
     renderCrm()
-    expect(screen.getByText('Pipeline érték')).toBeTruthy()
-    expect(screen.getByText('Win rate')).toBeTruthy()
-    expect(screen.getByText('Lead konverzió')).toBeTruthy()
-  })
-
-  it('renders dashboard with lead pipeline mini', () => {
-    renderCrm()
-    expect(screen.getByText('Lead pipeline')).toBeTruthy()
-  })
-
-  it('renders dashboard with open opportunities', () => {
-    renderCrm()
-    expect(screen.getByText('Nyitott lehetőségek')).toBeTruthy()
-  })
-
-  it('renders pipeline kanban with columns', () => {
-    renderCrm('pipeline')
-    expect(screen.getByText('Kapcsolat')).toBeTruthy()
-    expect(screen.getByText('Minősítés')).toBeTruthy()
-    expect(screen.getByText('Nurturing')).toBeTruthy()
-  })
-
-  it('pipeline shows lead cards', () => {
-    renderCrm('pipeline')
-    expect(screen.getByText('Kele Márton')).toBeTruthy()
-  })
-
-  it('renders lead list screen', () => {
-    renderCrm('leads')
-    expect(screen.getAllByText(/Kapcsolatfelvétel|Minősítés|Nurturing|Új/)[0]).toBeTruthy()
-  })
-
-  it('lead list has search input', () => {
-    renderCrm('leads')
-    expect(screen.getAllByPlaceholderText('Keresés…').length).toBeGreaterThan(0)
-  })
-
-  it('lead list filter works', () => {
-    renderCrm('leads')
-    fireEvent.click(screen.getAllByText('Elvetve')[0])
-    expect(screen.getByText('Tarr Niké')).toBeTruthy()
-  })
-
-  it('clicking lead opens detail SlideOver', () => {
-    renderCrm('leads')
-    fireEvent.click(screen.getByText('Kele Márton'))
-    expect(screen.getByText('LEAD-2426-001')).toBeTruthy()
-  })
-
-  it('lead detail shows activity log', () => {
-    renderCrm('leads')
-    fireEvent.click(screen.getByText('Kele Márton'))
-    expect(screen.getByText('Tevékenységnapló')).toBeTruthy()
-  })
-
-  it('renders opportunity list screen', () => {
-    renderCrm('opps')
-    expect(screen.getByText('Lehetőség')).toBeTruthy()
-    expect(screen.getByText('Várdai Konyhastúdió')).toBeTruthy()
-  })
-
-  it('opp list shows status pills', () => {
-    renderCrm('opps')
-    expect(screen.getAllByText(/Nyitott|Igényfelmérés|Ajánlat/)[0]).toBeTruthy()
-  })
-
-  it('clicking opp opens detail SlideOver', () => {
-    renderCrm('opps')
-    fireEvent.click(screen.getAllByText('Mind')[0])
-    fireEvent.click(screen.getByText('Bognár Bútor Kft.'))
-    expect(screen.getAllByText('OPP-2426-005').length).toBeGreaterThan(0)
-  })
-
-  it('renders forecast screen', () => {
-    renderCrm('forecast')
-    expect(screen.getByText('Pipeline (bruttó)')).toBeTruthy()
+    expect(await screen.findByText('Pipeline érték')).toBeTruthy()
     expect(screen.getByText('Súlyozott forecast')).toBeTruthy()
-    expect(screen.getByText('Megnyert (YTD)')).toBeTruthy()
+    expect(screen.getByText('Lead-konverzió')).toBeTruthy()
   })
 
-  it('forecast shows forecast table', () => {
-    renderCrm('forecast')
-    expect(screen.getByText('Forecast fázis szerint')).toBeTruthy()
-    expect(screen.getByText('Valószínűség')).toBeTruthy()
-  })
-
-  it('dashboard open tasks section shows tasks', () => {
+  it('dashboard shows recent activities', async () => {
     renderCrm()
-    expect(screen.getAllByText('Nyitott feladatok').length).toBeGreaterThan(0)
+    expect(await screen.findByText('Legutóbbi tevékenységek')).toBeTruthy()
+  })
+
+  it('renders pipeline kanban with stage columns', async () => {
+    renderCrm('pipeline')
+    expect((await screen.findAllByText('Igényfelmérés')).length).toBeGreaterThan(0)
+    expect(screen.getAllByText('Tárgyalás').length).toBeGreaterThan(0)
+    expect(await screen.findByText('Vella Interior Design')).toBeTruthy()
+  })
+
+  it('renders lead list from the API', async () => {
+    renderCrm('leads')
+    expect((await screen.findAllByText('Kele Márton')).length).toBeGreaterThan(0)
+  })
+
+  it('lead list filter works (server-side)', async () => {
+    renderCrm('leads')
+    await screen.findAllByText('Kele Márton')
+    fireEvent.click(screen.getAllByRole('button', { name: 'Elvetve' })[0])
+    expect((await screen.findAllByText('Tarr Niké')).length).toBeGreaterThan(0)
+  })
+
+  it('clicking a lead opens the detail SlideOver with FSM actions', async () => {
+    renderCrm('leads')
+    fireEvent.click((await screen.findAllByText('Kele Márton'))[0])
+    const dialog = await screen.findByRole('dialog')
+    // új leadnél: contact engedélyezett, qualify tiltott (aria-disabled)
+    expect(await within(dialog).findByRole('button', { name: 'Kapcsolatfelvétel' })).not.toHaveAttribute('aria-disabled')
+    expect(within(dialog).getByRole('button', { name: 'Minősítés' })).toHaveAttribute('aria-disabled', 'true')
+    expect(within(dialog).getByText(/Tevékenységnapló/)).toBeTruthy()
+  })
+
+  it('renders opportunity list with weighted column', async () => {
+    renderCrm('opps')
+    expect((await screen.findAllByText('Doorstar Hungary Zrt.')).length).toBeGreaterThan(0)
+    expect(screen.getAllByText('Súlyozott').length).toBeGreaterThan(0)
+  })
+
+  it('renders tasks screen with SLA badges', async () => {
+    renderCrm('tasks')
+    expect((await screen.findAllByText('Késésben')).length).toBeGreaterThan(0)
+    expect((await screen.findAllByRole('button', { name: 'Teljesítés' })).length).toBeGreaterThan(0)
+  })
+
+  it('renders forecast screen with stage table', async () => {
+    renderCrm('forecast')
+    expect(await screen.findByText('Pipeline (bruttó)')).toBeTruthy()
+    expect(screen.getByText('Megnyert (YTD)')).toBeTruthy()
+    expect(screen.getByText('Valószínűség')).toBeTruthy()
   })
 })

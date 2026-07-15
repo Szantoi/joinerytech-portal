@@ -3,6 +3,9 @@ import { render, screen } from '@testing-library/react'
 import { MemoryRouter } from 'react-router-dom'
 import { App } from '../App'
 
+// The route pages are lazy chunks (React.lazy + Suspense) since F1-C, so every
+// assertion awaits the chunk resolution via findBy*/findAllBy* queries.
+
 function renderApp(path: string) {
   return render(
     <MemoryRouter initialEntries={[path]}>
@@ -12,46 +15,46 @@ function renderApp(path: string) {
 }
 
 describe('App Router', () => {
-  it('renders home at /', () => {
+  it('renders home at /', async () => {
     renderApp('/')
-    expect(screen.getByText(/J\u00f3 reggelt/)).toBeTruthy()
+    expect(await screen.findByText(/Jó reggelt/)).toBeTruthy()
   })
 
-  it('renders shopfloor at /w/shopfloor', () => {
+  it('renders shopfloor at /w/shopfloor', async () => {
     renderApp('/w/shopfloor')
-    expect(screen.getByText('Bejelentkezés')).toBeTruthy()
+    expect(await screen.findByText('Bejelentkezés')).toBeTruthy()
   })
 
-  it('redirects unknown routes to home', () => {
+  it('redirects unknown routes to home', async () => {
     renderApp('/nonexistent')
-    expect(screen.getByText(/J\u00f3 reggelt/)).toBeTruthy()
+    expect(await screen.findByText(/Jó reggelt/)).toBeTruthy()
   })
 
-  it('renders production world shell', () => {
+  it('renders production world shell', async () => {
     renderApp('/w/production')
-    const matches = screen.getAllByText(/Gy\u00e1rt\u00e1s/)
+    const matches = await screen.findAllByText(/Gyártás/)
     expect(matches.length).toBeGreaterThan(0)
   })
 
-  it('renders settings world shell', () => {
+  it('renders settings world shell', async () => {
     renderApp('/w/settings')
-    const matches = screen.getAllByText(/Be\u00e1ll\u00edt\u00e1sok/)
+    const matches = await screen.findAllByText(/Beállítások/)
     expect(matches.length).toBeGreaterThan(0)
   })
 
-  it('renders warehouse overview', () => {
+  it('renders warehouse overview', async () => {
     renderApp('/w/warehouse')
-    const matches = screen.getAllByText(/Rakt\u00e1r/)
+    const matches = await screen.findAllByText(/Raktár/)
     expect(matches.length).toBeGreaterThan(0)
   })
 
-  it('renders warehouse procurement screen', () => {
+  it('renders warehouse procurement screen', async () => {
     renderApp('/w/warehouse/procurement')
-    expect(screen.getByText('Akt\u00edv megrendel\u00e9sek')).toBeTruthy()
+    expect(await screen.findByText('Aktív megrendelések')).toBeTruthy()
   })
 
-  it('renders warehouse movements screen', () => {
+  it('renders warehouse movements screen', async () => {
     renderApp('/w/warehouse/movements')
-    expect(screen.getByText('Backend endpoint nem elérhető')).toBeTruthy()
+    expect(await screen.findByText('Backend endpoint nem elérhető')).toBeTruthy()
   })
 })

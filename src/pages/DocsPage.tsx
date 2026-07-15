@@ -1,9 +1,9 @@
 import { useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
-import { Card } from '../components/ui'
+import { Card, StatusPill } from '../components/ui'
 import { SlideOver } from '../components/ui/SlideOver'
 import { WorldShell } from '../components/layout/WorldShell'
-import { DOCS, DOC_TYPE_META, DOC_STATUS_META, type Doc, type DocStatus } from '../mocks/docs'
+import { DOCS, DOC_TYPE_META, DOC_STATUS_META, type Doc } from '../mocks/docs'
 
 // ── Helpers ────────────────────────────────────────────────────────────────
 function DocTypeBadge({ type }: { type: Doc['type'] }) {
@@ -15,14 +15,7 @@ function DocTypeBadge({ type }: { type: Doc['type'] }) {
   )
 }
 
-function DocStatusPill({ status }: { status: DocStatus }) {
-  const m = DOC_STATUS_META[status]
-  return (
-    <span className={`inline-flex items-center gap-1.5 px-2 h-6 rounded-full text-[10.5px] font-medium border ${m.pill}`}>
-      <span className={`w-1.5 h-1.5 rounded-full ${m.dot}`} />{m.label}
-    </span>
-  )
-}
+// Dokumentum // státusz-pill: közös StatusPill + FSM_TONES — a per-modul pill-másolat kivezetve (F1-A)
 
 // ── Doc Detail SlideOver ───────────────────────────────────────────────────
 function DocDetailSlideOver({ doc, onClose }: { doc: Doc | null; onClose: () => void }) {
@@ -32,7 +25,7 @@ function DocDetailSlideOver({ doc, onClose }: { doc: Doc | null; onClose: () => 
       <div className="space-y-5 px-5 py-5">
         <div className="flex items-center gap-2 flex-wrap">
           <DocTypeBadge type={doc.type} />
-          <DocStatusPill status={doc.status} />
+          <StatusPill fsm="dmsDokumentum" status={doc.status} label={DOC_STATUS_META[doc.status].label} />
         </div>
 
         <div className="grid grid-cols-2 gap-3">
@@ -100,7 +93,7 @@ function DocsList() {
             <div className="min-w-0 flex-1">
               <div className="flex items-center gap-2 flex-wrap mb-1">
                 <DocTypeBadge type={doc.type} />
-                <DocStatusPill status={doc.status} />
+                <StatusPill fsm="dmsDokumentum" status={doc.status} label={DOC_STATUS_META[doc.status].label} />
               </div>
               <div className="text-[13px] font-semibold text-stone-900">{doc.name}</div>
               <div className="text-[11.5px] text-stone-500 mt-0.5">
@@ -164,7 +157,7 @@ function DocsDashboard() {
               </div>
               <div className="shrink-0 flex flex-col items-end gap-1">
                 <DocTypeBadge type={doc.type} />
-                <DocStatusPill status={doc.status} />
+                <StatusPill fsm="dmsDokumentum" status={doc.status} label={DOC_STATUS_META[doc.status].label} />
               </div>
             </button>
           ))}

@@ -1,10 +1,32 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { render, screen, fireEvent } from '@testing-library/react';
+import { describe, it, expect, beforeEach, beforeAll, afterAll, afterEach, vi } from 'vitest';
+import { render as rtlRender, screen, fireEvent } from '@testing-library/react';
+import type { ReactElement } from 'react';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { setupServer } from 'msw/node';
 import { IncidentReportWizard } from '../IncidentReportWizard';
 import { useIncidentDraftStore } from '../../../stores/incidentDraftStore';
+import { ToastProvider } from '../../ui';
+import { ehsApiHandlers, resetEhsDb } from '../../../mocks/ehsApi';
+
+// A StepDetails a locations API-ból tölt (MSW) — provider + szerver kell a teszthez
+const server = setupServer(...ehsApiHandlers);
+
+function render(ui: ReactElement) {
+  const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+  return rtlRender(
+    <QueryClientProvider client={queryClient}>
+      <ToastProvider>{ui}</ToastProvider>
+    </QueryClientProvider>
+  );
+}
 
 describe('IncidentReportWizard', () => {
+  beforeAll(() => server.listen());
+  afterEach(() => server.resetHandlers());
+  afterAll(() => server.close());
+
   beforeEach(() => {
+    resetEhsDb();
     // Reset store and start new draft
     useIncidentDraftStore.setState({
       drafts: [],
@@ -26,14 +48,15 @@ describe('IncidentReportWizard', () => {
   });
 
   it('should not render wizard when closed', () => {
-    const { container } = render(
+    render(
       <IncidentReportWizard
         isOpen={false}
         onClose={vi.fn()}
       />
     );
 
-    expect(container.firstChild).toBeNull();
+    // a wrapper providerek DOM-ja megmarad, de a wizard nem renderelődik
+    expect(screen.queryByText('Report Incident')).not.toBeInTheDocument();
   });
 
   it('should show incident type selection in step 1', () => {
@@ -103,6 +126,22 @@ describe('IncidentReportWizard', () => {
     fireEvent.click(nextButton);
 
     expect(screen.getByRole('button', { name: /back/i })).toBeInTheDocument();
+  });
+
+  it('loads locations from the EHS locations API in step 2 (mock-lista kiváltva)', async () => {
+    render(
+      <IncidentReportWizard
+        isOpen={true}
+        onClose={vi.fn()}
+      />
+    );
+
+    fireEvent.click(screen.getByText('Injury').closest('button')!);
+    fireEvent.click(screen.getByRole('button', { name: /next/i }));
+
+    // az MSW seed helyszínei jelennek meg a legördülőben
+    expect(await screen.findByRole('option', { name: 'Raktár' })).toBeInTheDocument();
+    expect(screen.getByRole('option', { name: 'A csarnok — szabászat' })).toBeInTheDocument();
   });
 
   it('should call onClose when Cancel is clicked', () => {

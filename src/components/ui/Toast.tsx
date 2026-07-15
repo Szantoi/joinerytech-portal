@@ -1,34 +1,22 @@
-import { useState, useEffect, createContext, useContext, useCallback, type ReactNode } from 'react'
-import { Icon } from './Icon'
+import { useState, useCallback, type ReactNode } from 'react'
+import { ToastItem } from './ToastItem'
+import { ToastContext, MIN_TOAST_DURATION_MS, type Toast, type ToastType } from './toastContext'
 
-// ─── Types ────────────────────────────────────────────────────────────────────
-
-export type ToastType = 'success' | 'error' | 'info' | 'warning'
-
-export interface Toast {
-  id: string
-  message: string
-  type: ToastType
-  duration?: number
-}
-
-interface ToastContextValue {
-  toasts: Toast[]
-  addToast: (message: string, type?: ToastType, duration?: number) => void
-  removeToast: (id: string) => void
-}
-
-// ─── Context ──────────────────────────────────────────────────────────────────
-
-const ToastContext = createContext<ToastContextValue | null>(null)
-
-export function useToast() {
-  const ctx = useContext(ToastContext)
-  if (!ctx) throw new Error('useToast must be used within ToastProvider')
-  return ctx
-}
-
-// ─── Provider ─────────────────────────────────────────────────────────────────
+/**
+ * Toast — notification system (DESIGN_SYSTEM_SPEC_V1 §2.6).
+ *
+ * A11y contract:
+ * - The live-region containers are ALWAYS in the DOM (even with zero toasts) —
+ *   screen readers only announce changes inside an already-existing live region.
+ *   (This fixes the old bug where the container returned null when empty.)
+ * - success/info/warning → polite region (role="status"); error → assertive
+ *   region (role="alert") and never auto-dismisses (manual close only).
+ * - Auto-dismiss is min. 5000 ms; hover and focus pause the timer (WCAG 2.2.1).
+ * - Toasts never steal focus; the close button is reachable in normal tab order.
+ * - Position: desktop bottom-right; mobile above the bottom nav + safe area.
+ *
+ * Types and the useToast hook live in ./toastContext (re-exported by the barrel).
+ */
 
 export function ToastProvider({ children }: { children: ReactNode }) {
   const [toasts, setToasts] = useState<Toast[]>([])
@@ -37,14 +25,13 @@ export function ToastProvider({ children }: { children: ReactNode }) {
     setToasts((prev) => prev.filter((t) => t.id !== id))
   }, [])
 
-  const addToast = useCallback((message: string, type: ToastType = 'info', duration = 4000) => {
+  const addToast = useCallback((message: string, type: ToastType = 'info', duration?: number) => {
     const id = `toast-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`
-    setToasts((prev) => [...prev, { id, message, type, duration }])
-
-    if (duration > 0) {
-      setTimeout(() => removeToast(id), duration)
-    }
-  }, [removeToast])
+    // Errors require manual dismissal; everything else auto-dismisses (min 5 s).
+    const effectiveDuration =
+      type === 'error' ? null : Math.max(duration ?? MIN_TOAST_DURATION_MS, MIN_TOAST_DURATION_MS)
+    setToasts((prev) => [...prev, { id, message, type, duration: effectiveDuration }])
+  }, [])
 
   return (
     <ToastContext.Provider value={{ toasts, addToast, removeToast }}>
@@ -54,58 +41,26 @@ export function ToastProvider({ children }: { children: ReactNode }) {
   )
 }
 
-// ─── Toast Container ──────────────────────────────────────────────────────────
+// ─── Container (persistent live regions) ──────────────────────────────────────
 
 function ToastContainer({ toasts, onClose }: { toasts: Toast[]; onClose: (id: string) => void }) {
-  if (toasts.length === 0) return null
+  const politeToasts = toasts.filter((t) => t.type !== 'error')
+  const errorToasts = toasts.filter((t) => t.type === 'error')
 
+  // NOTE: this container must never return null — the live regions have to
+  // exist BEFORE a toast arrives for AT to announce it.
   return (
-    <div className="fixed bottom-4 right-4 z-50 flex flex-col gap-2 max-w-sm">
-      {toasts.map((toast) => (
-        <ToastItem key={toast.id} toast={toast} onClose={() => onClose(toast.id)} />
-      ))}
-    </div>
-  )
-}
-
-// ─── Toast Item ───────────────────────────────────────────────────────────────
-
-const TOAST_STYLES: Record<ToastType, { bg: string; text: string; icon: string }> = {
-  success: { bg: 'bg-emerald-50 border-emerald-200', text: 'text-emerald-900', icon: 'check' },
-  error:   { bg: 'bg-rose-50 border-rose-200', text: 'text-rose-900', icon: 'alert' },
-  warning: { bg: 'bg-amber-50 border-amber-200', text: 'text-amber-900', icon: 'alert' },
-  info:    { bg: 'bg-teal-50 border-teal-200', text: 'text-teal-900', icon: 'info' },
-}
-
-function ToastItem({ toast, onClose }: { toast: Toast; onClose: () => void }) {
-  const [isVisible, setIsVisible] = useState(false)
-  const style = TOAST_STYLES[toast.type]
-
-  useEffect(() => {
-    // Trigger enter animation
-    const timer = setTimeout(() => setIsVisible(true), 10)
-    return () => clearTimeout(timer)
-  }, [])
-
-  return (
-    <div
-      className={`
-        flex items-start gap-3 p-3 rounded-lg border shadow-lg
-        transition-all duration-300 ease-out
-        ${style.bg} ${style.text}
-        ${isVisible ? 'opacity-100 translate-x-0' : 'opacity-0 translate-x-4'}
-      `}
-    >
-      <Icon name={style.icon} size={16} className="mt-0.5 flex-shrink-0" />
-      <div className="flex-1 text-[12.5px] font-medium leading-snug">
-        {toast.message}
+    <div className="pointer-events-none fixed right-4 z-50 flex w-full max-w-sm flex-col gap-2 bottom-[calc(58px+env(safe-area-inset-bottom)+8px)] md:bottom-4">
+      <div role="status" aria-live="polite" className="contents">
+        {politeToasts.map((toast) => (
+          <ToastItem key={toast.id} toast={toast} onClose={() => onClose(toast.id)} />
+        ))}
       </div>
-      <button
-        onClick={onClose}
-        className="flex-shrink-0 p-0.5 rounded hover:bg-black/5 transition"
-      >
-        <Icon name="close" size={14} className="opacity-60" />
-      </button>
+      <div role="alert" aria-live="assertive" className="contents">
+        {errorToasts.map((toast) => (
+          <ToastItem key={toast.id} toast={toast} onClose={() => onClose(toast.id)} />
+        ))}
+      </div>
     </div>
   )
 }

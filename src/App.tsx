@@ -1,3 +1,4 @@
+import { lazy, Suspense, type ComponentType } from 'react'
 import { Routes, Route, Navigate, useNavigate, useParams } from 'react-router-dom'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { AuthProvider } from './auth/AuthContext'
@@ -6,49 +7,67 @@ import { CallbackPage } from './auth/CallbackPage'
 import { RequireAuth } from './auth/RequireAuth'
 import { HomeScreen } from './components/layout/HomeScreen'
 import { WorldShell } from './components/layout/WorldShell'
+import { RouteFallback } from './components/layout/RouteFallback'
 import { ErrorBoundary } from './components/ErrorBoundary'
-import { LandingPage } from './pages/LandingPage'
-import { LoginPage } from './pages/LoginPage'
-import { DashboardPage } from './pages/DashboardPage'
-import { ProductionPage } from './pages/ProductionPage'
-import { ProductionDashboardPage } from './pages/production/ProductionDashboardPage'
-import { MovementsPage } from './pages/warehouse/MovementsPage'
-import { SalesWorldPage } from './pages/SalesPage'
-import { DesignWorldPage } from './pages/DesignPage'
-import { WorkflowPage } from './pages/WorkflowPage'
-import { InventoryPage } from './pages/InventoryPage'
-import { ProcurementPage } from './pages/ProcurementPage'
-import { CuttingAnalyticsPage } from './pages/CuttingAnalyticsPage'
-import { SettingsPage } from './pages/SettingsPage'
-import { ShopFloorPage } from './pages/ShopFloorPage'
-import { ShopFloorKioskPage } from './pages/ShopFloorKioskPage'
-import { CrmWorldPage } from './pages/CrmPage'
-import { FinanceWorldPage } from './pages/FinancePage'
-import { ProjectsWorldPage } from './pages/ProjectsPage'
-import { LogisticsWorldPage } from './pages/LogisticsPage'
-import { MfgPrepWorldPage } from './pages/MfgPrepPage'
-import { SupervisorWorldPage } from './pages/SupervisorPage'
-import { MasterdataWorldPage } from './pages/MasterdataPage'
-import { TradeWorld } from './pages/TradeWorld'
-import { InteriorWorldPage } from './pages/InteriorPage'
-import { MaintenanceWorldPage } from './pages/MaintenancePage'
-import { QualityWorldPage } from './pages/QualityPage'
-import { EhsWorldPage } from './pages/EhsPage'
-import { AttendanceWorldPage } from './pages/AttendancePage'
-import { TasksWorldPage } from './pages/TasksPage'
-import { DocsWorldPage } from './pages/DocsPage'
-import { AiWorldPage } from './pages/AiPage'
-import { ExecBiWorldPage } from './pages/ExecBiPage'
-import { ShopWorldPage } from './pages/ShopPage'
-import { HrWorldPage } from './pages/HrPage'
-import { ControllingWorldPage } from './pages/ControllingPage'
-import { ServiceWorldPage } from './pages/ServicePage'
-import { LotsPage, ZoneMapPage, MovementLogPage } from './pages/warehouse/LotsPage'
-import { ProductConfiguratorWizard } from './pages/ProductConfiguratorWizard'
-import { BOMPreviewPage } from './pages/BOMPreviewPage'
-import { WorkOrderSummary } from './pages/WorkOrderSummary'
-import { SupplierPortalPage } from './pages/SupplierPortalPage'
-import PublicQuoteRequestPage from './pages/PublicQuoteRequestPage'
+
+/**
+ * Route-level code splitting (UI_GAP_ANALYSIS §1 / Fázis 1.3).
+ *
+ * Every page below is its own lazy chunk — Vite splits on the dynamic
+ * import()s, so the initial bundle only carries the shell (auth, layout,
+ * providers). Pages use named exports, hence the `lazyPage` picker helper.
+ * The single <Suspense> around <Routes> shows RouteFallback while a page
+ * chunk loads; multi-screen world wrappers add a nested inline fallback so
+ * the shell stays visible during screen switches.
+ */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any -- generic constraint only; props stay fully typed per component
+function lazyPage<M, C extends ComponentType<any>>(load: () => Promise<M>, pick: (m: M) => C) {
+  return lazy(async () => ({ default: pick(await load()) }))
+}
+
+const LandingPage = lazyPage(() => import('./pages/LandingPage'), (m) => m.LandingPage)
+const LoginPage = lazyPage(() => import('./pages/LoginPage'), (m) => m.LoginPage)
+const ProductionPage = lazyPage(() => import('./pages/ProductionPage'), (m) => m.ProductionPage)
+const ProductionDashboardPage = lazyPage(() => import('./pages/production/ProductionDashboardPage'), (m) => m.ProductionDashboardPage)
+const MovementsPage = lazyPage(() => import('./pages/warehouse/MovementsPage'), (m) => m.MovementsPage)
+const SalesWorldPage = lazyPage(() => import('./pages/SalesPage'), (m) => m.SalesWorldPage)
+const DesignWorldPage = lazyPage(() => import('./pages/DesignPage'), (m) => m.DesignWorldPage)
+const WorkflowPage = lazyPage(() => import('./pages/WorkflowPage'), (m) => m.WorkflowPage)
+const InventoryPage = lazyPage(() => import('./pages/InventoryPage'), (m) => m.InventoryPage)
+const ProcurementPage = lazyPage(() => import('./pages/ProcurementPage'), (m) => m.ProcurementPage)
+const CuttingAnalyticsPage = lazyPage(() => import('./pages/CuttingAnalyticsPage'), (m) => m.CuttingAnalyticsPage)
+const SettingsPage = lazyPage(() => import('./pages/SettingsPage'), (m) => m.SettingsPage)
+const ShopFloorPage = lazyPage(() => import('./pages/ShopFloorPage'), (m) => m.ShopFloorPage)
+const ShopFloorKioskPage = lazyPage(() => import('./pages/ShopFloorKioskPage'), (m) => m.ShopFloorKioskPage)
+const CrmWorldPage = lazyPage(() => import('./pages/CrmPage'), (m) => m.CrmWorldPage)
+const FinanceWorldPage = lazyPage(() => import('./pages/FinancePage'), (m) => m.FinanceWorldPage)
+const ProjectsWorldPage = lazyPage(() => import('./pages/ProjectsPage'), (m) => m.ProjectsWorldPage)
+const LogisticsWorldPage = lazyPage(() => import('./pages/LogisticsPage'), (m) => m.LogisticsWorldPage)
+const MfgPrepWorldPage = lazyPage(() => import('./pages/MfgPrepPage'), (m) => m.MfgPrepWorldPage)
+const SupervisorWorldPage = lazyPage(() => import('./pages/SupervisorPage'), (m) => m.SupervisorWorldPage)
+const MasterdataWorldPage = lazyPage(() => import('./pages/MasterdataPage'), (m) => m.MasterdataWorldPage)
+const TradeWorld = lazyPage(() => import('./pages/TradeWorld'), (m) => m.TradeWorld)
+const InteriorWorldPage = lazyPage(() => import('./pages/InteriorPage'), (m) => m.InteriorWorldPage)
+const MaintenanceWorldPage = lazyPage(() => import('./pages/MaintenancePage'), (m) => m.MaintenanceWorldPage)
+const QualityWorldPage = lazyPage(() => import('./pages/QualityPage'), (m) => m.QualityWorldPage)
+const EhsWorldPage = lazyPage(() => import('./pages/EhsPage'), (m) => m.EhsWorldPage)
+const AttendanceWorldPage = lazyPage(() => import('./pages/AttendancePage'), (m) => m.AttendanceWorldPage)
+const TasksWorldPage = lazyPage(() => import('./pages/TasksPage'), (m) => m.TasksWorldPage)
+const DocsWorldPage = lazyPage(() => import('./pages/DocsPage'), (m) => m.DocsWorldPage)
+const AiWorldPage = lazyPage(() => import('./pages/AiPage'), (m) => m.AiWorldPage)
+const ExecBiWorldPage = lazyPage(() => import('./pages/ExecBiPage'), (m) => m.ExecBiWorldPage)
+const ShopWorldPage = lazyPage(() => import('./pages/ShopPage'), (m) => m.ShopWorldPage)
+const HrWorldPage = lazyPage(() => import('./pages/HrPage'), (m) => m.HrWorldPage)
+const ControllingWorldPage = lazyPage(() => import('./pages/ControllingPage'), (m) => m.ControllingWorldPage)
+const ServiceWorldPage = lazyPage(() => import('./pages/ServicePage'), (m) => m.ServiceWorldPage)
+const LotsPage = lazyPage(() => import('./pages/warehouse/LotsPage'), (m) => m.LotsPage)
+const ZoneMapPage = lazyPage(() => import('./pages/warehouse/LotsPage'), (m) => m.ZoneMapPage)
+const MovementLogPage = lazyPage(() => import('./pages/warehouse/LotsPage'), (m) => m.MovementLogPage)
+const ProductConfiguratorWizard = lazyPage(() => import('./pages/ProductConfiguratorWizard'), (m) => m.ProductConfiguratorWizard)
+const BOMPreviewPage = lazyPage(() => import('./pages/BOMPreviewPage'), (m) => m.BOMPreviewPage)
+const WorkOrderSummary = lazyPage(() => import('./pages/WorkOrderSummary'), (m) => m.WorkOrderSummary)
+const SupplierPortalPage = lazyPage(() => import('./pages/SupplierPortalPage'), (m) => m.SupplierPortalPage)
+const PublicQuoteRequestPage = lazy(() => import('./pages/PublicQuoteRequestPage'))
 
 // Create a QueryClient instance
 const queryClient = new QueryClient({
@@ -75,20 +94,6 @@ function HomePage() {
   )
 }
 
-function WorldPage({ worldKey, screen, children }: { worldKey: string; screen?: string; children: React.ReactNode }) {
-  const navigate = useNavigate()
-  return (
-    <WorldShell
-      worldKey={worldKey}
-      screen={screen ?? worldKey}
-      onScreen={(key) => navigate(`/w/${worldKey}/${key}`)}
-      onHome={() => navigate('/')}
-    >
-      {children}
-    </WorldShell>
-  )
-}
-
 function ProductionWorldPage() {
   const navigate = useNavigate()
   const { screen } = useParams<{ screen?: string }>()
@@ -110,9 +115,12 @@ function ProductionWorldPage() {
       onHome={() => navigate('/')}
     >
       <ErrorBoundary>
-        <div key={currentScreen} className="contents">
-          {renderContent()}
-        </div>
+        {/* Nested Suspense: screen chunks load without hiding the shell */}
+        <Suspense fallback={<RouteFallback fullscreen={false} />}>
+          <div key={currentScreen} className="contents">
+            {renderContent()}
+          </div>
+        </Suspense>
       </ErrorBoundary>
     </WorldShell>
   )
@@ -130,12 +138,14 @@ function SettingsWorldPage() {
       onScreen={(key) => navigate(`/w/settings/${key}`)}
       onHome={() => navigate('/')}
     >
-      <div key={currentScreen} className="contents">
-        <SettingsPage
-          initialTab={currentScreen}
-          onTabChange={(tab) => navigate(`/w/settings/${tab}`)}
-        />
-      </div>
+      <Suspense fallback={<RouteFallback fullscreen={false} />}>
+        <div key={currentScreen} className="contents">
+          <SettingsPage
+            initialTab={currentScreen}
+            onTabChange={(tab) => navigate(`/w/settings/${tab}`)}
+          />
+        </div>
+      </Suspense>
     </WorldShell>
   )
 }
@@ -163,7 +173,9 @@ function WarehouseWorldPage() {
       onScreen={(key) => navigate(`/w/warehouse/${key}`)}
       onHome={() => navigate('/')}
     >
-      <div key={currentScreen} className="contents">{renderContent()}</div>
+      <Suspense fallback={<RouteFallback fullscreen={false} />}>
+        <div key={currentScreen} className="contents">{renderContent()}</div>
+      </Suspense>
     </WorldShell>
   )
 }
@@ -173,6 +185,8 @@ export function App() {
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
         <ToastProvider>
+        {/* Root Suspense: shows a token-styled full-page fallback while a lazy route chunk loads */}
+        <Suspense fallback={<RouteFallback />}>
         <Routes>
         {/* Public routes */}
         <Route path="/" element={<LandingPage />} />
@@ -505,6 +519,7 @@ export function App() {
 
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
+      </Suspense>
       </ToastProvider>
     </AuthProvider>
     </QueryClientProvider>

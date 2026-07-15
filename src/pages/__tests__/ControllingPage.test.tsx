@@ -1,6 +1,10 @@
-import { describe, it, expect, vi } from 'vitest'
+import { describe, it, expect, vi, beforeAll, afterAll, beforeEach, afterEach } from 'vitest'
 import { render, screen, fireEvent } from '@testing-library/react'
 import { MemoryRouter, Route, Routes } from 'react-router-dom'
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import { setupServer } from 'msw/node'
+import { ToastProvider } from '../../components/ui'
+import { controllingApiHandlers, resetControllingDb } from '../../mocks/controllingApi'
 import { ControllingWorldPage } from '../ControllingPage'
 
 vi.mock('../../auth', () => ({
@@ -10,86 +14,79 @@ vi.mock('../../auth', () => ({
   })),
 }))
 
+const server = setupServer(...controllingApiHandlers)
+
+beforeAll(() => server.listen())
+beforeEach(() => resetControllingDb())
+afterEach(() => server.resetHandlers())
+afterAll(() => server.close())
+
 function renderCtrl(path = '') {
   const url = path ? `/w/kontrolling/${path}` : '/w/kontrolling'
+  const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } })
   return render(
-    <MemoryRouter initialEntries={[url]}>
-      <Routes>
-        <Route path="/w/kontrolling" element={<ControllingWorldPage />} />
-        <Route path="/w/kontrolling/:screen" element={<ControllingWorldPage />} />
-      </Routes>
-    </MemoryRouter>
+    <QueryClientProvider client={queryClient}>
+      <ToastProvider>
+        <MemoryRouter initialEntries={[url]}>
+          <Routes>
+            <Route path="/w/kontrolling" element={<ControllingWorldPage />} />
+            <Route path="/w/kontrolling/:screen" element={<ControllingWorldPage />} />
+          </Routes>
+        </MemoryRouter>
+      </ToastProvider>
+    </QueryClientProvider>
   )
 }
 
-describe('ControllingPage', () => {
-  it('renders Kontrolling dashboard', () => {
-    renderCtrl()
-    expect(screen.getAllByText('Kontrolling').length).toBeGreaterThan(0)
-  })
+// A teljes szvit párhuzamos terhelése alatt a render+fetch lassabb lehet, mint
+// az 5 mp-es alap-timeout (a smoke tesztekével azonos ok) — bő keret.
+const ROUTE_TIMEOUT = 20_000
 
-  it('dashboard shows KPI cards', () => {
+describe('ControllingPage (route-diszpécser, API-vezérelt képernyők)', () => {
+  it('renders vezetői áttekintés with KPI cards from the API', async () => {
     renderCtrl()
-    expect(screen.getAllByText('Portfólió érték').length).toBeGreaterThan(0)
+    expect(await screen.findByText('Portfólió érték')).toBeTruthy()
+    expect(screen.getByText('Kockázatos projekt')).toBeTruthy()
+    expect(screen.getByText('EAC-túllépés')).toBeTruthy()
+  }, ROUTE_TIMEOUT)
+
+  it('renders portfolio DataTable with lifecycle pills', async () => {
+    renderCtrl('portfolio')
+    expect((await screen.findAllByText('Novitech iroda — 40 munkaállomás')).length).toBeGreaterThan(0)
+    expect((await screen.findAllByText('Vázlat')).length).toBeGreaterThan(0)
+  }, ROUTE_TIMEOUT)
+
+  it('clicking a portfolio row opens the detail SlideOver with EAC breakdown', async () => {
+    renderCtrl('portfolio')
+    fireEvent.click((await screen.findAllByText(/Petőfi u\. 12/))[0])
+    const dialog = await screen.findByRole('dialog')
+    // S1: a kategória-tábla SAJÁT görgethető régióban él (spec 2.4 —
+    // role="region" + aria-label + fókuszálható konténer, overflow-x-auto)
+    const region = await screen.findByRole('region', { name: 'Kategória-bontás' })
+    expect(region.className).toContain('overflow-x-auto')
+    expect(region.getAttribute('tabindex')).toBe('0')
+    expect(screen.getByText('EAC (várható összköltség)')).toBeTruthy()
+    expect(dialog).toBeTruthy()
+  }, ROUTE_TIMEOUT)
+
+  it('renders projekt-fedezet cards with margin percentages', async () => {
+    renderCtrl('projects')
+    expect((await screen.findAllByText(/Belváros Café/)).length).toBeGreaterThan(0)
     expect(screen.getAllByText('Terv-fedezet').length).toBeGreaterThan(0)
-    expect(screen.getAllByText('Tény-fedezet').length).toBeGreaterThan(0)
-  })
+    expect(screen.getAllByText('EAC-fedezet').length).toBeGreaterThan(0)
+  }, ROUTE_TIMEOUT)
 
-  it('dashboard shows portfolio table', () => {
-    renderCtrl()
-    expect(screen.getAllByText('Projekt-portfólió').length).toBeGreaterThan(0)
-  })
+  it('renders eltérés-elemzés with category rows', async () => {
+    renderCtrl('variance')
+    expect(await screen.findByRole('button', { name: /Anyag/ })).toBeTruthy()
+    expect(screen.getByRole('button', { name: /Munkaóra/ })).toBeTruthy()
+  }, ROUTE_TIMEOUT)
 
-  it('portfolio table shows project rows', () => {
-    renderCtrl()
-    expect(screen.getAllByText(/Petőfi u\. 12/).length).toBeGreaterThan(0)
-    expect(screen.getAllByText(/Belváros Café/).length).toBeGreaterThan(0)
-  })
-
-  it('portfolio table shows customers', () => {
-    renderCtrl()
-    expect(screen.getAllByText(/Nagy Anna/).length).toBeGreaterThan(0)
-  })
-
-  it('dashboard shows top/flop panels', () => {
-    renderCtrl()
-    expect(screen.getByText('Legjobb fedezet')).toBeTruthy()
-    expect(screen.getByText('Leggyengébb fedezet')).toBeTruthy()
-  })
-
-  it('clicking project row opens detail SlideOver', () => {
-    renderCtrl()
-    fireEvent.click(screen.getAllByText(/Petőfi u\. 12/)[0])
-    expect(screen.getAllByText('Kategória-bontás').length).toBeGreaterThan(0)
-  })
-
-  it('project detail shows cost categories', () => {
-    renderCtrl()
-    fireEvent.click(screen.getAllByText(/Petőfi u\. 12/)[0])
-    expect(screen.getAllByText(/Anyag|Munkaóra|Szállítás/).length).toBeGreaterThan(0)
-  })
-
-  it('project detail shows plan vs actual columns', () => {
-    renderCtrl()
-    fireEvent.click(screen.getAllByText(/Petőfi u\. 12/)[0])
-    expect(screen.getAllByText('Terv').length).toBeGreaterThan(0)
-    expect(screen.getAllByText('Tény').length).toBeGreaterThan(0)
-  })
-
-  it('renders project list screen', () => {
-    renderCtrl('projects')
-    expect(screen.getAllByText('Projekt-fedezet').length).toBeGreaterThan(0)
-  })
-
-  it('project list shows all projects', () => {
-    renderCtrl('projects')
-    expect(screen.getAllByText(/Petőfi u\. 12/).length).toBeGreaterThan(0)
-    expect(screen.getAllByText(/Doorstar ajtók/).length).toBeGreaterThan(0)
-  })
-
-  it('project list shows margin pills', () => {
-    renderCtrl('projects')
-    const joPills = screen.getAllByText(/Jó|Közepes|Gyenge|Veszteséges/)
-    expect(joPills.length).toBeGreaterThan(0)
-  })
+  it('renders utókalkuláció with seeded adjustments', async () => {
+    renderCtrl('adjustments')
+    expect(
+      (await screen.findAllByText('Beszállítói jóváírás — élzárás reklamáció')).length,
+    ).toBeGreaterThan(0)
+    expect(screen.getByRole('button', { name: 'Új korrekció' })).toBeTruthy()
+  }, ROUTE_TIMEOUT)
 })

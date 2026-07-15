@@ -1,28 +1,56 @@
-const STATUS_TONES: Record<string, { bg: string; fg: string; dot: string }> = {
-  draft: { bg: 'bg-stone-100', fg: 'text-stone-600', dot: 'bg-stone-400' },
-  calc: { bg: 'bg-amber-50', fg: 'text-amber-700', dot: 'bg-amber-500' },
-  ready: { bg: 'bg-sky-50', fg: 'text-sky-700', dot: 'bg-sky-500' },
-  released: { bg: 'bg-emerald-50', fg: 'text-emerald-700', dot: 'bg-emerald-500' },
-  planned: { bg: 'bg-stone-100', fg: 'text-stone-600', dot: 'bg-stone-400' },
-  running: { bg: 'bg-teal-50', fg: 'text-teal-700', dot: 'bg-teal-500' },
-  done: { bg: 'bg-emerald-50', fg: 'text-emerald-700', dot: 'bg-emerald-500' },
-  low: { bg: 'bg-amber-50', fg: 'text-amber-700', dot: 'bg-amber-500' },
-  ok: { bg: 'bg-emerald-50', fg: 'text-emerald-700', dot: 'bg-emerald-500' },
-  critical: { bg: 'bg-rose-50', fg: 'text-rose-700', dot: 'bg-rose-500' },
-}
+/**
+ * StatusPill — generikus státusz-pill a 7 tónusú STATUS_TONES skálával.
+ *
+ * Spec: DESIGN_SYSTEM_SPEC_V1.md 2.5 fejezet.
+ *  - A label mindig látható szövegként renderelt (dot/ikon-only tilos).
+ *  - A dot dekoratív (`aria-hidden`); `terminal` tónusnál üreges (forma-jelzés).
+ *  - Nem interaktív elem — kattinthatóvá `<button>`-ba csomagolva tehető.
+ *
+ * Tónus-feloldás (prioritás-sorrendben):
+ *  1. `tone`          — közvetlen tónus
+ *  2. `fsm` + `status` — modul-FSM készletből (theme/fsmTones.ts)
+ *  3. `status`        — legacy státusz-kulcs (theme/statusTones.ts térképe)
+ *  Ismeretlen kulcs → `neutral` + dev-warning.
+ */
 
+import { STATUS_TONES, resolveLegacyTone, type Tone } from '../../theme/statusTones'
+import { resolveFsmTone, type FsmSet } from '../../theme/fsmTones'
+
+// Kompat re-export: a korábbi `import { STATUS_TONES } from './StatusPill'` továbbra is működik
 export { STATUS_TONES }
+export type { Tone }
+
+type PillSize = 'sm' | 'md'
+
+const SIZE_CLASSES: Record<PillSize, string> = {
+  sm: 'px-1.5 h-5 text-[10px]',
+  md: 'px-2 py-0.5 text-[11px]',
+}
 
 interface StatusPillProps {
-  status: string
+  /** Lokalizált, mindig látható státusznév. */
   label: string
+  /** Közvetlen tónus — ha megadott, ez nyer. */
+  tone?: Tone
+  /** FSM státusz-készlet azonosító (a `status`-szal együtt használandó). */
+  fsm?: FsmSet
+  /** Státusz-kulcs: FSM-kulcs (`fsm` mellett) vagy legacy kulcs. */
+  status?: string
+  size?: PillSize
 }
 
-export function StatusPill({ status, label }: StatusPillProps) {
-  const t = STATUS_TONES[status] ?? STATUS_TONES.draft
+export function StatusPill({ label, tone, fsm, status, size = 'md' }: StatusPillProps) {
+  const resolved: Tone =
+    tone ??
+    (fsm && status !== undefined
+      ? resolveFsmTone(fsm, status)
+      : resolveLegacyTone(status ?? 'neutral'))
+  const t = STATUS_TONES[resolved]
   return (
-    <span className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[11px] font-medium ${t.bg} ${t.fg}`}>
-      <span className={`w-1.5 h-1.5 rounded-full ${t.dot}`} />
+    <span
+      className={`inline-flex items-center gap-1.5 rounded-full font-medium ${SIZE_CLASSES[size]} ${t.bg} ${t.fg}`}
+    >
+      <span aria-hidden="true" className={`w-1.5 h-1.5 rounded-full ${t.dot}`} />
       {label}
     </span>
   )

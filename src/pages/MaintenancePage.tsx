@@ -1,13 +1,13 @@
 import { useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
-import { Card, Icon } from '../components/ui'
+import { Card, Icon, StatusPill } from '../components/ui'
 import { SlideOver } from '../components/ui/SlideOver'
 import { WorldShell } from '../components/layout/WorldShell'
 import {
   ASSETS, TICKETS, SCHEDULED,
   ASSET_STATUS_META, TICKET_TYPE_META, TICKET_STATUS_META,
   type MaintenanceAsset, type MaintenanceTicket,
-  type AssetStatus, type TicketType, type TicketStatus,
+  type AssetStatus, type TicketType,
 } from '../mocks/maintenance'
 
 // ── Helpers ────────────────────────────────────────────────────────────────
@@ -27,14 +27,7 @@ function TicketTypeBadge({ type }: { type: TicketType }) {
   )
 }
 
-function TicketStatusPill({ status }: { status: TicketStatus }) {
-  const m = TICKET_STATUS_META[status]
-  return (
-    <span className={`inline-flex items-center gap-1.5 px-2 h-6 rounded-full text-[10.5px] font-medium ${m.bg} ${m.fg}`}>
-      <span className={`w-1.5 h-1.5 rounded-full ${m.dot}`} />{m.label}
-    </span>
-  )
-}
+// Jegy // státusz-pill: közös StatusPill + FSM_TONES — a per-modul pill-másolat kivezetve (F1-A)
 
 // ── Asset Detail SlideOver ─────────────────────────────────────────────────
 function AssetDetailSlideOver({ asset, onClose }: { asset: MaintenanceAsset | null; onClose: () => void }) {
@@ -71,7 +64,7 @@ function AssetDetailSlideOver({ asset, onClose }: { asset: MaintenanceAsset | nu
                 <div key={t.id} className="border border-stone-100 rounded-lg px-3 py-2.5 bg-stone-50">
                   <div className="flex items-center gap-2 mb-1">
                     <TicketTypeBadge type={t.type} />
-                    <TicketStatusPill status={t.status} />
+                    <StatusPill fsm="maintenanceMunkalap" status={t.status} label={TICKET_STATUS_META[t.status].label} />
                   </div>
                   <div className="text-[12px] font-medium text-stone-800">{t.title}</div>
                   <div className="text-[11px] text-stone-500 mt-0.5">Határidő: {t.dueDate}</div>
@@ -100,7 +93,7 @@ function TicketDetailSlideOver({ ticket, onClose }: { ticket: MaintenanceTicket 
       <div className="space-y-5 px-5 py-5">
         <div className="flex items-center gap-2 flex-wrap">
           <TicketTypeBadge type={ticket.type} />
-          <TicketStatusPill status={ticket.status} />
+          <StatusPill fsm="maintenanceMunkalap" status={ticket.status} label={TICKET_STATUS_META[ticket.status].label} />
           <span className={`inline-flex items-center px-2 h-5 rounded-full text-[10px] font-medium ${PRIO_META[ticket.priority]}`}>
             {PRIO_LABELS[ticket.priority]}
           </span>
@@ -179,7 +172,7 @@ function TicketsList() {
             <div className="min-w-0 flex-1">
               <div className="flex items-center gap-2 flex-wrap mb-1">
                 <TicketTypeBadge type={t.type} />
-                <TicketStatusPill status={t.status} />
+                <StatusPill fsm="maintenanceMunkalap" status={t.status} label={TICKET_STATUS_META[t.status].label} />
               </div>
               <div className="text-[13px] font-semibold text-stone-900">{t.title}</div>
               <div className="text-[11.5px] text-stone-500 mt-0.5">{t.assetName} · {t.reportedBy}</div>

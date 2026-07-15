@@ -1,11 +1,26 @@
-import { useEffect, useRef, useId } from 'react'
+import { useEffect, useRef, useId, type CSSProperties } from 'react'
 import { Icon } from './Icon'
+import { useFocusTrap } from './hooks/useFocusTrap'
+import { useInertBackground } from './hooks/useInertBackground'
+
+/**
+ * SlideOver — modal side panel / mobile bottom sheet (DESIGN_SYSTEM_SPEC_V1 §2.2).
+ *
+ * - ≥ md: panel slides in from the right (width prop, capped at 100vw).
+ * - < md: bottom sheet — full width, max-h 85dvh, rounded top edge, drag-handle,
+ *   explicit "Vissza" button in the header, safe-area padding on the action row.
+ * - Focus: trapped inside (dynamic list re-queried per Tab), returned to the
+ *   trigger element on close. Background gets `inert` + body scroll-lock.
+ * - Close: Esc, overlay click, X button, mobile back button.
+ * - Animation respects prefers-reduced-motion (motion-reduce:transition-none).
+ */
 
 interface SlideOverProps {
   open: boolean
   onClose: () => void
   title: string
   subtitle?: string
+  /** Desktop panel width in px (mobile is always full-width bottom sheet). */
   width?: number
   children: React.ReactNode
   footer?: React.ReactNode
@@ -13,82 +28,86 @@ interface SlideOverProps {
 
 export function SlideOver({ open, onClose, title, subtitle, width = 520, children, footer }: SlideOverProps) {
   const titleId = useId()
-  const slideOverRef = useRef<HTMLElement>(null)
+  const rootRef = useRef<HTMLDivElement>(null)
+  const panelRef = useRef<HTMLElement>(null)
 
+  // Order matters: inert must be lifted BEFORE focus is returned on close
+  // (React runs effect cleanups in declaration order).
+  useInertBackground(rootRef, open)
+  useFocusTrap(panelRef, open)
+
+  // Esc closes the panel (focus return is handled by the trap's cleanup).
   useEffect(() => {
     if (!open) return
-
-    // Escape key handler
     const onKey = (e: KeyboardEvent) => {
       if (e.key === 'Escape') onClose()
     }
-    window.addEventListener('keydown', onKey)
-
-    // Focus trap - basic implementation
-    const slideOver = slideOverRef.current
-    if (slideOver) {
-      const focusableElements = slideOver.querySelectorAll<HTMLElement>(
-        'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
-      )
-      const firstElement = focusableElements[0]
-      const lastElement = focusableElements[focusableElements.length - 1]
-
-      firstElement?.focus()
-
-      const trapFocus = (e: KeyboardEvent) => {
-        if (e.key !== 'Tab') return
-
-        if (e.shiftKey && document.activeElement === firstElement) {
-          e.preventDefault()
-          lastElement?.focus()
-        } else if (!e.shiftKey && document.activeElement === lastElement) {
-          e.preventDefault()
-          firstElement?.focus()
-        }
-      }
-
-      slideOver.addEventListener('keydown', trapFocus as EventListener)
-      return () => {
-        window.removeEventListener('keydown', onKey)
-        slideOver.removeEventListener('keydown', trapFocus as EventListener)
-      }
-    }
-
-    return () => window.removeEventListener('keydown', onKey)
+    document.addEventListener('keydown', onKey)
+    return () => document.removeEventListener('keydown', onKey)
   }, [open, onClose])
 
   if (!open) return null
 
   return (
-    <div className="fixed inset-0 z-40">
-      <div className="absolute inset-0 bg-stone-900/30 backdrop-blur-[2px]" onClick={onClose} aria-hidden="true" />
+    <div ref={rootRef} className="fixed inset-0 z-40">
+      {/* Overlay — click closes; hidden from AT (the dialog itself is modal) */}
+      <div
+        className="absolute inset-0 bg-stone-900/30 backdrop-blur-[2px]"
+        onClick={onClose}
+        aria-hidden="true"
+      />
       <aside
-        ref={slideOverRef}
+        ref={panelRef}
         role="dialog"
         aria-modal="true"
         aria-labelledby={titleId}
         aria-describedby={subtitle ? `${titleId}-subtitle` : undefined}
-        className="absolute right-0 top-0 h-full bg-white dark:bg-stone-900 shadow-2xl flex flex-col"
-        style={{ width: `min(${width}px, 100vw)` }}
+        tabIndex={-1}
+        style={{ '--slideover-width': `${width}px` } as CSSProperties}
+        className="absolute flex flex-col bg-surface-1 shadow-2xl transition-transform duration-200 motion-reduce:transition-none max-md:inset-x-0 max-md:bottom-0 max-md:max-h-[85dvh] max-md:rounded-t-2xl md:right-0 md:top-0 md:h-full md:w-[min(var(--slideover-width),100vw)]"
       >
-        <div className="px-5 py-4 border-b border-stone-200 dark:border-stone-700 flex items-start gap-3">
-          <div className="flex-1 min-w-0">
-            <div id={titleId} className="text-[15px] font-semibold text-stone-900 dark:text-stone-100 truncate">{title}</div>
+        {/* Drag-handle — decorative, bottom sheet only */}
+        <div aria-hidden="true" className="mx-auto mt-2 h-1 w-10 shrink-0 rounded-full bg-line md:hidden" />
+
+        <div className="flex items-start gap-3 border-b border-line px-5 py-4">
+          {/* Mobile: explicit back button (audit finding — not just an X) */}
+          <button
+            type="button"
+            onClick={onClose}
+            className="inline-flex h-8 shrink-0 items-center gap-1 rounded-md pr-2 text-[12.5px] font-medium text-ink-muted hover:bg-surface-2 hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-world-ring md:hidden"
+          >
+            <span aria-hidden="true" className="rotate-180">
+              <Icon name="chevron" size={16} />
+            </span>
+            Vissza
+          </button>
+          <div className="min-w-0 flex-1">
+            <div id={titleId} className="truncate text-[15px] font-semibold text-ink">
+              {title}
+            </div>
             {subtitle && (
-              <div id={`${titleId}-subtitle`} className="text-[11.5px] text-stone-500 dark:text-stone-400 mt-0.5 truncate">{subtitle}</div>
+              <div id={`${titleId}-subtitle`} className="mt-0.5 truncate text-[11.5px] text-ink-muted">
+                {subtitle}
+              </div>
             )}
           </div>
           <button
+            type="button"
             onClick={onClose}
-            aria-label="Close panel"
-            className="w-8 h-8 grid place-items-center rounded-md text-stone-400 dark:text-stone-500 hover:bg-stone-100 dark:hover:bg-stone-800 hover:text-stone-700 dark:hover:text-stone-300"
+            aria-label="Bezárás"
+            className="grid h-8 w-8 shrink-0 place-items-center rounded-md text-ink-muted hover:bg-surface-2 hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-world-ring"
           >
             <Icon name="x" size={16} />
           </button>
         </div>
-        <div className="flex-1 overflow-y-auto">{children}</div>
+
+        {/* Content — safe-area padding on mobile when there is no footer below it */}
+        <div className={`flex-1 overflow-y-auto ${footer ? '' : 'max-md:pb-[env(safe-area-inset-bottom)]'}`}>
+          {children}
+        </div>
+
         {footer && (
-          <div className="px-5 py-3 border-t border-stone-200 dark:border-stone-700 bg-stone-50/60 dark:bg-stone-800/60 flex items-center gap-2 justify-end">
+          <div className="flex items-center justify-end gap-2 border-t border-line bg-surface-2/60 px-5 py-3 max-md:pb-[max(0.75rem,env(safe-area-inset-bottom))]">
             {footer}
           </div>
         )}

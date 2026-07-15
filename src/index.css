@@ -1,17 +1,20 @@
 @import "tailwindcss";
 
-/* Tailwind 4 Dark Mode Configuration */
-@variant dark {
-  @media (prefers-color-scheme: dark) {
-    :root:not(.light *) {
-      @mixin dark;
-    }
-  }
+/*
+ * JoineryTech Portal — design tokens (DESIGN_SYSTEM_SPEC_V1.md, 1. fejezet)
+ *
+ * Két réteg:
+ *   1. Nyers CSS-változók (:root / .dark / [data-world]) — itt dől el az érték.
+ *   2. `@theme inline` — utility-t generál (bg-surface-1, text-ink, bg-world…),
+ *      és a var()-láncot a HASZNÁLAT helyén oldja fel, így a scope-alapú
+ *      felülírás (.dark, [data-world]) működik.
+ *
+ * Komponens SOHA nem használ nyers palettát felület-színre — csak szemantikus
+ * utility-t. A `dark:` variáns csak escape hatch (ld. spec 4.2).
+ */
 
-  :is(.dark *) {
-    @mixin dark;
-  }
-}
+/* Dark mode: class-alapú, `.dark` a <html> elemen (no-flash script az index.html-ben) */
+@custom-variant dark (&:where(.dark, .dark *));
 
 /* Custom animations for ProductCard shimmer effect */
 @keyframes shimmer {
@@ -25,16 +28,160 @@
 
 @theme {
   --animate-shimmer: shimmer 2s infinite;
+}
 
-  /* Dark-first color system (Tailwind 4 CSS variables) */
-  --color-bg-primary: #0f1419;
-  --color-bg-secondary: #1a1f26;
-  --color-bg-tertiary: #252b33;
-  --color-text-primary: #e7e9ea;
-  --color-text-secondary: #a8acb0;
-  --color-border-default: #2f363d;
-  --color-accent-primary: #3b82f6;
-  --color-accent-secondary: #60a5fa;
+/* ── Szemantikus tokenek → utility-k ─────────────────────────────── */
+@theme inline {
+  /* Felületek és tinta */
+  --color-surface-0: var(--surface-0);   /* app háttér */
+  --color-surface-1: var(--surface-1);   /* kártya, panel, SlideOver */
+  --color-surface-2: var(--surface-2);   /* hover, táblafejléc, inset */
+  --color-ink:        var(--ink);        /* elsődleges szöveg */
+  --color-ink-muted:  var(--ink-muted);  /* másodlagos szöveg */
+  --color-line:       var(--line);       /* border, elválasztó */
+
+  /* Aktív világ akcent (data-world indirekció) */
+  --color-world:         var(--world);          /* primary button bg, aktív elem */
+  --color-world-fg:      var(--world-fg);       /* szöveg a --world felületen */
+  --color-world-hover:   var(--world-hover);    /* primary button hover bg */
+  --color-world-soft:    var(--world-soft);     /* nav pill / kijelölt fül bg */
+  --color-world-soft-fg: var(--world-soft-fg);  /* nav pill szöveg */
+  --color-world-ring:    var(--world-ring);     /* focus ring */
+}
+
+/* ── Alap (light) ────────────────────────────────────────────────── */
+:root {
+  color-scheme: light;
+  --surface-0:  var(--color-stone-50);
+  --surface-1:  #ffffff;
+  --surface-2:  var(--color-stone-100);
+  --ink:        var(--color-stone-900);
+  --ink-muted:  var(--color-stone-600);   /* NEM stone-500/400 — audit: 4.5:1 alatt */
+  --line:       var(--color-stone-200);
+
+  /* Fallback világ-akcent (brand teal) — világ-scope-on kívül (Home, nem-platform
+     világok) így is feloldódnak a world-* utility-k. */
+  --world:         var(--color-teal-700);  --world-fg: #ffffff;
+  --world-hover:   var(--color-teal-800);
+  --world-soft:    var(--color-teal-100);  --world-soft-fg: var(--color-teal-800);
+  --world-ring:    var(--color-teal-600);
+}
+
+/* ── Dark ────────────────────────────────────────────────────────── */
+.dark {
+  color-scheme: dark;
+  --surface-0:  var(--color-stone-950);
+  --surface-1:  var(--color-stone-900);
+  --surface-2:  var(--color-stone-800);
+  --ink:        var(--color-stone-100);
+  --ink-muted:  var(--color-stone-400);
+  --line:       var(--color-stone-700);
+
+  --world:         var(--color-teal-400);  --world-fg: var(--color-teal-950);
+  --world-hover:   var(--color-teal-300);
+  --world-soft:    var(--color-teal-950);  --world-soft-fg: var(--color-teal-300);
+  --world-ring:    var(--color-teal-400);
+}
+
+/* ── Világ-akcentek (root döntés: CRM=blue, Kontrolling=slate, HR=amber,
+      Maintenance=cyan, QA=lime, EHS=red, DMS=violet) ─────────────── */
+
+/* CRM = blue */
+[data-world="crm"] {
+  --world: var(--color-blue-600);      --world-fg: #ffffff;
+  --world-hover: var(--color-blue-700);
+  --world-soft: var(--color-blue-100); --world-soft-fg: var(--color-blue-800);
+  --world-ring: var(--color-blue-600);
+}
+.dark [data-world="crm"] {
+  --world: var(--color-blue-400);      --world-fg: var(--color-blue-950);
+  --world-hover: var(--color-blue-300);
+  --world-soft: var(--color-blue-950); --world-soft-fg: var(--color-blue-300);
+  --world-ring: var(--color-blue-400);
+}
+
+/* Kontrolling = slate */
+[data-world="kontrolling"] {
+  --world: var(--color-slate-700);      --world-fg: #ffffff;
+  --world-hover: var(--color-slate-800);
+  --world-soft: var(--color-slate-200); --world-soft-fg: var(--color-slate-800);
+  --world-ring: var(--color-slate-600);
+}
+.dark [data-world="kontrolling"] {
+  --world: var(--color-slate-400);      --world-fg: var(--color-slate-950);
+  --world-hover: var(--color-slate-300);
+  --world-soft: var(--color-slate-800); --world-soft-fg: var(--color-slate-200);
+  --world-ring: var(--color-slate-400);
+}
+
+/* HR = amber */
+[data-world="hr"] {
+  --world: var(--color-amber-700);      --world-fg: #ffffff;
+  --world-hover: var(--color-amber-800);
+  --world-soft: var(--color-amber-100); --world-soft-fg: var(--color-amber-800);
+  --world-ring: var(--color-amber-600);
+}
+.dark [data-world="hr"] {
+  --world: var(--color-amber-400);      --world-fg: var(--color-amber-950);
+  --world-hover: var(--color-amber-300);
+  --world-soft: var(--color-amber-950); --world-soft-fg: var(--color-amber-300);
+  --world-ring: var(--color-amber-400);
+}
+
+/* Maintenance = cyan */
+[data-world="maintenance"] {
+  --world: var(--color-cyan-700);      --world-fg: #ffffff;
+  --world-hover: var(--color-cyan-800);
+  --world-soft: var(--color-cyan-100); --world-soft-fg: var(--color-cyan-800);
+  --world-ring: var(--color-cyan-600);
+}
+.dark [data-world="maintenance"] {
+  --world: var(--color-cyan-400);      --world-fg: var(--color-cyan-950);
+  --world-hover: var(--color-cyan-300);
+  --world-soft: var(--color-cyan-950); --world-soft-fg: var(--color-cyan-300);
+  --world-ring: var(--color-cyan-400);
+}
+
+/* QA = lime */
+[data-world="qa"] {
+  --world: var(--color-lime-700);      --world-fg: #ffffff;
+  --world-hover: var(--color-lime-800);
+  --world-soft: var(--color-lime-100); --world-soft-fg: var(--color-lime-800);
+  --world-ring: var(--color-lime-600);
+}
+.dark [data-world="qa"] {
+  --world: var(--color-lime-400);      --world-fg: var(--color-lime-950);
+  --world-hover: var(--color-lime-300);
+  --world-soft: var(--color-lime-950); --world-soft-fg: var(--color-lime-300);
+  --world-ring: var(--color-lime-400);
+}
+
+/* EHS = red */
+[data-world="ehs"] {
+  --world: var(--color-red-600);      --world-fg: #ffffff;
+  --world-hover: var(--color-red-700);
+  --world-soft: var(--color-red-100); --world-soft-fg: var(--color-red-800);
+  --world-ring: var(--color-red-600);
+}
+.dark [data-world="ehs"] {
+  --world: var(--color-red-400);      --world-fg: var(--color-red-950);
+  --world-hover: var(--color-red-300);
+  --world-soft: var(--color-red-950); --world-soft-fg: var(--color-red-300);
+  --world-ring: var(--color-red-400);
+}
+
+/* DMS = violet */
+[data-world="dms"] {
+  --world: var(--color-violet-600);      --world-fg: #ffffff;
+  --world-hover: var(--color-violet-700);
+  --world-soft: var(--color-violet-100); --world-soft-fg: var(--color-violet-800);
+  --world-ring: var(--color-violet-600);
+}
+.dark [data-world="dms"] {
+  --world: var(--color-violet-400);      --world-fg: var(--color-violet-950);
+  --world-hover: var(--color-violet-300);
+  --world-soft: var(--color-violet-950); --world-soft-fg: var(--color-violet-300);
+  --world-ring: var(--color-violet-400);
 }
 
 /* Aspect ratio utilities (if not already provided by Tailwind 4) */

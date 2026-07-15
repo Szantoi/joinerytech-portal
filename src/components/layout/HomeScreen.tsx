@@ -2,6 +2,7 @@ import { Icon, Card } from '../ui'
 import { WorldIcon } from './WorldIcon'
 import { ACCENT_MAP } from './WorldShell'
 import { WORLDS, WORLD_ORDER } from '../../mocks/worlds'
+import { WORLD_DATA_ATTR } from '../../theme/worldAccents'
 import { useAuth } from '../../hooks/useAuth'
 import type { WorldKey } from '../../types'
 
@@ -165,9 +166,11 @@ export function HomeScreen({ onEnter, lang = 'hu' }: HomeScreenProps) {
             const w = WORLDS[key]
             const accent = ACCENT_MAP[w.accent] ?? ACCENT_MAP.teal
             return (
+              // data-world: a kártyán a world-* akcent-tokenek a saját világ színét oldják fel (spec 1.3)
               <button
                 key={key}
                 onClick={() => onEnter(key)}
+                data-world={WORLD_DATA_ATTR[key]}
                 className="group relative overflow-hidden rounded-2xl bg-white border border-stone-200/80 hover:border-stone-300 hover:shadow-[0_8px_24px_-6px_rgba(28,25,23,.12)] transition text-left p-6 min-h-[200px] flex flex-col"
               >
                 <div className={`absolute -right-6 -top-6 w-32 h-32 rounded-full ${accent.tint} opacity-50 group-hover:opacity-90 transition`} />
