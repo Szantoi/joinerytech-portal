@@ -295,6 +295,7 @@ export const WORLDS: Record<string, World> = {
       { key: 'capacity', hu: 'Kapacitás', en: 'Capacity' },
       { key: 'absences', hu: 'Távollét', en: 'Absence' },
       { key: 'skills', hu: 'Készségek', en: 'Skills' },
+      { key: 'timelogs', hu: 'Munkaidő', en: 'Time log' },
     ],
   },
   kontrolling: {

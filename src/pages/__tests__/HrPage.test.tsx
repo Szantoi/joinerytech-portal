@@ -1,6 +1,10 @@
-import { describe, it, expect, vi } from 'vitest'
-import { render, screen, fireEvent } from '@testing-library/react'
+import { describe, it, expect, vi, beforeAll, afterAll, beforeEach, afterEach } from 'vitest'
+import { render, screen, fireEvent, within } from '@testing-library/react'
 import { MemoryRouter, Route, Routes } from 'react-router-dom'
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import { setupServer } from 'msw/node'
+import { ToastProvider } from '../../components/ui'
+import { hrApiHandlers, resetHrDb } from '../../mocks/hrApi'
 import { HrWorldPage } from '../HrPage'
 
 vi.mock('../../auth', () => ({
@@ -10,104 +14,79 @@ vi.mock('../../auth', () => ({
   })),
 }))
 
+const server = setupServer(...hrApiHandlers)
+
+beforeAll(() => server.listen())
+beforeEach(() => resetHrDb())
+afterEach(() => server.resetHandlers())
+afterAll(() => server.close())
+
 function renderHr(path = '') {
   const url = path ? `/w/hr/${path}` : '/w/hr'
+  const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } })
   return render(
-    <MemoryRouter initialEntries={[url]}>
-      <Routes>
-        <Route path="/w/hr" element={<HrWorldPage />} />
-        <Route path="/w/hr/:screen" element={<HrWorldPage />} />
-      </Routes>
-    </MemoryRouter>
+    <QueryClientProvider client={queryClient}>
+      <ToastProvider>
+        <MemoryRouter initialEntries={[url]}>
+          <Routes>
+            <Route path="/w/hr" element={<HrWorldPage />} />
+            <Route path="/w/hr/:screen" element={<HrWorldPage />} />
+          </Routes>
+        </MemoryRouter>
+      </ToastProvider>
+    </QueryClientProvider>
   )
 }
 
-describe('HrPage', () => {
-  it('renders HR dashboard', () => {
+// Teljes-suite párhuzamos terhelés alatt az 5 mp-es alap-timeout kevés lehet
+// (a Kontrolling route-tesztek bevált mintája).
+const ROUTE_TIMEOUT = 20_000
+
+describe('HrPage (route-diszpécser, API-vezérelt képernyők)', () => {
+  it('renders áttekintés with KPI cards from the API', async () => {
     renderHr()
-    expect(screen.getAllByText('HR / Kapacitás').length).toBeGreaterThan(0)
-  })
+    expect(await screen.findByText('Mai jelenlét')).toBeTruthy()
+    expect(screen.getByText('Kapacitás-kihasználtság')).toBeTruthy()
+    expect(screen.getByText('Túlterheltek')).toBeTruthy()
+    expect((await screen.findAllByText(/Nyitott kérelmek/)).length).toBeGreaterThan(0)
+  }, ROUTE_TIMEOUT)
 
-  it('dashboard shows KPI cards', () => {
-    renderHr()
-    expect(screen.getAllByText('Létszám').length).toBeGreaterThan(0)
-    expect(screen.getAllByText('Heti kapacitás').length).toBeGreaterThan(0)
-    expect(screen.getAllByText('Lekötött').length).toBeGreaterThan(0)
-    expect(screen.getAllByText('Kihasználtság').length).toBeGreaterThan(0)
-  })
-
-  it('dashboard shows presence panel', () => {
-    renderHr()
-    expect(screen.getByText('Mai jelenlét')).toBeTruthy()
-  })
-
-  it('dashboard shows open requests panel', () => {
-    renderHr()
-    expect(screen.getAllByText(/Nyitott kérelmek/).length).toBeGreaterThan(0)
-  })
-
-  it('dashboard shows capacity overview', () => {
-    renderHr()
-    expect(screen.getByText('Heti kapacitás — áttekintés')).toBeTruthy()
-  })
-
-  it('dashboard lists employees in overview', () => {
-    renderHr()
-    expect(screen.getAllByText(/Kovács Péter/).length).toBeGreaterThan(0)
-  })
-
-  it('renders people screen', () => {
+  it('renders dolgozók with employee DataTable and dept filter', async () => {
     renderHr('people')
-    expect(screen.getAllByText('Dolgozók').length).toBeGreaterThan(0)
-  })
+    expect((await screen.findAllByText('Nagy János')).length).toBeGreaterThan(0)
+    expect((await screen.findAllByText('Kiss András')).length).toBeGreaterThan(0)
+    expect(screen.getByRole('group', { name: 'Részleg-szűrő' })).toBeTruthy()
+  }, ROUTE_TIMEOUT)
 
-  it('people screen shows employee list', () => {
+  it('clicking an employee opens the profile SlideOver with skills', async () => {
     renderHr('people')
-    expect(screen.getAllByText(/Nagy János/).length).toBeGreaterThan(0)
-    expect(screen.getAllByText(/Kiss András/).length).toBeGreaterThan(0)
-  })
+    fireEvent.click((await screen.findAllByText('Nagy János'))[0])
+    const dialog = await screen.findByRole('dialog')
+    expect(await within(dialog).findByText('Készségek')).toBeTruthy()
+    expect(within(dialog).getByText('Munkaóra-napló')).toBeTruthy()
+  }, ROUTE_TIMEOUT)
 
-  it('people screen has department filter', () => {
-    renderHr('people')
-    expect(screen.getAllByText('Összes').length).toBeGreaterThan(0)
-    expect(screen.getAllByText(/Gyártás/).length).toBeGreaterThan(0)
-  })
-
-  it('people screen has search input', () => {
-    renderHr('people')
-    const inputs = screen.getAllByPlaceholderText(/Keresés/)
-    expect(inputs.length).toBeGreaterThan(0)
-  })
-
-  it('clicking employee opens detail SlideOver', () => {
-    renderHr('people')
-    fireEvent.click(screen.getAllByText(/Nagy János/)[0])
-    expect(screen.getAllByText(/Beépítő vezető/).length).toBeGreaterThan(0)
-  })
-
-  it('employee detail shows skills', () => {
-    renderHr('people')
-    fireEvent.click(screen.getAllByText(/Nagy János/)[0])
-    expect(screen.getAllByText('Készségek').length).toBeGreaterThan(0)
-  })
-
-  it('renders capacity screen', () => {
+  it('renders kapacitás-rács as its own scrollable region', async () => {
     renderHr('capacity')
-    expect(screen.getAllByText('Kapacitás-naptár').length).toBeGreaterThan(0)
-  })
+    const region = await screen.findByRole('region', { name: /Kapacitás-rács/ })
+    expect(region.className).toContain('overflow-x-auto')
+  }, ROUTE_TIMEOUT)
 
-  it('capacity screen shows employee rows', () => {
-    renderHr('capacity')
-    expect(screen.getAllByText(/Nagy János/).length).toBeGreaterThan(0)
-  })
-
-  it('renders absences screen', () => {
+  it('renders távollét with FSM status pills', async () => {
     renderHr('absences')
-    expect(screen.getAllByText('Távollétek').length).toBeGreaterThan(0)
-  })
+    expect((await screen.findAllByText('Balogh Márk')).length).toBeGreaterThan(0)
+    expect((await screen.findAllByText('Kért')).length).toBeGreaterThan(0)
+  }, ROUTE_TIMEOUT)
 
-  it('absences screen shows absence records', () => {
-    renderHr('absences')
-    expect(screen.getAllByText(/Szabadság|Betegszabadság/).length).toBeGreaterThan(0)
-  })
+  it('renders készség-mátrix with coverage row', async () => {
+    renderHr('skills')
+    expect(await screen.findByRole('region', { name: 'Készség-mátrix' })).toBeTruthy()
+    expect(await screen.findByText(/Lefedettség \(10 fő\)/)).toBeTruthy()
+  }, ROUTE_TIMEOUT)
+
+  it('renders munkaidő-napló with push button', async () => {
+    renderHr('timelogs')
+    expect((await screen.findAllByText('Átadásra vár')).length).toBeGreaterThan(0)
+    expect(screen.getByRole('button', { name: /Átadás a Kontrollingnak/ })).toBeTruthy()
+  }, ROUTE_TIMEOUT)
 })
