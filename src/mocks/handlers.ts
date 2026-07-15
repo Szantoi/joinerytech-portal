@@ -9,6 +9,7 @@ import { controllingApiHandlers } from './controllingApi'
 import { hrApiHandlers } from './hrApi'
 import { maintenanceApiHandlers } from './maintenanceApi'
 import { qaApiHandlers } from './qaApi'
+import { dmsApiHandlers } from './dmsApi'
 
 export const handlers = [
   // EHS modul-API (openapi-tükör, állapottartó store + FSM guardok) — ld. ./ehsApi
@@ -28,6 +29,9 @@ export const handlers = [
 
   // QA modul-API (MSW-first kontraktus, átvizsgálás + hibajegy FSM guardok, számított blocking/openTickets) — ld. ./qaApi
   ...qaApiHandlers,
+
+  // DMS modul-API (MSW-first kontraktus, dokumentum-FSM + verzió-lánc, számított releasedVersion/expiry) — ld. ./dmsApi
+  ...dmsApiHandlers,
 
   // POST /api/products/configure
   http.post('/api/products/configure', async ({ request }) => {

@@ -243,11 +243,12 @@ export const WORLDS: Record<string, World> = {
   },
   docs: {
     key: "docs", hu: "Dokumentumtár", en: "Docs",
-    sub: "Verziózott dokumentumok, rajzok, szerződések",
+    sub: "Verziózott dokumentumok, jóváhagyás-folyam, lejárat-figyelés",
     icon: "file", accent: "violet",
     screens: [
       { key: "dash", hu: "Áttekintés" },
-      { key: "files", hu: "Dokumentumok" },
+      { key: "library", hu: "Könyvtár" },
+      { key: "expiring", hu: "Lejáró / felülvizsgálat" },
     ],
     badge: "2 ellenőrzés",
   },
