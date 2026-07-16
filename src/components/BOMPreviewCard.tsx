@@ -57,8 +57,8 @@ export function BOMPreviewCard({ configId, bomItems, estimatedPrice }: BOMPrevie
                 <td className="py-2 px-3">{item.name}</td>
                 <td className="py-2 px-3 text-right">{item.quantity}</td>
                 <td className="py-2 px-3">{item.unit}</td>
-                <td className="py-2 px-3 text-right">{item.unitPrice.toLocaleString()} Ft</td>
-                <td className="py-2 px-3 text-right font-semibold">{item.totalPrice.toLocaleString()} Ft</td>
+                <td className="py-2 px-3 text-right">{item.unitPrice.toLocaleString('hu-HU')} Ft</td>
+                <td className="py-2 px-3 text-right font-semibold">{item.totalPrice.toLocaleString('hu-HU')} Ft</td>
               </tr>
             ))}
           </tbody>
@@ -69,15 +69,15 @@ export function BOMPreviewCard({ configId, bomItems, estimatedPrice }: BOMPrevie
       <div className="border-t-2 border-gray-300 pt-4 space-y-2">
         <div className="flex justify-between text-sm">
           <span className="text-gray-600">Total Material Cost:</span>
-          <span className="font-semibold">{totalMaterialCost.toLocaleString()} Ft</span>
+          <span className="font-semibold">{totalMaterialCost.toLocaleString('hu-HU')} Ft</span>
         </div>
         <div className="flex justify-between text-sm">
           <span className="text-gray-600">Estimated Labor:</span>
-          <span className="font-semibold">{estimatedLabor.toLocaleString()} Ft</span>
+          <span className="font-semibold">{estimatedLabor.toLocaleString('hu-HU')} Ft</span>
         </div>
         <div className="flex justify-between text-lg border-t border-gray-200 pt-2">
           <span className="font-bold">Total Estimated Price:</span>
-          <span className="font-bold text-blue-600">{estimatedPrice.toLocaleString()} Ft</span>
+          <span className="font-bold text-blue-600">{estimatedPrice.toLocaleString('hu-HU')} Ft</span>
         </div>
       </div>
 

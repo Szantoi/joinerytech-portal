@@ -14,25 +14,9 @@ import { useCatalogFilterStore } from '../stores/catalogFilterStore'
  * - Versioned storage (v2)
  */
 
-// Mock BroadcastChannel
-class MockBroadcastChannel {
-  name: string
-  onmessage: ((event: MessageEvent) => void) | null = null
-
-  constructor(name: string) {
-    this.name = name
-  }
-
-  postMessage(data: any) {
-    // Mock implementation - just store the message
-  }
-
-  close() {
-    // Mock cleanup
-  }
-}
-
-(globalThis as any).BroadcastChannel = MockBroadcastChannel
+// NOTE: the store creates its BroadcastChannel instance at module import time,
+// which runs BEFORE this file's body (ESM import hoisting). A mock class assigned
+// here would therefore never be picked up — spy on the real (jsdom) prototype instead.
 
 describe('Catalog Filter Persistence - Feature 2', () => {
   beforeEach(() => {
@@ -120,9 +104,10 @@ describe('Catalog Filter Persistence - Feature 2', () => {
     // Not saved yet (only 200ms passed)
     expect(localStorage.getItem('spaceos_catalog_v2')).toBeNull()
 
-    // Advance final 100ms (total 300ms from last change)
+    // Each change restarts the debounce window, so the save fires
+    // 300ms after the LAST change — advance the full 300ms
     act(() => {
-      vi.advanceTimersByTime(100)
+      vi.advanceTimersByTime(300)
     })
 
     // Now saved with latest value
@@ -191,13 +176,21 @@ describe('Catalog Filter Persistence - Feature 2', () => {
   it('✅ sessionStorage fallback: falls back when localStorage quota exceeded', async () => {
     vi.useFakeTimers()
 
-    // Mock localStorage.setItem to throw QuotaExceededError
-    const originalSetItem = localStorage.setItem
-    localStorage.setItem = vi.fn(() => {
-      const error = new Error('QuotaExceededError')
-      error.name = 'QuotaExceededError'
-      throw error
-    })
+    // Mock setItem to throw QuotaExceededError for localStorage only.
+    // NOTE: jsdom's Storage is a proxy — direct property assignment
+    // (localStorage.setItem = ...) would store an ITEM named "setItem"
+    // instead of overriding the method, so spy on Storage.prototype.
+    const originalSetItem = Storage.prototype.setItem
+    const setItemSpy = vi
+      .spyOn(Storage.prototype, 'setItem')
+      .mockImplementation(function (this: Storage, key: string, value: string) {
+        if (this === window.localStorage) {
+          const error = new Error('QuotaExceededError')
+          error.name = 'QuotaExceededError'
+          throw error
+        }
+        return originalSetItem.call(this, key, value)
+      })
 
     const consoleSpy = vi.spyOn(console, 'warn').mockImplementation(() => {})
 
@@ -226,7 +219,7 @@ describe('Catalog Filter Persistence - Feature 2', () => {
     )
 
     // Restore
-    localStorage.setItem = originalSetItem
+    setItemSpy.mockRestore()
     consoleSpy.mockRestore()
     vi.useRealTimers()
   })
@@ -289,9 +282,11 @@ describe('Catalog Filter Persistence - Feature 2', () => {
       result.current.clearFilters()
     })
 
-    // Re-populate and load
+    // clearFilters removes storage, so loadFilters has nothing to return...
     const loaded = result.current.loadFilters()
-    expect(loaded?.viewMode).toBe('grid') // Default after clear
+    expect(loaded).toBeNull()
+    // ...and the store itself is back on the default view mode
+    expect(result.current.viewMode).toBe('grid')
 
     vi.useRealTimers()
   })
@@ -337,7 +332,7 @@ describe('Catalog Filter Persistence - Feature 2', () => {
   it('✅ BroadcastChannel: broadcasts filter updates', async () => {
     vi.useFakeTimers()
 
-    const bcSpy = vi.spyOn(MockBroadcastChannel.prototype, 'postMessage')
+    const bcSpy = vi.spyOn(BroadcastChannel.prototype, 'postMessage')
 
     const { result } = renderHook(() => useCatalogFilterStore())
 

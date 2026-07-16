@@ -1,5 +1,4 @@
 import { create } from 'zustand'
-import { persist } from 'zustand/middleware'
 
 /**
  * Catalog Filter State
@@ -46,6 +45,41 @@ const STORAGE_KEY = `spaceos_catalog_v${FILTER_VERSION}`
 const bc = typeof window !== 'undefined' ? new BroadcastChannel('spaceos_filters') : null
 
 /**
+ * Read persisted filters from storage (localStorage → sessionStorage fallback),
+ * enforcing the 24h expiry. Returns null when nothing valid is stored.
+ */
+function readPersistedFilters(): { filters: CatalogFilters; viewMode: 'grid' | 'list' } | null {
+  if (typeof window === 'undefined') return null
+
+  // Try localStorage first, fallback to sessionStorage
+  const stored = localStorage.getItem(STORAGE_KEY) ?? sessionStorage.getItem(STORAGE_KEY)
+  if (!stored) return null
+
+  try {
+    const { filters, viewMode, timestamp } = JSON.parse(stored)
+
+    // Expiry check: 24 hours
+    if (!filters || Date.now() - timestamp > EXPIRY_TIME) {
+      localStorage.removeItem(STORAGE_KEY)
+      sessionStorage.removeItem(STORAGE_KEY)
+      return null
+    }
+
+    return { filters, viewMode: viewMode || 'grid' }
+  } catch (e) {
+    console.error('[CatalogStore] Failed to load filters:', e)
+    return null
+  }
+}
+
+// Rehydrate once at store creation so filters survive a page reload.
+// (Persistence itself is handled manually via the debounced save below —
+// the zustand persist middleware is intentionally NOT used, because its
+// immediate, differently-shaped writes to the same key would defeat the
+// 300ms debounce and the {filters, viewMode, timestamp, version} format.)
+const rehydrated = readPersistedFilters()
+
+/**
  * Catalog Filter Store
  * - Persists filters to localStorage with sessionStorage fallback
  * - Multi-tab sync via BroadcastChannel
@@ -53,161 +87,123 @@ const bc = typeof window !== 'undefined' ? new BroadcastChannel('spaceos_filters
  * - 24h expiry
  * - XSS protection: strips HTML tags from search input
  */
-export const useCatalogFilterStore = create<CatalogFilterStore>()(
-  persist(
-    (set, get) => ({
-      catalogFilters: initialFilters,
-      viewMode: 'grid',
-      saveTimeout: null,
+export const useCatalogFilterStore = create<CatalogFilterStore>()((set, get) => ({
+  catalogFilters: rehydrated?.filters ?? initialFilters,
+  viewMode: rehydrated?.viewMode ?? 'grid',
+  saveTimeout: null,
 
-      /**
-       * Set a specific filter value
-       * SECURITY: Strips HTML tags from search input (XSS protection)
-       */
-      setFilter: (key, value) => {
-        set((state) => {
-          let sanitizedValue = value
+  /**
+   * Set a specific filter value
+   * SECURITY: Strips HTML tags from search input (XSS protection)
+   */
+  setFilter: (key, value) => {
+    set((state) => {
+      let sanitizedValue = value
 
-          // ✅ XSS Fix: Strip HTML tags from search input
-          if (key === 'search' && typeof value === 'string') {
-            sanitizedValue = value.replace(/<[^>]*>/g, '') as typeof value
-          }
+      // ✅ XSS Fix: Strip HTML tags from search input
+      if (key === 'search' && typeof value === 'string') {
+        sanitizedValue = value.replace(/<[^>]*>/g, '') as typeof value
+      }
 
-          const updatedFilters = {
-            ...state.catalogFilters,
-            [key]: sanitizedValue,
-          }
+      const updatedFilters = {
+        ...state.catalogFilters,
+        [key]: sanitizedValue,
+      }
 
-          return { catalogFilters: updatedFilters }
-        })
+      return { catalogFilters: updatedFilters }
+    })
 
-        // Trigger debounced save
-        get().setFilters(get().catalogFilters)
-      },
+    // Trigger debounced save
+    get().setFilters(get().catalogFilters)
+  },
 
-      /**
-       * Set all filters at once (with debounced save)
-       */
-      setFilters: (filters) => {
-        set({ catalogFilters: filters })
+  /**
+   * Set all filters at once (with debounced save)
+   */
+  setFilters: (filters) => {
+    set({ catalogFilters: filters })
 
-        // Clear previous timeout
-        const { saveTimeout } = get()
-        if (saveTimeout) clearTimeout(saveTimeout)
+    // Clear previous timeout
+    const { saveTimeout } = get()
+    if (saveTimeout) clearTimeout(saveTimeout)
 
-        // Debounce: save after 300ms
-        const timeout = setTimeout(() => {
-          try {
-            const data = {
-              filters,
-              viewMode: get().viewMode,
-              timestamp: Date.now(),
-              version: FILTER_VERSION
-            }
-            const jsonStr = JSON.stringify(data)
+    // Debounce: save after 300ms
+    const timeout = setTimeout(() => {
+      try {
+        const data = {
+          filters,
+          viewMode: get().viewMode,
+          timestamp: Date.now(),
+          version: FILTER_VERSION
+        }
+        const jsonStr = JSON.stringify(data)
 
-            // Plan-B: Compression check
-            if (jsonStr.length > 50000) {
-              // Use sessionStorage if too large
-              sessionStorage.setItem(STORAGE_KEY, jsonStr)
-              console.warn('[CatalogStore] localStorage quota near limit, using sessionStorage')
-            } else {
-              localStorage.setItem(STORAGE_KEY, jsonStr)
-            }
-
-            // Multi-tab sync: notify other tabs
-            if (bc) {
-              bc.postMessage({
-                type: 'FILTER_UPDATE',
-                filters,
-                viewMode: get().viewMode,
-                timestamp: Date.now()
-              })
-            }
-          } catch (e) {
-            if (e instanceof Error && e.name === 'QuotaExceededError') {
-              // Fallback to sessionStorage
-              const data = { filters, viewMode: get().viewMode, timestamp: Date.now(), version: FILTER_VERSION }
-              sessionStorage.setItem(STORAGE_KEY, JSON.stringify(data))
-              console.warn('[CatalogStore] localStorage quota exceeded, fallback to sessionStorage')
-            }
-          }
-        }, 300)
-
-        set({ saveTimeout: timeout })
-      },
-
-      /**
-       * Set view mode (grid/list) and save immediately
-       */
-      setViewMode: (viewMode) => {
-        set({ viewMode })
-        // Trigger immediate save
-        get().setFilters(get().catalogFilters)
-      },
-
-      /**
-       * Load filters from storage (with expiry check)
-       */
-      loadFilters: () => {
-        // Try localStorage first
-        let stored = localStorage.getItem(STORAGE_KEY)
-
-        // Fallback to sessionStorage
-        if (!stored) {
-          stored = sessionStorage.getItem(STORAGE_KEY)
+        // Plan-B: Compression check
+        if (jsonStr.length > 50000) {
+          // Use sessionStorage if too large
+          sessionStorage.setItem(STORAGE_KEY, jsonStr)
+          console.warn('[CatalogStore] localStorage quota near limit, using sessionStorage')
+        } else {
+          localStorage.setItem(STORAGE_KEY, jsonStr)
         }
 
-        if (!stored) return null
-
-        try {
-          const { filters, viewMode, timestamp } = JSON.parse(stored)
-
-          // Expiry check: 24 hours
-          if (Date.now() - timestamp > EXPIRY_TIME) {
-            localStorage.removeItem(STORAGE_KEY)
-            sessionStorage.removeItem(STORAGE_KEY)
-            return null
-          }
-
-          return { filters, viewMode: viewMode || 'grid' }
-        } catch (e) {
-          console.error('[CatalogStore] Failed to load filters:', e)
-          return null
+        // Multi-tab sync: notify other tabs
+        if (bc) {
+          bc.postMessage({
+            type: 'FILTER_UPDATE',
+            filters,
+            viewMode: get().viewMode,
+            timestamp: Date.now()
+          })
         }
-      },
-
-      /**
-       * Clear all filters and storage
-       */
-      clearFilters: () => {
-        set({ catalogFilters: initialFilters, viewMode: 'grid' })
-        localStorage.removeItem(STORAGE_KEY)
-        sessionStorage.removeItem(STORAGE_KEY)
-      },
-
-      /**
-       * Reset all filters to initial state
-       */
-      resetFilters: () => {
-        set({ catalogFilters: initialFilters })
-
-        // Clear URL params
-        if (typeof window !== 'undefined') {
-          window.history.pushState({}, '', window.location.pathname)
+      } catch (e) {
+        if (e instanceof Error && e.name === 'QuotaExceededError') {
+          // Fallback to sessionStorage
+          const data = { filters, viewMode: get().viewMode, timestamp: Date.now(), version: FILTER_VERSION }
+          sessionStorage.setItem(STORAGE_KEY, JSON.stringify(data))
+          console.warn('[CatalogStore] localStorage quota exceeded, fallback to sessionStorage')
         }
-      },
-    }),
-    {
-      name: STORAGE_KEY,
-      version: FILTER_VERSION,
-      partialize: (state) => ({
-        catalogFilters: state.catalogFilters,
-        viewMode: state.viewMode
-      })
+      }
+    }, 300)
+
+    set({ saveTimeout: timeout })
+  },
+
+  /**
+   * Set view mode (grid/list) and save immediately
+   */
+  setViewMode: (viewMode) => {
+    set({ viewMode })
+    // Trigger immediate save
+    get().setFilters(get().catalogFilters)
+  },
+
+  /**
+   * Load filters from storage (with expiry check)
+   */
+  loadFilters: () => readPersistedFilters(),
+
+  /**
+   * Clear all filters and storage
+   */
+  clearFilters: () => {
+    set({ catalogFilters: initialFilters, viewMode: 'grid' })
+    localStorage.removeItem(STORAGE_KEY)
+    sessionStorage.removeItem(STORAGE_KEY)
+  },
+
+  /**
+   * Reset all filters to initial state
+   */
+  resetFilters: () => {
+    set({ catalogFilters: initialFilters })
+
+    // Clear URL params
+    if (typeof window !== 'undefined') {
+      window.history.pushState({}, '', window.location.pathname)
     }
-  )
-)
+  },
+}))
 
 // Listen to BroadcastChannel from other tabs
 if (bc) {

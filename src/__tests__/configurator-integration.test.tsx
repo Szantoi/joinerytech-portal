@@ -175,9 +175,9 @@ describe('Configurator Integration Flow with MSW', () => {
 
     // Verify work order details from mock
     expect(screen.getByText('wo_2026_042')).toBeInTheDocument()
-    expect(screen.getByText(/31,500/)).toBeInTheDocument()
-    expect(screen.getByText(/18,000/)).toBeInTheDocument()
-    expect(screen.getByText(/49,500/)).toBeInTheDocument()
+    expect(screen.getByText(/31 500/)).toBeInTheDocument()
+    expect(screen.getByText(/18 000/)).toBeInTheDocument()
+    expect(screen.getByText(/49 500/)).toBeInTheDocument()
     expect(screen.getByText('2026-07-08')).toBeInTheDocument()
     expect(screen.getByText('2026-07-14')).toBeInTheDocument()
   })

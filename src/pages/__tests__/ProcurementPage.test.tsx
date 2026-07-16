@@ -1,31 +1,41 @@
 import { describe, it, expect } from 'vitest'
 import { render, screen } from '@testing-library/react'
+import { MemoryRouter } from 'react-router-dom'
 import { ProcurementPage } from '../ProcurementPage'
+
+// ProcurementPage uses useSearchParams (RFQ filters), so it needs a Router context
+function renderPage() {
+  return render(
+    <MemoryRouter>
+      <ProcurementPage />
+    </MemoryRouter>
+  )
+}
 
 describe('ProcurementPage', () => {
   it('renders suppliers section', () => {
-    render(<ProcurementPage />)
-    expect(screen.getByText('Sz\u00e1ll\u00edt\u00f3k')).toBeTruthy()
+    renderPage()
+    expect(screen.getByText('Szállítók')).toBeTruthy()
   })
 
   it('renders active POs', () => {
-    render(<ProcurementPage />)
-    expect(screen.getByText('Akt\u00edv megrendel\u00e9sek')).toBeTruthy()
+    renderPage()
+    expect(screen.getByText('Aktív megrendelések')).toBeTruthy()
   })
 
   it('renders new PO button', () => {
-    render(<ProcurementPage />)
-    expect(screen.getByText('\u00daj megrendel\u00e9s')).toBeTruthy()
+    renderPage()
+    expect(screen.getByText('Új megrendelés')).toBeTruthy()
   })
 
   it('renders PO table headers', () => {
-    render(<ProcurementPage />)
-    expect(screen.getByText('Sz\u00e1ll\u00edt\u00f3')).toBeTruthy()
-    expect(screen.getByText('\u00d6sszeg')).toBeTruthy()
+    renderPage()
+    expect(screen.getByText('Szállító')).toBeTruthy()
+    expect(screen.getByText('Összeg')).toBeTruthy()
   })
 
   it('renders empty state when no API data', () => {
-    render(<ProcurementPage />)
+    renderPage()
     // Without API token, suppliers list is empty
     expect(screen.getByText('Szállítók')).toBeTruthy()
   })

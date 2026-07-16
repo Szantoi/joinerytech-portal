@@ -99,14 +99,14 @@ describe('BOMPreviewCard', () => {
 
     // Total material cost = 8500 + 10400 + 3600 = 22500
     expect(screen.getByText('Total Material Cost:')).toBeInTheDocument()
-    const materialCostValues = screen.getAllByText(/22,500/)
+    const materialCostValues = screen.getAllByText(/22 500/)
     expect(materialCostValues.length).toBeGreaterThan(0)
 
     // Estimated labor = 45000 - 22500 = 22500
     expect(screen.getByText('Estimated Labor:')).toBeInTheDocument()
 
     // Total price
-    expect(screen.getByText(/45,000/)).toBeInTheDocument()
+    expect(screen.getByText(/45 000/)).toBeInTheDocument()
   })
 
   it('displays quantities and units correctly', () => {
@@ -141,14 +141,15 @@ describe('BOMPreviewCard', () => {
       </BrowserRouter>
     )
 
-    // Check formatted prices (Hungarian locale uses space as thousands separator)
-    const price8500 = screen.getAllByText(/8,500/)
+    // Check formatted prices (Hungarian locale uses space as thousands separator,
+    // but only from 5 digits: CLDR hu minimumGroupingDigits = 2)
+    const price8500 = screen.getAllByText(/8500/)
     expect(price8500.length).toBeGreaterThan(0)
 
-    const price10400 = screen.getAllByText(/10,400/)
+    const price10400 = screen.getAllByText(/10 400/)
     expect(price10400.length).toBeGreaterThan(0)
 
-    const price3600 = screen.getAllByText(/3,600/)
+    const price3600 = screen.getAllByText(/3600/)
     expect(price3600.length).toBeGreaterThan(0)
   })
 

@@ -41,6 +41,17 @@ const mockBOMItems: BOMItem[] = [
   }
 ]
 
+/**
+ * Hungarian-locale price string as Testing Library sees it:
+ * the DOM text normalizer collapses NBSP/narrow-NBSP group separators
+ * into plain spaces, so expectations must use plain spaces too.
+ */
+const NBSP_RE = new RegExp('[' + String.fromCharCode(0xa0, 0x202f) + ']', 'g')
+
+function huPrice(value: number): string {
+  return value.toLocaleString('hu-HU').replace(NBSP_RE, ' ')
+}
+
 function renderWithRouter(ui: React.ReactElement) {
   return render(
     <MemoryRouter>
@@ -87,7 +98,7 @@ describe('BOMPreviewCard', () => {
 
     expect(screen.getByText('Total Material Cost:')).toBeTruthy()
     const totalMaterialCost = mockBOMItems.reduce((sum, item) => sum + item.totalPrice, 0)
-    const costElements = screen.getAllByText(new RegExp(totalMaterialCost.toLocaleString()))
+    const costElements = screen.getAllByText(new RegExp(huPrice(totalMaterialCost)))
     expect(costElements.length).toBeGreaterThan(0)
   })
 
@@ -103,7 +114,7 @@ describe('BOMPreviewCard', () => {
     expect(screen.getByText('Estimated Labor:')).toBeTruthy()
     const totalMaterialCost = mockBOMItems.reduce((sum, item) => sum + item.totalPrice, 0)
     const estimatedLabor = 45000 - totalMaterialCost
-    const laborElements = screen.getAllByText(new RegExp(estimatedLabor.toLocaleString()))
+    const laborElements = screen.getAllByText(new RegExp(huPrice(estimatedLabor)))
     expect(laborElements.length).toBeGreaterThan(0)
   })
 
@@ -116,7 +127,7 @@ describe('BOMPreviewCard', () => {
       />
     )
 
-    expect(screen.getByText('45,000 Ft')).toBeTruthy()
+    expect(screen.getByText(`${huPrice(45000)} Ft`)).toBeTruthy()
   })
 
   it('has Download PDF button', () => {

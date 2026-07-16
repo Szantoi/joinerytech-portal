@@ -1,9 +1,10 @@
 import { useState } from 'react'
+import { ZodError } from 'zod'
 import { useNavigate } from 'react-router-dom'
 import { useMutation } from '@tanstack/react-query'
 import { useConfiguratorStore } from '../stores/configuratorStore'
 import { ConfigStateSchema } from '../types/configurator.types'
-import type { ConfigureResponse } from '../types/configurator.types'
+import type { ConfigStateForm, ConfigureResponse } from '../types/configurator.types'
 import { mockTemplates, mockMaterialOptions, mockFittingOptions } from '../mocks/configuratorMocks'
 
 export function ProductConfiguratorWizard() {
@@ -12,7 +13,7 @@ export function ProductConfiguratorWizard() {
   const [errors, setErrors] = useState<Record<string, string>>({})
 
   const { mutate: submitConfig, isPending } = useMutation({
-    mutationFn: async (data: any) => {
+    mutationFn: async (data: ConfigStateForm) => {
       const response = await fetch('/api/products/configure', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -39,10 +40,13 @@ export function ProductConfiguratorWizard() {
     if (step === 2) {
       try {
         ConfigStateSchema.shape.dimensions.parse(config.dimensions)
-      } catch (error: any) {
-        error.errors?.forEach((err: any) => {
-          newErrors[err.path[0]] = err.message
-        })
+      } catch (error) {
+        // zod v4: validation issues live on `issues` (the old `errors` alias was removed)
+        if (error instanceof ZodError) {
+          error.issues.forEach((err) => {
+            newErrors[String(err.path[0])] = err.message
+          })
+        }
       }
     }
 
@@ -69,7 +73,8 @@ export function ProductConfiguratorWizard() {
       } else {
         // Final submit
         submitConfig({
-          productType: config.productType,
+          // validateStep(1) guarantees a selected product type by this point
+          productType: config.productType ?? '',
           dimensions: config.dimensions,
           materials: config.materials,
           fittings: config.fittings

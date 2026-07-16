@@ -90,7 +90,7 @@ export function WorkOrderSummary() {
               </div>
               <div>
                 <span className="text-gray-600">Estimated Price:</span>
-                <span className="ml-2 font-medium">{configPreview.estimatedPrice.toLocaleString()} Ft</span>
+                <span className="ml-2 font-medium">{configPreview.estimatedPrice.toLocaleString('hu-HU')} Ft</span>
               </div>
             </div>
           </div>
@@ -193,7 +193,7 @@ export function WorkOrderSummary() {
                       <td className="py-2 px-3">{item.name}</td>
                       <td className="py-2 px-3 text-right">{item.quantity}</td>
                       <td className="py-2 px-3">{item.unit}</td>
-                      <td className="py-2 px-3 text-right">{item.totalPrice.toLocaleString()} Ft</td>
+                      <td className="py-2 px-3 text-right">{item.totalPrice.toLocaleString('hu-HU')} Ft</td>
                       <td className="py-2 px-3 text-sm text-gray-600">{item.supplier || '-'}</td>
                       <td className="py-2 px-3 text-center">
                         {item.inStock !== undefined && (
@@ -216,15 +216,15 @@ export function WorkOrderSummary() {
             <div className="border-t-2 border-gray-300 pt-4 space-y-2 mb-6">
               <div className="flex justify-between">
                 <span className="text-gray-600">Total Material Cost:</span>
-                <span className="font-semibold">{workOrderResult.totalMaterialCost.toLocaleString()} Ft</span>
+                <span className="font-semibold">{workOrderResult.totalMaterialCost.toLocaleString('hu-HU')} Ft</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-gray-600">Estimated Labor:</span>
-                <span className="font-semibold">{workOrderResult.estimatedLabor.toLocaleString()} Ft</span>
+                <span className="font-semibold">{workOrderResult.estimatedLabor.toLocaleString('hu-HU')} Ft</span>
               </div>
               <div className="flex justify-between text-lg border-t border-gray-200 pt-2">
                 <span className="font-bold">Total Cost:</span>
-                <span className="font-bold text-blue-600">{workOrderResult.totalCost.toLocaleString()} Ft</span>
+                <span className="font-bold text-blue-600">{workOrderResult.totalCost.toLocaleString('hu-HU')} Ft</span>
               </div>
             </div>
 

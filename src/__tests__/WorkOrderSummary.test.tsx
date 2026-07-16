@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { render, screen, fireEvent, waitFor } from '@testing-library/react'
+import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { BrowserRouter, Route, Routes } from 'react-router-dom'
@@ -185,9 +185,9 @@ describe('WorkOrderSummary', () => {
     })
 
     expect(screen.getByText('wo_2026_042')).toBeInTheDocument()
-    expect(screen.getByText(/31,500/)).toBeInTheDocument() // totalMaterialCost
-    expect(screen.getByText(/18,000/)).toBeInTheDocument() // estimatedLabor
-    expect(screen.getByText(/49,500/)).toBeInTheDocument() // totalCost
+    expect(screen.getByText(/31 500/)).toBeInTheDocument() // totalMaterialCost
+    expect(screen.getByText(/18 000/)).toBeInTheDocument() // estimatedLabor
+    expect(screen.getByText(/49 500/)).toBeInTheDocument() // totalCost
   })
 
   it('displays BOM items table with supplier and stock info', async () => {

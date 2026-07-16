@@ -1,10 +1,16 @@
 import { describe, it, expect } from 'vitest'
-import { render, screen } from '@testing-library/react'
+import { configure, render, screen } from '@testing-library/react'
 import { MemoryRouter } from 'react-router-dom'
 import { App } from '../App'
 
 // The route pages are lazy chunks (React.lazy + Suspense) since F1-C, so every
 // assertion awaits the chunk resolution via findBy*/findAllBy* queries.
+//
+// The default 1s findBy timeout is not enough for the bigger chunks (ProcurementPage
+// pulls in the whole catalog panel) when the suite runs its files in parallel forks
+// on a loaded machine — the Suspense fallback is still up at 1s and the query fails.
+// The wait is chunk-import latency, not product behaviour, so give it real headroom.
+configure({ asyncUtilTimeout: 5000 })
 
 function renderApp(path: string) {
   return render(
