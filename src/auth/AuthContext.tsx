@@ -65,7 +65,37 @@ const AuthContext = createContext<AuthContextValue | null>(null)
 
 export const userManager = new UserManager(authConfig)
 
+// Dev-bypass: VITE_AUTH_MODE=mock esetén Keycloak nélkül, mock userrel fut
+// (pl. amíg a localhost redirect URI nincs felvéve a Keycloak kliensbe).
+// Az import.meta.env.DEV guard miatt production buildben soha nem aktív.
+const AUTH_MOCK = import.meta.env.DEV && import.meta.env.VITE_AUTH_MODE === 'mock'
+
+const mockAuthValue: AuthContextValue = {
+  user: {
+    profile: { name: 'Dev Felhasználó', preferred_username: 'dev' },
+    access_token: 'mock-token',
+    expired: false,
+  } as unknown as User,
+  isAuthenticated: true,
+  isLoading: false,
+  login: async () => {},
+  logout: async () => {},
+  token: 'mock-token',
+  tenantId: 'mock-tenant',
+  roles: ['Admin'],
+  enabledModules: ['crm', 'kontrolling', 'hr', 'maintenance', 'qa', 'ehs', 'dms'],
+  facilityId: 'mock-facility',
+  facilityName: 'Vác főüzem (mock)',
+}
+
 export function AuthProvider({ children }: { children: React.ReactNode }) {
+  if (AUTH_MOCK) {
+    return <AuthContext.Provider value={mockAuthValue}>{children}</AuthContext.Provider>
+  }
+  return <OidcAuthProvider>{children}</OidcAuthProvider>
+}
+
+function OidcAuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [facilityId, setFacilityId] = useState<string | null>(null)
