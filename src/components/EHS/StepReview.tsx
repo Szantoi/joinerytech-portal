@@ -1,5 +1,5 @@
 import { useIncidentDraftStore } from '../../stores/incidentDraftStore';
-import { useEhsLocations } from '../../services/ehs';
+import { useEhsLocations } from '../../modules/ehs';
 
 const INCIDENT_TYPE_LABELS: Record<string, string> = {
   'near-miss': 'Near Miss',

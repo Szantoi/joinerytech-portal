@@ -1,11 +1,13 @@
 import { useNavigate, useParams } from 'react-router-dom'
 import { WorldShell } from '../components/layout/WorldShell'
-import { CrmDashboard } from './crm/CrmDashboard'
-import { PipelineScreen } from './crm/PipelineScreen'
-import { LeadsScreen } from './crm/LeadsScreen'
-import { OppsScreen } from './crm/OppsScreen'
-import { TasksScreen } from './crm/TasksScreen'
-import { ForecastScreen } from './crm/ForecastScreen'
+import {
+  CrmDashboard,
+  PipelineScreen,
+  LeadsScreen,
+  OppsScreen,
+  TasksScreen,
+  ForecastScreen,
+} from '../modules/crm'
 
 /**
  * CRM világ-oldal — vékony képernyő-diszpécser (a képernyők a ./crm/ alatt

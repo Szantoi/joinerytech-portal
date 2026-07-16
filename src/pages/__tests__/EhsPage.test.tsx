@@ -4,7 +4,7 @@ import { MemoryRouter, Route, Routes } from 'react-router-dom'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { setupServer } from 'msw/node'
 import { ToastProvider } from '../../components/ui'
-import { ehsApiHandlers, resetEhsDb } from '../../mocks/ehsApi'
+import { ehsApiHandlers, resetEhsDb } from '../../modules/ehs/mocks'
 import { EhsWorldPage } from '../EhsPage'
 
 vi.mock('../../auth', () => ({

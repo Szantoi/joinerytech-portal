@@ -3,13 +3,13 @@ import {
   mockConfigureResponse,
   mockWorkOrderResponse
 } from './configuratorMocks'
-import { ehsApiHandlers } from './ehsApi'
-import { crmApiHandlers } from './crmApi'
-import { controllingApiHandlers } from './controllingApi'
-import { hrApiHandlers } from './hrApi'
-import { maintenanceApiHandlers } from './maintenanceApi'
-import { qaApiHandlers } from './qaApi'
-import { dmsApiHandlers } from './dmsApi'
+import { ehsApiHandlers } from '../modules/ehs/mocks'
+import { crmApiHandlers } from '../modules/crm/mocks'
+import { controllingApiHandlers } from '../modules/controlling/mocks'
+import { hrApiHandlers } from '../modules/hr/mocks'
+import { maintenanceApiHandlers } from '../modules/maintenance/mocks'
+import { qaApiHandlers } from '../modules/qa/mocks'
+import { dmsApiHandlers } from '../modules/dms/mocks'
 
 export const handlers = [
   // EHS modul-API (openapi-tükör, állapottartó store + FSM guardok) — ld. ./ehsApi

@@ -6,7 +6,7 @@ import { setupServer } from 'msw/node';
 import { IncidentReportWizard } from '../IncidentReportWizard';
 import { useIncidentDraftStore } from '../../../stores/incidentDraftStore';
 import { ToastProvider } from '../../ui';
-import { ehsApiHandlers, resetEhsDb } from '../../../mocks/ehsApi';
+import { ehsApiHandlers, resetEhsDb } from '../../../modules/ehs/mocks';
 
 // A StepDetails a locations API-ból tölt (MSW) — provider + szerver kell a teszthez
 const server = setupServer(...ehsApiHandlers);

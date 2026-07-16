@@ -1,11 +1,13 @@
 import { useNavigate, useParams } from 'react-router-dom'
 import { WorldShell } from '../components/layout/WorldShell'
-import { HrDashboard } from './hr/HrDashboard'
-import { PeopleScreen } from './hr/PeopleScreen'
-import { CapacityScreen } from './hr/CapacityScreen'
-import { AbsencesScreen } from './hr/AbsencesScreen'
-import { SkillsScreen } from './hr/SkillsScreen'
-import { TimeLogsScreen } from './hr/TimeLogsScreen'
+import {
+  HrDashboard,
+  PeopleScreen,
+  CapacityScreen,
+  AbsencesScreen,
+  SkillsScreen,
+  TimeLogsScreen,
+} from '../modules/hr'
 
 /**
  * HR világ-oldal — vékony képernyő-diszpécser (a képernyők a ./hr/ alatt

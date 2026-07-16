@@ -3,13 +3,15 @@ import { useQueryClient } from '@tanstack/react-query'
 import { WorldShell } from '../components/layout/WorldShell'
 import { useToast } from '../components/ui'
 import { IncidentReportFAB } from '../components/EHS/IncidentReportFAB'
-import { ehsKeys } from '../services/ehs'
-import { EhsDashboard } from './ehs/EhsDashboard'
-import { IncidentsScreen } from './ehs/IncidentsScreen'
-import { RisksScreen } from './ehs/RisksScreen'
-import { SdsScreen } from './ehs/SdsScreen'
-import { PpeScreen } from './ehs/PpeScreen'
-import { WalksScreen } from './ehs/WalksScreen'
+import {
+  ehsKeys,
+  EhsDashboard,
+  IncidentsScreen,
+  RisksScreen,
+  SdsScreen,
+  PpeScreen,
+  WalksScreen,
+} from '../modules/ehs'
 
 /**
  * EHS világ-oldal — vékony képernyő-diszpécser (a képernyők a ./ehs/ alatt élnek,

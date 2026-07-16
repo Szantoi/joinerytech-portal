@@ -1,7 +1,7 @@
 import { useIncidentDraftStore } from '../../stores/incidentDraftStore';
 import { useState, useRef, useEffect } from 'react';
-import { useEhsLocations } from '../../services/ehs';
-import { useToast } from '../../components/ui';
+import { useEhsLocations } from '../../modules/ehs';
+import { useToast } from '../ui';
 
 export function StepDetails() {
   const { currentDraft, updateDraft } = useIncidentDraftStore();

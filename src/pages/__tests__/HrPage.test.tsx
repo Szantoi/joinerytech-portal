@@ -4,7 +4,7 @@ import { MemoryRouter, Route, Routes } from 'react-router-dom'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { setupServer } from 'msw/node'
 import { ToastProvider } from '../../components/ui'
-import { hrApiHandlers, resetHrDb } from '../../mocks/hrApi'
+import { hrApiHandlers, resetHrDb } from '../../modules/hr/mocks'
 import { HrWorldPage } from '../HrPage'
 
 vi.mock('../../auth', () => ({

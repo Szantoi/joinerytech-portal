@@ -1,10 +1,12 @@
 import { useNavigate, useParams } from 'react-router-dom'
 import { WorldShell } from '../components/layout/WorldShell'
-import { DashboardScreen } from './controlling/DashboardScreen'
-import { PortfolioScreen } from './controlling/PortfolioScreen'
-import { MarginScreen } from './controlling/MarginScreen'
-import { VarianceScreen } from './controlling/VarianceScreen'
-import { AdjustmentsScreen } from './controlling/AdjustmentsScreen'
+import {
+  DashboardScreen,
+  PortfolioScreen,
+  MarginScreen,
+  VarianceScreen,
+  AdjustmentsScreen,
+} from '../modules/controlling'
 
 /**
  * Kontrolling világ-oldal — vékony képernyő-diszpécser (a képernyők a

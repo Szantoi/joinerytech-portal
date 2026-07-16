@@ -4,7 +4,7 @@ import { MemoryRouter, Route, Routes } from 'react-router-dom'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { setupServer } from 'msw/node'
 import { ToastProvider } from '../../components/ui'
-import { crmApiHandlers, resetCrmDb } from '../../mocks/crmApi'
+import { crmApiHandlers, resetCrmDb } from '../../modules/crm/mocks'
 import { CrmWorldPage } from '../CrmPage'
 
 vi.mock('../../auth', () => ({

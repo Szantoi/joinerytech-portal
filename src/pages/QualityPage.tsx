@@ -1,9 +1,11 @@
 import { useNavigate, useParams } from 'react-router-dom'
 import { WorldShell } from '../components/layout/WorldShell'
-import { QaDashboard } from './qa/QaDashboard'
-import { InspectionsScreen } from './qa/InspectionsScreen'
-import { TicketsScreen } from './qa/TicketsScreen'
-import { TrendScreen } from './qa/TrendScreen'
+import {
+  QaDashboard,
+  InspectionsScreen,
+  TicketsScreen,
+  TrendScreen,
+} from '../modules/qa'
 
 /**
  * Minőség (QA) világ-oldal — vékony képernyő-diszpécser (a képernyők a ./qa/

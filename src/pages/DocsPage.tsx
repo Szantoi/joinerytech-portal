@@ -1,8 +1,6 @@
 import { useNavigate, useParams } from 'react-router-dom'
 import { WorldShell } from '../components/layout/WorldShell'
-import { DmsDashboard } from './dms/DmsDashboard'
-import { LibraryScreen } from './dms/LibraryScreen'
-import { ExpiringScreen } from './dms/ExpiringScreen'
+import { DmsDashboard, LibraryScreen, ExpiringScreen } from '../modules/dms'
 
 /**
  * Dokumentumtár (DMS) világ-oldal — vékony képernyő-diszpécser (a képernyők a

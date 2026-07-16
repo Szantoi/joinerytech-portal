@@ -1,9 +1,11 @@
 import { useNavigate, useParams } from 'react-router-dom'
 import { WorldShell } from '../components/layout/WorldShell'
-import { MaintenanceDashboard } from './maintenance/MaintenanceDashboard'
-import { AssetsScreen } from './maintenance/AssetsScreen'
-import { WorkOrdersScreen } from './maintenance/WorkOrdersScreen'
-import { ScheduleScreen } from './maintenance/ScheduleScreen'
+import {
+  MaintenanceDashboard,
+  AssetsScreen,
+  WorkOrdersScreen,
+  ScheduleScreen,
+} from '../modules/maintenance'
 
 /**
  * Karbantartás világ-oldal — vékony képernyő-diszpécser (a képernyők a
