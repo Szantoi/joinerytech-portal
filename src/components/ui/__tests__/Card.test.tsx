@@ -8,11 +8,15 @@ describe('Card', () => {
     expect(screen.getByText('Hello')).toBeTruthy()
   })
 
-  it('applies default classes', () => {
+  it('applies default classes (szemantikus tokenek — DS-DARKMODE)', () => {
     const { container } = render(<Card>Content</Card>)
     const div = container.firstElementChild as HTMLElement
     expect(div.className).toContain('rounded-xl')
-    expect(div.className).toContain('bg-white')
+    // token-smoke: kártya = surface-card + border token, nem nyers paletta
+    expect(div.className).toContain('bg-surface-card')
+    expect(div.className).toContain('border-line')
+    expect(div.className).not.toContain('bg-white')
+    expect(div.className).not.toContain('stone-')
   })
 
   it('applies interactive classes when interactive', () => {

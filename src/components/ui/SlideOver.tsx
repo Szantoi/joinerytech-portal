@@ -52,7 +52,7 @@ export function SlideOver({ open, onClose, title, subtitle, width = 520, childre
     <div ref={rootRef} className="fixed inset-0 z-40">
       {/* Overlay — click closes; hidden from AT (the dialog itself is modal) */}
       <div
-        className="absolute inset-0 bg-stone-900/30 backdrop-blur-[2px]"
+        className="absolute inset-0 bg-stone-900/30 dark:bg-black/60 backdrop-blur-[2px]"
         onClick={onClose}
         aria-hidden="true"
       />

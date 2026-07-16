@@ -33,7 +33,7 @@ export function KpiCard({
   changeDirection,
   delta,
   spark,
-  sparkColor = '#0d9488',
+  sparkColor = 'var(--acc-mid)',  // token: világ-akcent chart-szín (light: paletta-hű, dark: oklch-recept)
   breakdowns,
 }: KpiCardProps) {
   const [open, setOpen] = useState(false)
@@ -50,22 +50,22 @@ export function KpiCard({
     <Card className="overflow-hidden">
       <button
         onClick={breakdowns?.length ? () => setOpen(!open) : undefined}
-        className={`w-full text-left p-4 transition ${breakdowns?.length ? 'hover:bg-stone-50/60 cursor-pointer' : 'cursor-default'}`}
+        className={`w-full text-left p-4 transition ${breakdowns?.length ? 'hover:bg-surface-sunken/60 cursor-pointer' : 'cursor-default'}`}
       >
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0 flex-1">
-            <div className="text-[11.5px] uppercase tracking-wide text-stone-500 font-medium">{displayLabel}</div>
+            <div className="text-[11.5px] uppercase tracking-wide text-ink-soft font-medium">{displayLabel}</div>
             <div className="mt-1 flex items-baseline gap-1.5">
-              <span className="text-[26px] font-semibold text-stone-900 tabular-nums tracking-tight">{value}</span>
-              {unit && <span className="text-[12px] text-stone-500">{unit}</span>}
+              <span className="text-[26px] font-semibold text-ink tabular-nums tracking-tight">{value}</span>
+              {unit && <span className="text-[12px] text-ink-soft">{unit}</span>}
             </div>
             {deltaText && (
               <div className="mt-1.5 flex items-center gap-1.5 text-[11px]">
-                <span className={`inline-flex items-center gap-0.5 ${deltaPositive ? 'text-emerald-700' : 'text-rose-700'}`}>
+                <span className={`inline-flex items-center gap-0.5 ${deltaPositive ? 'text-emerald-700 dark:text-emerald-400' : 'text-rose-700 dark:text-rose-400'}`}>
                   <Icon name={deltaPositive ? 'up' : 'down'} size={11} />
                   {deltaText}
                 </span>
-                <span className="text-stone-400">előző héthez</span>
+                <span className="text-ink-soft">előző héthez</span>
               </div>
             )}
           </div>
@@ -76,19 +76,19 @@ export function KpiCard({
           )}
         </div>
         {breakdowns && breakdowns.length > 0 && (
-          <div className="mt-2.5 flex items-center justify-between text-[11px] text-stone-400">
+          <div className="mt-2.5 flex items-center justify-between text-[11px] text-ink-soft">
             <span>{open ? 'Bezárás' : 'Részletek'}</span>
             <Icon name={open ? 'up' : 'down'} size={13} />
           </div>
         )}
       </button>
       {open && breakdowns && breakdowns.length > 0 && (
-        <div className="border-t border-stone-200/80 bg-stone-50/40 p-4 grid grid-cols-3 gap-3 text-[11.5px]">
+        <div className="border-t border-line/80 bg-surface-sunken/40 p-4 grid grid-cols-3 gap-3 text-[11.5px]">
           {breakdowns.map((b) => (
-            <div key={b.label} className="bg-white rounded-lg border border-stone-200/70 p-3">
-              <div className="text-stone-500 text-[10.5px] uppercase tracking-wide">{b.label}</div>
-              <div className="mt-1 text-[16px] font-semibold text-stone-900 tabular-nums">{b.value}</div>
-              {b.note && <div className="text-stone-500 mt-0.5 text-[10.5px]">{b.note}</div>}
+            <div key={b.label} className="bg-surface-card rounded-lg border border-line/70 p-3">
+              <div className="text-ink-soft text-[10.5px] uppercase tracking-wide">{b.label}</div>
+              <div className="mt-1 text-[16px] font-semibold text-ink tabular-nums">{b.value}</div>
+              {b.note && <div className="text-ink-soft mt-0.5 text-[10.5px]">{b.note}</div>}
             </div>
           ))}
         </div>

@@ -1,12 +1,14 @@
 /**
- * Téma-kezelés — class-alapú dark mode, három-állapotú preferenciával.
+ * Téma-kezelés — attribútum-alapú dark mode, három-állapotú preferenciával.
  *
- * Spec: DESIGN_SYSTEM_SPEC_V1.md 4.1 fejezet.
+ * Spec: design-system/dark-mode.html ("Bevezetés a portálba").
  *  - Preferencia: 'light' | 'dark' | 'system', localStorage kulcs: `jt-theme`
- *  - Mechanizmus: `.dark` class a <html> elemen (a no-flash script az
- *    index.html-ben ugyanezt a logikát futtatja a bundle előtt)
- *  - 'system' esetén a `prefers-color-scheme` media query dönt, és `change`
- *    eseményre élőben követi az OS-t.
+ *  - Mechanizmus: `data-theme="light|dark"` a <html> elemen KIZÁRÓLAG explicit
+ *    választásnál; 'system' módban NINCS attribútum — ilyenkor a CSS
+ *    `prefers-color-scheme` ága dönt (`:root:not([data-theme="light"])`).
+ *    A no-flash script az index.html-ben ugyanezt futtatja a bundle előtt.
+ *  - 'system' esetén a media query `change` eseményére élőben követi az OS-t
+ *    (a CSS magától vált; a listener a JS-fogyasztókat — isDark — értesíti).
  */
 
 import { useSyncExternalStore } from 'react'
@@ -54,10 +56,18 @@ export function resolveIsDark(
   return pref === 'dark' || (pref === 'system' && systemDark)
 }
 
-/** A `.dark` class szinkronizálása a <html> elemre az aktuális preferencia szerint. */
+/**
+ * A `data-theme` attribútum szinkronizálása a <html> elemre.
+ * Explicit light/dark → attribútum; system → attribútum törlése
+ * (a rendszer-preferenciát a CSS media query viszi, JS nélkül is).
+ */
 export function applyTheme(pref: ThemePreference = preference): void {
   if (typeof document === 'undefined') return
-  document.documentElement.classList.toggle('dark', resolveIsDark(pref))
+  if (pref === 'light' || pref === 'dark') {
+    document.documentElement.setAttribute('data-theme', pref)
+  } else {
+    document.documentElement.removeAttribute('data-theme')
+  }
 }
 
 /** Aktuális preferencia (light | dark | system). */

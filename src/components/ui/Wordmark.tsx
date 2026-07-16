@@ -20,8 +20,8 @@ interface WordmarkProps {
 }
 
 export function Wordmark({ tone = 'dark', size = 14 }: WordmarkProps) {
-  const fg = tone === 'dark' ? 'text-white' : 'text-stone-900'
-  const dim = tone === 'dark' ? 'text-white/55' : 'text-stone-500'
+  const fg = tone === 'dark' ? 'text-white' : 'text-ink'
+  const dim = tone === 'dark' ? 'text-white/55' : 'text-ink-soft'
   const accent = 'text-teal-300'
   return (
     <div className="flex items-center gap-2 select-none" style={{ fontSize: size }}>

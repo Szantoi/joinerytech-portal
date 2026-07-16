@@ -3,7 +3,7 @@ import { Icon } from '../ui/Icon'
 import { useFocusTrap } from '../ui/hooks/useFocusTrap'
 import { useInertBackground } from '../ui/hooks/useInertBackground'
 import { WorldIcon } from './WorldIcon'
-import { ThemeToggle } from './ThemeToggle'
+import { ThemeToggle, ThemeQuickToggle } from './ThemeToggle'
 import { MobileBottomNav } from './MobileBottomNav'
 import { ChatBubble } from '../chat/ChatBubble'
 import { WORLDS } from '../../mocks/worlds'
@@ -34,21 +34,21 @@ export const ACCENT_MAP: Record<string, {
   sideAccent: string
   sideHover: string
 }> = {
-  teal:    { tint: 'bg-teal-100',    iconBg: 'bg-teal-100',    iconFg: 'text-teal-700',    fg: 'text-teal-700',    sideBg: 'bg-teal-50/30',    sideAccent: 'border-teal-600',    sideHover: 'hover:bg-teal-50' },
-  blue:    { tint: 'bg-blue-100',    iconBg: 'bg-blue-100',    iconFg: 'text-blue-700',    fg: 'text-blue-700',    sideBg: 'bg-blue-50/30',    sideAccent: 'border-blue-600',    sideHover: 'hover:bg-blue-50' },
-  indigo:  { tint: 'bg-indigo-100',  iconBg: 'bg-indigo-100',  iconFg: 'text-indigo-700',  fg: 'text-indigo-700',  sideBg: 'bg-indigo-50/30',  sideAccent: 'border-indigo-600',  sideHover: 'hover:bg-indigo-50' },
-  amber:   { tint: 'bg-amber-100',   iconBg: 'bg-amber-100',   iconFg: 'text-amber-700',   fg: 'text-amber-700',   sideBg: 'bg-amber-50/30',   sideAccent: 'border-amber-600',   sideHover: 'hover:bg-amber-50' },
-  emerald: { tint: 'bg-emerald-100', iconBg: 'bg-emerald-100', iconFg: 'text-emerald-700', fg: 'text-emerald-700', sideBg: 'bg-emerald-50/30', sideAccent: 'border-emerald-600', sideHover: 'hover:bg-emerald-50' },
-  lime:    { tint: 'bg-lime-100',    iconBg: 'bg-lime-100',    iconFg: 'text-lime-700',    fg: 'text-lime-700',    sideBg: 'bg-lime-50/30',    sideAccent: 'border-lime-600',    sideHover: 'hover:bg-lime-50' },
-  stone:   { tint: 'bg-stone-100',   iconBg: 'bg-stone-100',   iconFg: 'text-stone-700',   fg: 'text-stone-700',   sideBg: 'bg-stone-50/40',   sideAccent: 'border-stone-700',   sideHover: 'hover:bg-stone-100' },
-  violet:  { tint: 'bg-violet-100',  iconBg: 'bg-violet-100',  iconFg: 'text-violet-700',  fg: 'text-violet-700',  sideBg: 'bg-violet-50/30',  sideAccent: 'border-violet-600',  sideHover: 'hover:bg-violet-50' },
-  cyan:    { tint: 'bg-cyan-100',    iconBg: 'bg-cyan-100',    iconFg: 'text-cyan-700',    fg: 'text-cyan-700',    sideBg: 'bg-cyan-50/30',    sideAccent: 'border-cyan-600',    sideHover: 'hover:bg-cyan-50' },
-  orange:  { tint: 'bg-orange-100',  iconBg: 'bg-orange-100',  iconFg: 'text-orange-700',  fg: 'text-orange-700',  sideBg: 'bg-orange-50/30',  sideAccent: 'border-orange-600',  sideHover: 'hover:bg-orange-50' },
-  red:     { tint: 'bg-red-100',     iconBg: 'bg-red-100',     iconFg: 'text-red-700',     fg: 'text-red-700',     sideBg: 'bg-red-50/30',     sideAccent: 'border-red-600',     sideHover: 'hover:bg-red-50' },
-  rose:    { tint: 'bg-rose-100',    iconBg: 'bg-rose-100',    iconFg: 'text-rose-700',    fg: 'text-rose-700',    sideBg: 'bg-rose-50/30',    sideAccent: 'border-rose-600',    sideHover: 'hover:bg-rose-50' },
-  sky:     { tint: 'bg-sky-100',     iconBg: 'bg-sky-100',     iconFg: 'text-sky-700',     fg: 'text-sky-700',     sideBg: 'bg-sky-50/30',     sideAccent: 'border-sky-600',     sideHover: 'hover:bg-sky-50' },
-  slate:   { tint: 'bg-slate-100',   iconBg: 'bg-slate-100',   iconFg: 'text-slate-700',   fg: 'text-slate-700',   sideBg: 'bg-slate-50/30',   sideAccent: 'border-slate-600',   sideHover: 'hover:bg-slate-50' },
-  purple:  { tint: 'bg-purple-100',  iconBg: 'bg-purple-100',  iconFg: 'text-purple-700',  fg: 'text-purple-700',  sideBg: 'bg-purple-50/30',  sideAccent: 'border-purple-600',  sideHover: 'hover:bg-purple-50' },
+  teal: { tint: 'bg-teal-100 dark:bg-teal-950', iconBg: 'bg-teal-100 dark:bg-teal-950', iconFg: 'text-teal-700 dark:text-teal-300', fg: 'text-teal-700 dark:text-teal-300', sideBg: 'bg-teal-50/30 dark:bg-teal-950/40', sideAccent: 'border-teal-600 dark:border-teal-400', sideHover: 'hover:bg-teal-50 dark:hover:bg-teal-950/40' },
+  blue: { tint: 'bg-blue-100 dark:bg-blue-950', iconBg: 'bg-blue-100 dark:bg-blue-950', iconFg: 'text-blue-700 dark:text-blue-300', fg: 'text-blue-700 dark:text-blue-300', sideBg: 'bg-blue-50/30 dark:bg-blue-950/40', sideAccent: 'border-blue-600 dark:border-blue-400', sideHover: 'hover:bg-blue-50 dark:hover:bg-blue-950/40' },
+  indigo: { tint: 'bg-indigo-100 dark:bg-indigo-950', iconBg: 'bg-indigo-100 dark:bg-indigo-950', iconFg: 'text-indigo-700 dark:text-indigo-300', fg: 'text-indigo-700 dark:text-indigo-300', sideBg: 'bg-indigo-50/30 dark:bg-indigo-950/40', sideAccent: 'border-indigo-600 dark:border-indigo-400', sideHover: 'hover:bg-indigo-50 dark:hover:bg-indigo-950/40' },
+  amber: { tint: 'bg-amber-100 dark:bg-amber-950', iconBg: 'bg-amber-100 dark:bg-amber-950', iconFg: 'text-amber-700 dark:text-amber-300', fg: 'text-amber-700 dark:text-amber-300', sideBg: 'bg-amber-50/30 dark:bg-amber-950/40', sideAccent: 'border-amber-600 dark:border-amber-400', sideHover: 'hover:bg-amber-50 dark:hover:bg-amber-950/40' },
+  emerald: { tint: 'bg-emerald-100 dark:bg-emerald-950', iconBg: 'bg-emerald-100 dark:bg-emerald-950', iconFg: 'text-emerald-700 dark:text-emerald-300', fg: 'text-emerald-700 dark:text-emerald-300', sideBg: 'bg-emerald-50/30 dark:bg-emerald-950/40', sideAccent: 'border-emerald-600 dark:border-emerald-400', sideHover: 'hover:bg-emerald-50 dark:hover:bg-emerald-950/40' },
+  lime: { tint: 'bg-lime-100 dark:bg-lime-950', iconBg: 'bg-lime-100 dark:bg-lime-950', iconFg: 'text-lime-700 dark:text-lime-300', fg: 'text-lime-700 dark:text-lime-300', sideBg: 'bg-lime-50/30 dark:bg-lime-950/40', sideAccent: 'border-lime-600 dark:border-lime-400', sideHover: 'hover:bg-lime-50 dark:hover:bg-lime-950/40' },
+  stone: { tint: 'bg-stone-100 dark:bg-stone-800', iconBg: 'bg-stone-100 dark:bg-stone-800', iconFg: 'text-stone-700 dark:text-stone-300', fg: 'text-stone-700 dark:text-stone-300', sideBg: 'bg-stone-50/40 dark:bg-stone-800/40', sideAccent: 'border-stone-700 dark:border-stone-400', sideHover: 'hover:bg-stone-100 dark:hover:bg-stone-800/40' },
+  violet: { tint: 'bg-violet-100 dark:bg-violet-950', iconBg: 'bg-violet-100 dark:bg-violet-950', iconFg: 'text-violet-700 dark:text-violet-300', fg: 'text-violet-700 dark:text-violet-300', sideBg: 'bg-violet-50/30 dark:bg-violet-950/40', sideAccent: 'border-violet-600 dark:border-violet-400', sideHover: 'hover:bg-violet-50 dark:hover:bg-violet-950/40' },
+  cyan: { tint: 'bg-cyan-100 dark:bg-cyan-950', iconBg: 'bg-cyan-100 dark:bg-cyan-950', iconFg: 'text-cyan-700 dark:text-cyan-300', fg: 'text-cyan-700 dark:text-cyan-300', sideBg: 'bg-cyan-50/30 dark:bg-cyan-950/40', sideAccent: 'border-cyan-600 dark:border-cyan-400', sideHover: 'hover:bg-cyan-50 dark:hover:bg-cyan-950/40' },
+  orange: { tint: 'bg-orange-100 dark:bg-orange-950', iconBg: 'bg-orange-100 dark:bg-orange-950', iconFg: 'text-orange-700 dark:text-orange-300', fg: 'text-orange-700 dark:text-orange-300', sideBg: 'bg-orange-50/30 dark:bg-orange-950/40', sideAccent: 'border-orange-600 dark:border-orange-400', sideHover: 'hover:bg-orange-50 dark:hover:bg-orange-950/40' },
+  red: { tint: 'bg-red-100 dark:bg-red-950', iconBg: 'bg-red-100 dark:bg-red-950', iconFg: 'text-red-700 dark:text-red-300', fg: 'text-red-700 dark:text-red-300', sideBg: 'bg-red-50/30 dark:bg-red-950/40', sideAccent: 'border-red-600 dark:border-red-400', sideHover: 'hover:bg-red-50 dark:hover:bg-red-950/40' },
+  rose: { tint: 'bg-rose-100 dark:bg-rose-950', iconBg: 'bg-rose-100 dark:bg-rose-950', iconFg: 'text-rose-700 dark:text-rose-300', fg: 'text-rose-700 dark:text-rose-300', sideBg: 'bg-rose-50/30 dark:bg-rose-950/40', sideAccent: 'border-rose-600 dark:border-rose-400', sideHover: 'hover:bg-rose-50 dark:hover:bg-rose-950/40' },
+  sky: { tint: 'bg-sky-100 dark:bg-sky-950', iconBg: 'bg-sky-100 dark:bg-sky-950', iconFg: 'text-sky-700 dark:text-sky-300', fg: 'text-sky-700 dark:text-sky-300', sideBg: 'bg-sky-50/30 dark:bg-sky-950/40', sideAccent: 'border-sky-600 dark:border-sky-400', sideHover: 'hover:bg-sky-50 dark:hover:bg-sky-950/40' },
+  slate: { tint: 'bg-slate-100 dark:bg-slate-950', iconBg: 'bg-slate-100 dark:bg-slate-950', iconFg: 'text-slate-700 dark:text-slate-300', fg: 'text-slate-700 dark:text-slate-300', sideBg: 'bg-slate-50/30 dark:bg-slate-950/40', sideAccent: 'border-slate-600 dark:border-slate-400', sideHover: 'hover:bg-slate-50 dark:hover:bg-slate-950/40' },
+  purple: { tint: 'bg-purple-100 dark:bg-purple-950', iconBg: 'bg-purple-100 dark:bg-purple-950', iconFg: 'text-purple-700 dark:text-purple-300', fg: 'text-purple-700 dark:text-purple-300', sideBg: 'bg-purple-50/30 dark:bg-purple-950/40', sideAccent: 'border-purple-600 dark:border-purple-400', sideHover: 'hover:bg-purple-50 dark:hover:bg-purple-950/40' },
 }
 
 /** Közös fókusz-ring (spec 2. fejezet): world-akcentes, offsettel. */
@@ -93,7 +93,7 @@ function WorldSidebar({ world, accent, screen, onScreen, onHome, lang }: WorldSi
   return (
     <aside className="hidden md:flex w-56 shrink-0 bg-surface-1 border-r border-line flex-col">
       <button onClick={onHome} className={`px-4 py-4 border-b border-line flex items-center gap-2.5 hover:bg-surface-2 text-left ${FOCUS_RING}`}>
-        <div className="w-8 h-8 rounded-lg bg-stone-900 grid place-items-center text-white">
+        <div className="w-8 h-8 rounded-lg bg-sidebar grid place-items-center text-white">
           <span className="text-[13px] font-bold tracking-tighter">jt</span>
         </div>
         <div className="min-w-0 flex-1">
@@ -206,11 +206,11 @@ function WorldTopBar({ world, screen, onHome, lang, onMenu }: WorldTopBarProps) 
         </div>
         <div className="hidden md:flex items-center gap-2 text-[11.5px] text-ink-muted">
           <button onClick={onHome} className="hover:text-ink">Home</button>
-          <Icon name="chevron" size={11} className="text-stone-300 dark:text-stone-600" />
+          <Icon name="chevron" size={11} className="text-line-strong" />
           <span className="text-world-soft-fg font-medium">{lang === 'en' ? world.en : world.hu}</span>
           {screenObj && (
             <>
-              <Icon name="chevron" size={11} className="text-stone-300 dark:text-stone-600" />
+              <Icon name="chevron" size={11} className="text-line-strong" />
               <span className="text-ink font-medium">{screenLabel}</span>
             </>
           )}
@@ -221,7 +221,7 @@ function WorldTopBar({ world, screen, onHome, lang, onMenu }: WorldTopBarProps) 
             <input
               aria-label={lang === 'en' ? 'Search' : 'Keresés'}
               placeholder={lang === 'en' ? 'Search…' : 'Keresés…'}
-              className="h-8 w-56 pl-8 pr-3 rounded-lg border border-line text-[12px] text-ink placeholder:text-ink-muted focus:border-stone-400 focus:ring-1 focus:ring-world-ring outline-none bg-surface-2/60"
+              className="h-8 w-56 pl-8 pr-3 rounded-lg border border-line text-[12px] text-ink placeholder:text-ink-muted focus:border-line-strong focus:ring-1 focus:ring-world-ring outline-none bg-surface-2/60"
             />
             <Icon name="search" size={13} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-ink-muted" />
           </div>
@@ -232,6 +232,7 @@ function WorldTopBar({ world, screen, onHome, lang, onMenu }: WorldTopBarProps) 
             <Icon name="bell" size={14} />
             <span aria-hidden="true" className="absolute top-1 right-1 w-1.5 h-1.5 rounded-full bg-rose-500" />
           </button>
+          <ThemeQuickToggle lang={lang} />
           <UserMenu lang={lang} />
         </div>
       </div>
@@ -268,7 +269,7 @@ function WorldMobileDrawer({ open, onClose, world, accent, screen, onScreen, onH
       <div
         onClick={onClose}
         aria-hidden="true"
-        className={`absolute inset-0 bg-stone-900/40 backdrop-blur-[1px] transition-opacity duration-200 ${open ? 'opacity-100' : 'opacity-0'}`}
+        className={`absolute inset-0 bg-stone-900/40 dark:bg-black/60 backdrop-blur-[1px] transition-opacity duration-200 ${open ? 'opacity-100' : 'opacity-0'}`}
       />
       <aside
         ref={panelRef}
@@ -279,7 +280,7 @@ function WorldMobileDrawer({ open, onClose, world, accent, screen, onScreen, onH
         className={`absolute inset-y-0 left-0 w-[280px] max-w-[82%] bg-surface-1 shadow-2xl flex flex-col transition-transform duration-200 ease-out motion-reduce:transition-none ${open ? 'translate-x-0' : '-translate-x-full'}`}
       >
         <div className="px-4 py-4 border-b border-line flex items-center gap-2.5">
-          <div className="w-8 h-8 rounded-lg bg-stone-900 grid place-items-center text-white shrink-0">
+          <div className="w-8 h-8 rounded-lg bg-sidebar grid place-items-center text-white shrink-0">
             <span className="text-[13px] font-bold tracking-tighter">jt</span>
           </div>
           <div className="min-w-0 flex-1">

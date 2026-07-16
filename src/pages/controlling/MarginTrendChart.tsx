@@ -8,8 +8,8 @@ import { formatMonth } from './labels'
  * világban); világ-akcent: slate. Default export a React.lazy()-hez.
  */
 
-const ACTUAL_STROKE = '#475569' // Tailwind slate-600 — Kontrolling világ-akcent
-const PLAN_STROKE = '#a8a29e' // stone-400 — visszafogott referencia-vonal
+const ACTUAL_STROKE = 'var(--acc-mid)' // token: Kontrolling világ-akcent (light: slate-600, dark: oklch-recept)
+const PLAN_STROKE = 'var(--chart-ref)' // token: visszafogott referencia-vonal (light: stone-400)
 
 export default function MarginTrendChart({ trend }: { trend: MarginTrendPoint[] }) {
   const data = trend.map((p) => ({
@@ -23,18 +23,18 @@ export default function MarginTrendChart({ trend }: { trend: MarginTrendPoint[] 
       <div aria-hidden="true">
         <ResponsiveContainer width="100%" height={220}>
           <LineChart data={data} margin={{ top: 5, right: 10, left: 0, bottom: 5 }}>
-            <CartesianGrid strokeDasharray="3 3" stroke="#e7e5e4" vertical={false} />
-            <XAxis dataKey="name" tick={{ fontSize: 11, fill: '#78716c' }} tickLine={false} axisLine={false} />
+            <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" vertical={false} />
+            <XAxis dataKey="name" tick={{ fontSize: 11, fill: 'var(--text-secondary)' }} tickLine={false} axisLine={false} />
             <YAxis
-              tick={{ fontSize: 11, fill: '#78716c' }}
+              tick={{ fontSize: 11, fill: 'var(--text-secondary)' }}
               tickLine={false}
               axisLine={false}
               tickFormatter={(v: number) => `${v}%`}
               width={40}
             />
             <Tooltip
-              cursor={{ stroke: 'rgba(120, 113, 108, 0.3)' }}
-              contentStyle={{ fontSize: 12, borderRadius: 8, border: '1px solid #e7e5e4' }}
+              cursor={{ stroke: 'var(--text-secondary)', strokeOpacity: 0.3 }}
+              contentStyle={{ fontSize: 12, borderRadius: 8, border: '1px solid var(--border)', background: 'var(--surface-card)', color: 'var(--text-primary)' }} labelStyle={{ color: 'var(--text-primary)' }}
               formatter={(value, name) => [`${String(value)}%`, name === 'teny' ? 'Tény-fedezet' : 'Terv-fedezet']}
             />
             <Line type="monotone" dataKey="terv" stroke={PLAN_STROKE} strokeWidth={1.5} strokeDasharray="5 4" dot={false} />
@@ -65,9 +65,9 @@ export default function MarginTrendChart({ trend }: { trend: MarginTrendPoint[] 
         </tbody>
       </table>
       <p className="mt-1 text-[10.5px] text-ink-muted">
-        <span aria-hidden="true" className="mr-1 inline-block h-0.5 w-4 translate-y-[-2px] bg-stone-400" />
+        <span aria-hidden="true" className="mr-1 inline-block h-0.5 w-4 translate-y-[-2px] bg-chart-ref" />
         terv (szaggatott) ·{' '}
-        <span aria-hidden="true" className="mr-1 inline-block h-0.5 w-4 translate-y-[-2px] bg-slate-600" />
+        <span aria-hidden="true" className="mr-1 inline-block h-0.5 w-4 translate-y-[-2px] bg-acc-mid" />
         tény
       </p>
     </>

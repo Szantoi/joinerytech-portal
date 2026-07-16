@@ -20,9 +20,9 @@ export function RisksScreen() {
 
   function cellColor(prob: number, impact: number) {
     const score = prob * impact
-    if (score >= 6) return 'bg-rose-100 border-rose-200'
-    if (score >= 3) return 'bg-amber-50 border-amber-200'
-    return 'bg-emerald-50 border-emerald-200'
+    if (score >= 6) return 'bg-rose-100 border-rose-200 dark:bg-rose-950 dark:border-rose-900'
+    if (score >= 3) return 'bg-amber-50 border-amber-200 dark:bg-amber-950 dark:border-amber-900'
+    return 'bg-emerald-50 border-emerald-200 dark:bg-emerald-950 dark:border-emerald-900'
   }
 
   function getRisksAt(prob: number, impact: number) {
@@ -57,7 +57,7 @@ export function RisksScreen() {
                   <div key={impact} className={`flex-1 min-h-[80px] rounded-lg border p-2 ${cellColor(prob, impact)}`}>
                     {cellRisks.map((r) => (
                       <button key={r.id} onClick={() => setSelected(r)}
-                        className="w-full text-left text-[10px] text-stone-700 hover:text-stone-900 mb-1 leading-tight">
+                        className="w-full text-left text-[10px] text-stone-700 hover:text-stone-900 dark:text-stone-200 dark:hover:text-white mb-1 leading-tight">
                         {r.title}
                       </button>
                     ))}

@@ -1,6 +1,7 @@
 /**
  * Téma-kezelés tesztek (F1-A / DESIGN_SYSTEM_SPEC_V1 4.1).
  *
+ * Mechanizmus: data-theme attribútum (design-system/dark-mode.html).
  * A useTheme module-szintű state-et tart (localStorage + matchMedia), ezért
  * minden teszt friss module-példánnyal indul (vi.resetModules + dynamic import),
  * kontrollált matchMedia-mockkal.
@@ -35,7 +36,7 @@ async function importTheme() {
 beforeEach(() => {
   vi.resetModules()
   window.localStorage.clear()
-  document.documentElement.classList.remove('dark')
+  document.documentElement.removeAttribute('data-theme')
 })
 
 describe('useTheme — preferencia és perzisztencia', () => {
@@ -59,17 +60,17 @@ describe('useTheme — preferencia és perzisztencia', () => {
     expect(getThemePreference()).toBe('system')
   })
 
-  it('setThemePreference perzisztál és állítja a .dark class-t', async () => {
+  it('setThemePreference perzisztál és állítja a data-theme attribútumot', async () => {
     mockMatchMedia(false)
     const { setThemePreference, THEME_STORAGE_KEY } = await importTheme()
 
     setThemePreference('dark')
     expect(window.localStorage.getItem(THEME_STORAGE_KEY)).toBe('dark')
-    expect(document.documentElement.classList.contains('dark')).toBe(true)
+    expect(document.documentElement.getAttribute('data-theme')).toBe('dark')
 
     setThemePreference('light')
     expect(window.localStorage.getItem(THEME_STORAGE_KEY)).toBe('light')
-    expect(document.documentElement.classList.contains('dark')).toBe(false)
+    expect(document.documentElement.getAttribute('data-theme')).toBe('light')
   })
 })
 
@@ -83,18 +84,29 @@ describe('useTheme — system mód', () => {
     expect(resolveIsDark('system', false)).toBe(false)
   })
 
-  it('system módban az OS-váltást (change esemény) élőben követi', async () => {
-    const media = mockMatchMedia(false)
+  it('system módban NINCS data-theme attribútum — a CSS media query dönt', async () => {
+    mockMatchMedia(false)
     const { setThemePreference } = await importTheme()
 
+    act(() => setThemePreference('dark'))
+    expect(document.documentElement.getAttribute('data-theme')).toBe('dark')
+
     act(() => setThemePreference('system'))
-    expect(document.documentElement.classList.contains('dark')).toBe(false)
+    expect(document.documentElement.hasAttribute('data-theme')).toBe(false)
+  })
+
+  it('system módban az OS-váltást (change esemény) élőben követi (isDark)', async () => {
+    const media = mockMatchMedia(false)
+    const { setThemePreference, resolveIsDark, getThemePreference } = await importTheme()
+
+    act(() => setThemePreference('system'))
+    expect(resolveIsDark(getThemePreference())).toBe(false)
+    expect(document.documentElement.hasAttribute('data-theme')).toBe(false)
 
     act(() => media.setSystemDark(true))
-    expect(document.documentElement.classList.contains('dark')).toBe(true)
-
-    act(() => media.setSystemDark(false))
-    expect(document.documentElement.classList.contains('dark')).toBe(false)
+    expect(resolveIsDark(getThemePreference())).toBe(true)
+    // az attribútum system módban akkor sem jelenik meg — a CSS ága vált
+    expect(document.documentElement.hasAttribute('data-theme')).toBe(false)
   })
 
   it('explicit light/dark módban az OS-váltás NEM ír felül', async () => {
@@ -103,7 +115,7 @@ describe('useTheme — system mód', () => {
 
     act(() => setThemePreference('light'))
     act(() => media.setSystemDark(true))
-    expect(document.documentElement.classList.contains('dark')).toBe(false)
+    expect(document.documentElement.getAttribute('data-theme')).toBe('light')
   })
 })
 
@@ -119,6 +131,6 @@ describe('useTheme — React hook', () => {
     act(() => result.current.setPreference('dark'))
     expect(result.current.preference).toBe('dark')
     expect(result.current.isDark).toBe(true)
-    expect(document.documentElement.classList.contains('dark')).toBe(true)
+    expect(document.documentElement.getAttribute('data-theme')).toBe('dark')
   })
 })

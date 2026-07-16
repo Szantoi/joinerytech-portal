@@ -1,20 +1,41 @@
 @import "tailwindcss";
 
 /*
- * JoineryTech Portal — design tokens (DESIGN_SYSTEM_SPEC_V1.md, 1. fejezet)
+ * JoineryTech Portal — design tokens
  *
- * Két réteg:
- *   1. Nyers CSS-változók (:root / .dark / [data-world]) — itt dől el az érték.
- *   2. `@theme inline` — utility-t generál (bg-surface-1, text-ink, bg-world…),
- *      és a var()-láncot a HASZNÁLAT helyén oldja fel, így a scope-alapú
- *      felülírás (.dark, [data-world]) működik.
+ * KANONIKUS FORRÁS: design-system/dark-mode.html + szinek.html (Gábor styleguide).
+ * (A korábbi DESIGN_SYSTEM_SPEC_V1 token-nevek aliasként élnek tovább, ld. lent.)
+ *
+ * Rétegek:
+ *   1. Spec-tokenek (:root / [data-theme="dark"]) — surface-app/card/sunken,
+ *      border, text-primary/secondary, sidebar. Itt dől el az érték.
+ *   2. Legacy szemantikus aliasok (--surface-0/1/2, --ink, --ink-muted, --line)
+ *      — a meglévő komponensek utility-jei ezekre épülnek, a spec-tokenekre
+ *      képződnek le.
+ *   3. World-akcentusok: [data-world] csak a --hue-t (és light palettát) adja;
+ *      sötétben EGYETLEN generikus oklch-recept számolja az akcenteket
+ *      (dark-mode.html: a hue változatlan, csak a lightness/chroma nő).
+ *   4. `@theme inline` — utility-t generál (bg-surface-card, text-ink, …), és a
+ *      var()-láncot a HASZNÁLAT helyén oldja fel, így a scope-alapú felülírás
+ *      ([data-theme], [data-world]) működik.
  *
  * Komponens SOHA nem használ nyers palettát felület-színre — csak szemantikus
- * utility-t. A `dark:` variáns csak escape hatch (ld. spec 4.2).
+ * utility-t. A `dark:` variáns csak escape hatch (pl. státusz-tintek).
  */
 
-/* Dark mode: class-alapú, `.dark` a <html> elemen (no-flash script az index.html-ben) */
-@custom-variant dark (&:where(.dark, .dark *));
+/* Dark mode: attribútum-alapú — kézi felülírás `data-theme`-mel a <html>-en,
+   rendszer-preferencia alapértelmezésként (dark-mode.html, "Bevezetés").
+   A no-flash script az index.html-ben csak explicit light/dark esetén ír attribútumot. */
+@custom-variant dark {
+  &:where([data-theme="dark"], [data-theme="dark"] *) {
+    @slot;
+  }
+  @media (prefers-color-scheme: dark) {
+    &:where(:root:not([data-theme="light"]), :root:not([data-theme="light"]) *) {
+      @slot;
+    }
+  }
+}
 
 /* Custom animations for ProductCard shimmer effect */
 @keyframes shimmer {
@@ -32,13 +53,22 @@
 
 /* ── Szemantikus tokenek → utility-k ─────────────────────────────── */
 @theme inline {
-  /* Felületek és tinta */
-  --color-surface-0: var(--surface-0);   /* app háttér */
-  --color-surface-1: var(--surface-1);   /* kártya, panel, SlideOver */
+  /* Spec felület-tokenek (dark-mode.html) */
+  --color-surface-app:    var(--surface-app);    /* body-háttér */
+  --color-surface-card:   var(--surface-card);   /* kártya, táblázat, SlideOver */
+  --color-surface-sunken: var(--surface-sunken); /* fejléc-sáv, footer, hover-sor */
+  --color-border:         var(--border);         /* kártya-, táblázat-, input-keret */
+  --color-sidebar:        var(--sidebar);        /* fő-sidebar (light-ban is sötét) */
+
+  /* Legacy aliasok (DESIGN_SYSTEM_SPEC_V1 nevek — meglévő komponensek) */
+  --color-surface-0: var(--surface-0);   /* = surface-app */
+  --color-surface-1: var(--surface-1);   /* = surface-card */
   --color-surface-2: var(--surface-2);   /* hover, táblafejléc, inset */
-  --color-ink:        var(--ink);        /* elsődleges szöveg */
-  --color-ink-muted:  var(--ink-muted);  /* másodlagos szöveg */
-  --color-line:       var(--line);       /* border, elválasztó */
+  --color-ink:        var(--ink);        /* = text-primary */
+  --color-ink-muted:  var(--ink-muted);  /* másodlagos szöveg (light: stone-600, AA) */
+  --color-ink-soft:   var(--text-secondary); /* felirat, meta, placeholder (spec --text-secondary) */
+  --color-line:       var(--line);       /* = border */
+  --color-line-strong: var(--line-strong); /* erősebb border (hover, kbd) */
 
   /* Aktív világ akcent (data-world indirekció) */
   --color-world:         var(--world);          /* primary button bg, aktív elem */
@@ -47,141 +77,232 @@
   --color-world-soft:    var(--world-soft);     /* nav pill / kijelölt fül bg */
   --color-world-soft-fg: var(--world-soft-fg);  /* nav pill szöveg */
   --color-world-ring:    var(--world-ring);     /* focus ring */
+
+  /* Akcentus-szerepek (szinek.html oklch-recept) — chart, jelölő-pont, tint */
+  --color-acc-strong: var(--acc-strong);
+  --color-acc-mid:    var(--acc-mid);
+  --color-acc-tint:   var(--acc-tint);
+  --color-chart-ref:  var(--chart-ref);  /* visszafogott referencia-vonal (terv) */
 }
 
-/* ── Alap (light) ────────────────────────────────────────────────── */
+/* ── Alap (light) — dark-mode.html token-tábla ───────────────────── */
 :root {
   color-scheme: light;
-  --surface-0:  var(--color-stone-50);
-  --surface-1:  #ffffff;
-  --surface-2:  var(--color-stone-100);
-  --ink:        var(--color-stone-900);
-  --ink-muted:  var(--color-stone-600);   /* NEM stone-500/400 — audit: 4.5:1 alatt */
-  --line:       var(--color-stone-200);
+
+  /* Spec-tokenek */
+  --surface-app:    #f7f7f5;
+  --surface-card:   #ffffff;
+  --surface-sunken: #fafaf9;
+  --border:         #e7e5e4;
+  --text-primary:   #1c1917;
+  --text-secondary: #78716c;
+  --sidebar:        #0b1220;
+
+  /* Legacy aliasok */
+  --surface-0:  var(--surface-app);
+  --surface-1:  var(--surface-card);
+  --surface-2:  var(--color-stone-100);  /* hover/inset — a sunken-nél egy fokkal erősebb */
+  --ink:        var(--text-primary);
+  --ink-muted:  var(--color-stone-600);  /* NEM a spec text-secondary — audit: stone-500 4.5:1 alatt fehéren */
+  --line:       var(--border);
+  --line-strong: var(--color-stone-300);
 
   /* Fallback világ-akcent (brand teal) — világ-scope-on kívül (Home, nem-platform
-     világok) így is feloldódnak a world-* utility-k. */
+     világok) így is feloldódnak a world-* utility-k. --hue: a dark oklch-recept bemenete. */
+  --hue: 183;
   --world:         var(--color-teal-700);  --world-fg: #ffffff;
   --world-hover:   var(--color-teal-800);
   --world-soft:    var(--color-teal-100);  --world-soft-fg: var(--color-teal-800);
   --world-ring:    var(--color-teal-600);
-}
 
-/* ── Dark ────────────────────────────────────────────────────────── */
-.dark {
-  color-scheme: dark;
-  --surface-0:  var(--color-stone-950);
-  --surface-1:  var(--color-stone-900);
-  --surface-2:  var(--color-stone-800);
-  --ink:        var(--color-stone-100);
-  --ink-muted:  var(--color-stone-400);
-  --line:       var(--color-stone-700);
-
-  --world:         var(--color-teal-400);  --world-fg: var(--color-teal-950);
-  --world-hover:   var(--color-teal-300);
-  --world-soft:    var(--color-teal-950);  --world-soft-fg: var(--color-teal-300);
-  --world-ring:    var(--color-teal-400);
+  /* Akcentus-szerepek light-ban: paletta-hű értékek (a light megjelenés változatlan —
+     a szinek.html egységes oklch-receptjére állás külön kör: DS-RECONCILE). */
+  --acc-strong: var(--color-teal-700);
+  --acc-mid:    var(--color-teal-600);   /* KpiCard sparkline eddigi default színe */
+  --acc-tint:   var(--color-teal-50);
+  --chart-ref:  var(--color-stone-400);
 }
 
 /* ── Világ-akcentek (root döntés: CRM=blue, Kontrolling=slate, HR=amber,
-      Maintenance=cyan, QA=lime, EHS=red, DMS=violet) ─────────────── */
+      Maintenance=cyan, QA=lime, EHS=red, DMS=violet) ─────────────────
+      Light: paletta-hű tokenek (változatlan megjelenés) + --hue a dark-recepthez. */
 
-/* CRM = blue */
+/* CRM = blue (hue 255) */
 [data-world="crm"] {
+  --hue: 255;
   --world: var(--color-blue-600);      --world-fg: #ffffff;
   --world-hover: var(--color-blue-700);
   --world-soft: var(--color-blue-100); --world-soft-fg: var(--color-blue-800);
   --world-ring: var(--color-blue-600);
-}
-.dark [data-world="crm"] {
-  --world: var(--color-blue-400);      --world-fg: var(--color-blue-950);
-  --world-hover: var(--color-blue-300);
-  --world-soft: var(--color-blue-950); --world-soft-fg: var(--color-blue-300);
-  --world-ring: var(--color-blue-400);
+  --acc-strong: var(--color-blue-700);
+  --acc-mid:    var(--color-blue-500);  /* ForecastScreen oszlop-szín */
+  --acc-tint:   var(--color-blue-50);
 }
 
-/* Kontrolling = slate */
+/* Kontrolling = slate (hue 260, visszafogott chroma — szinek.html .w-slate) */
 [data-world="kontrolling"] {
+  --hue: 260;
+  /* a dark oklch-recept chroma-bemenetei (csak sötétben fogyasztjuk) */
+  --acc-c-strong: 0.04; --acc-c-mid: 0.045; --acc-c-tint: 0.015; --acc-c-soft-fg: 0.03;
   --world: var(--color-slate-700);      --world-fg: #ffffff;
   --world-hover: var(--color-slate-800);
   --world-soft: var(--color-slate-200); --world-soft-fg: var(--color-slate-800);
   --world-ring: var(--color-slate-600);
-}
-.dark [data-world="kontrolling"] {
-  --world: var(--color-slate-400);      --world-fg: var(--color-slate-950);
-  --world-hover: var(--color-slate-300);
-  --world-soft: var(--color-slate-800); --world-soft-fg: var(--color-slate-200);
-  --world-ring: var(--color-slate-400);
+  --acc-strong: var(--color-slate-700);
+  --acc-mid:    var(--color-slate-600);  /* MarginTrendChart tény-vonal */
+  --acc-tint:   var(--color-slate-100);
 }
 
-/* HR = amber */
+/* HR = amber (hue 75) */
 [data-world="hr"] {
+  --hue: 75;
   --world: var(--color-amber-700);      --world-fg: #ffffff;
   --world-hover: var(--color-amber-800);
   --world-soft: var(--color-amber-100); --world-soft-fg: var(--color-amber-800);
   --world-ring: var(--color-amber-600);
-}
-.dark [data-world="hr"] {
-  --world: var(--color-amber-400);      --world-fg: var(--color-amber-950);
-  --world-hover: var(--color-amber-300);
-  --world-soft: var(--color-amber-950); --world-soft-fg: var(--color-amber-300);
-  --world-ring: var(--color-amber-400);
+  --acc-strong: var(--color-amber-700);
+  --acc-mid:    var(--color-amber-500);
+  --acc-tint:   var(--color-amber-50);
 }
 
-/* Maintenance = cyan */
+/* Maintenance = cyan (hue 210) */
 [data-world="maintenance"] {
+  --hue: 210;
   --world: var(--color-cyan-700);      --world-fg: #ffffff;
   --world-hover: var(--color-cyan-800);
   --world-soft: var(--color-cyan-100); --world-soft-fg: var(--color-cyan-800);
   --world-ring: var(--color-cyan-600);
-}
-.dark [data-world="maintenance"] {
-  --world: var(--color-cyan-400);      --world-fg: var(--color-cyan-950);
-  --world-hover: var(--color-cyan-300);
-  --world-soft: var(--color-cyan-950); --world-soft-fg: var(--color-cyan-300);
-  --world-ring: var(--color-cyan-400);
+  --acc-strong: var(--color-cyan-700);
+  --acc-mid:    var(--color-cyan-500);
+  --acc-tint:   var(--color-cyan-50);
 }
 
-/* QA = lime */
+/* QA = lime (hue 130) */
 [data-world="qa"] {
+  --hue: 130;
   --world: var(--color-lime-700);      --world-fg: #ffffff;
   --world-hover: var(--color-lime-800);
   --world-soft: var(--color-lime-100); --world-soft-fg: var(--color-lime-800);
   --world-ring: var(--color-lime-600);
-}
-.dark [data-world="qa"] {
-  --world: var(--color-lime-400);      --world-fg: var(--color-lime-950);
-  --world-hover: var(--color-lime-300);
-  --world-soft: var(--color-lime-950); --world-soft-fg: var(--color-lime-300);
-  --world-ring: var(--color-lime-400);
+  --acc-strong: var(--color-lime-700);
+  --acc-mid:    var(--color-lime-500);
+  --acc-tint:   var(--color-lime-50);
 }
 
-/* EHS = red */
+/* EHS = red (hue 27) */
 [data-world="ehs"] {
+  --hue: 27;
   --world: var(--color-red-600);      --world-fg: #ffffff;
   --world-hover: var(--color-red-700);
   --world-soft: var(--color-red-100); --world-soft-fg: var(--color-red-800);
   --world-ring: var(--color-red-600);
-}
-.dark [data-world="ehs"] {
-  --world: var(--color-red-400);      --world-fg: var(--color-red-950);
-  --world-hover: var(--color-red-300);
-  --world-soft: var(--color-red-950); --world-soft-fg: var(--color-red-300);
-  --world-ring: var(--color-red-400);
+  --acc-strong: var(--color-red-700);
+  --acc-mid:    var(--color-red-500);
+  --acc-tint:   var(--color-red-50);
 }
 
-/* DMS = violet */
+/* DMS = violet (hue 300) */
 [data-world="dms"] {
+  --hue: 300;
   --world: var(--color-violet-600);      --world-fg: #ffffff;
   --world-hover: var(--color-violet-700);
   --world-soft: var(--color-violet-100); --world-soft-fg: var(--color-violet-800);
   --world-ring: var(--color-violet-600);
+  --acc-strong: var(--color-violet-700);
+  --acc-mid:    var(--color-violet-500);
+  --acc-tint:   var(--color-violet-50);
 }
-.dark [data-world="dms"] {
-  --world: var(--color-violet-400);      --world-fg: var(--color-violet-950);
-  --world-hover: var(--color-violet-300);
-  --world-soft: var(--color-violet-950); --world-soft-fg: var(--color-violet-300);
-  --world-ring: var(--color-violet-400);
+
+/* ── Dark (dark-mode.html) ───────────────────────────────────────────
+   Két bejárat, azonos értékkészlet:
+   1. explicit kapcsoló: :root[data-theme="dark"]
+   2. rendszer-preferencia alapértelmezésként: @media + :not([data-theme="light"])
+   Nincs tiszta fekete; a border viszi a tagolást (a shadow sötétben eltűnik).
+
+   World-akcentusok sötétben: a --hue VÁLTOZATLAN, közös oklch-recept —
+     --acc-strong 0.52→0.78 L, --acc-mid 0.65→0.72 L, --acc-tint 0.96→0.27 L.
+   Primer gomb: világosított akcentus-háttér + SÖTÉT szöveg (WCAG AA ≥4.5:1).
+   Pill/soft: saturált, alacsony-lightness tint + világos akcentus-szöveg. */
+
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --surface-app:    #0d1117;
+  --surface-card:   #151d2b;
+  --surface-sunken: #111826;
+  --border:         #232a35;
+  --text-primary:   #e6e9ee;
+  --text-secondary: #8b93a1;
+  --sidebar:        #05070c;
+
+  --surface-2:  #1b2330;                 /* hover/inset — a kártyánál egy fokkal világosabb */
+  --ink-muted:  var(--text-secondary);
+  --line-strong: #2e3743;
+  --chart-ref:  #4d5663;
+
+  /* fallback (teal) akcent — a [data-world] nélküli felületek (Home, Beállítások) */
+  --world:         oklch(0.78 var(--acc-c-strong, 0.13) var(--hue));
+  --world-fg:      oklch(0.23 var(--acc-c-tint, 0.05) var(--hue));
+  --world-hover:   oklch(0.83 var(--acc-c-strong, 0.13) var(--hue));
+  --world-soft:    oklch(0.27 var(--acc-c-tint, 0.05) var(--hue));
+  --world-soft-fg: oklch(0.82 var(--acc-c-soft-fg, 0.10) var(--hue));
+  --world-ring:    oklch(0.72 var(--acc-c-mid, 0.14) var(--hue));
+  --acc-strong:    oklch(0.78 var(--acc-c-strong, 0.13) var(--hue));
+  --acc-mid:       oklch(0.72 var(--acc-c-mid, 0.14) var(--hue));
+  --acc-tint:      oklch(0.27 var(--acc-c-tint, 0.05) var(--hue));
+}
+
+/* world-akcentusok sötétben — EGY generikus recept minden világra
+   (a kontrolling/slate a light blokkjában felvett --acc-c-* chromákkal fut) */
+[data-theme="dark"] [data-world] {
+  --world:         oklch(0.78 var(--acc-c-strong, 0.13) var(--hue));
+  --world-fg:      oklch(0.23 var(--acc-c-tint, 0.05) var(--hue));
+  --world-hover:   oklch(0.83 var(--acc-c-strong, 0.13) var(--hue));
+  --world-soft:    oklch(0.27 var(--acc-c-tint, 0.05) var(--hue));
+  --world-soft-fg: oklch(0.82 var(--acc-c-soft-fg, 0.10) var(--hue));
+  --world-ring:    oklch(0.72 var(--acc-c-mid, 0.14) var(--hue));
+  --acc-strong:    oklch(0.78 var(--acc-c-strong, 0.13) var(--hue));
+  --acc-mid:       oklch(0.72 var(--acc-c-mid, 0.14) var(--hue));
+  --acc-tint:      oklch(0.27 var(--acc-c-tint, 0.05) var(--hue));
+}
+
+/* rendszer-preferencia alapértelmezésként, kézi felülírással (spec-snippet) */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --surface-app:    #0d1117;
+    --surface-card:   #151d2b;
+    --surface-sunken: #111826;
+    --border:         #232a35;
+    --text-primary:   #e6e9ee;
+    --text-secondary: #8b93a1;
+    --sidebar:        #05070c;
+
+    --surface-2:  #1b2330;
+    --ink-muted:  var(--text-secondary);
+    --line-strong: #2e3743;
+    --chart-ref:  #4d5663;
+
+    --world:         oklch(0.78 var(--acc-c-strong, 0.13) var(--hue));
+    --world-fg:      oklch(0.23 var(--acc-c-tint, 0.05) var(--hue));
+    --world-hover:   oklch(0.83 var(--acc-c-strong, 0.13) var(--hue));
+    --world-soft:    oklch(0.27 var(--acc-c-tint, 0.05) var(--hue));
+    --world-soft-fg: oklch(0.82 var(--acc-c-soft-fg, 0.10) var(--hue));
+    --world-ring:    oklch(0.72 var(--acc-c-mid, 0.14) var(--hue));
+    --acc-strong:    oklch(0.78 var(--acc-c-strong, 0.13) var(--hue));
+    --acc-mid:       oklch(0.72 var(--acc-c-mid, 0.14) var(--hue));
+    --acc-tint:      oklch(0.27 var(--acc-c-tint, 0.05) var(--hue));
+  }
+  :root:not([data-theme="light"]) [data-world] {
+    --world:         oklch(0.78 var(--acc-c-strong, 0.13) var(--hue));
+    --world-fg:      oklch(0.23 var(--acc-c-tint, 0.05) var(--hue));
+    --world-hover:   oklch(0.83 var(--acc-c-strong, 0.13) var(--hue));
+    --world-soft:    oklch(0.27 var(--acc-c-tint, 0.05) var(--hue));
+    --world-soft-fg: oklch(0.82 var(--acc-c-soft-fg, 0.10) var(--hue));
+    --world-ring:    oklch(0.72 var(--acc-c-mid, 0.14) var(--hue));
+    --acc-strong:    oklch(0.78 var(--acc-c-strong, 0.13) var(--hue));
+    --acc-mid:       oklch(0.72 var(--acc-c-mid, 0.14) var(--hue));
+    --acc-tint:      oklch(0.27 var(--acc-c-tint, 0.05) var(--hue));
+  }
 }
 
 /* Aspect ratio utilities (if not already provided by Tailwind 4) */

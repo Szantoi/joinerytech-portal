@@ -48,8 +48,8 @@ export function MiniKanbanStrip({ onNav }: MiniKanbanStripProps) {
     <Card className="p-4 mb-3">
       <div className="flex items-center justify-between mb-3">
         <div>
-          <div className="text-[12.5px] font-semibold text-stone-900">Munkafolyamat áttekintés</div>
-          <div className="text-[11px] text-stone-500">
+          <div className="text-[12.5px] font-semibold text-ink">Munkafolyamat áttekintés</div>
+          <div className="text-[11px] text-ink-soft">
             Doorstar StageChain · {total} aktív feladat
           </div>
         </div>
@@ -68,17 +68,17 @@ export function MiniKanbanStrip({ onNav }: MiniKanbanStripProps) {
           <button
             key={s.key}
             onClick={() => onNav('workflow')}
-            className="text-left bg-stone-50 hover:bg-teal-50/60 border border-stone-200/60 rounded-lg px-3 py-2.5 transition relative"
+            className="text-left bg-surface-sunken hover:bg-teal-50/60 dark:hover:bg-teal-950/40 border border-line/60 rounded-lg px-3 py-2.5 transition relative"
           >
             <div className="flex items-center justify-between gap-1">
-              <div className="text-[10.5px] uppercase tracking-wide text-stone-500 font-medium truncate">
+              <div className="text-[10.5px] uppercase tracking-wide text-ink-soft font-medium truncate">
                 {s.hu}
               </div>
-              {s.optional && <span className="text-[8.5px] text-stone-400">opt</span>}
+              {s.optional && <span className="text-[8.5px] text-ink-soft">opt</span>}
             </div>
-            <div className="text-[22px] font-semibold tabular-nums text-stone-900 mt-0.5">{s.count}</div>
+            <div className="text-[22px] font-semibold tabular-nums text-ink mt-0.5">{s.count}</div>
             {i < counts.length - 1 && (
-              <div className="absolute -right-1 top-1/2 -translate-y-1/2 text-stone-300 z-10 hidden lg:block">
+              <div className="absolute -right-1 top-1/2 -translate-y-1/2 text-line-strong z-10 hidden lg:block">
                 <Icon name="chevron" size={12} />
               </div>
             )}

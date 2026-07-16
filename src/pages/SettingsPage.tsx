@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { Card, PrimaryBtn } from '../components/ui'
+import { ThemeToggle } from '../components/layout/ThemeToggle'
 import { MachineParkPanel } from '../components/settings/MachineParkPanel'
 import { CatalogPanel } from '../components/settings/CatalogPanel'
 import { AuditPanel } from '../components/settings/AuditPanel'
@@ -11,10 +12,11 @@ import { UsersPanel } from '../components/settings/UsersPanel'
 import { TemplatesPanel } from '../components/settings/TemplatesPanel'
 import { AuthorityPanel } from '../components/settings/AuthorityPanel'
 import { ProcessesPanel } from '../components/settings/ProcessesPanel'
-type SettingsTab = 'company' | 'users' | 'facilities' | 'machines' | 'partners' | 'workflow' | 'processes' | 'integrations' | 'catalog' | 'audit' | 'roles' | 'templates' | 'authority'
+type SettingsTab = 'company' | 'appearance' | 'users' | 'facilities' | 'machines' | 'partners' | 'workflow' | 'processes' | 'integrations' | 'catalog' | 'audit' | 'roles' | 'templates' | 'authority'
 
 const TAB_LIST: Array<{ key: SettingsTab; label: string }> = [
   { key: 'company',      label: 'Cég' },
+  { key: 'appearance',   label: 'Megjelenés' },
   { key: 'users',        label: 'Felhasználók' },
   { key: 'roles',        label: 'Jogosultságok' },
   { key: 'authority',    label: 'Hatáskörök' },
@@ -44,15 +46,15 @@ export function SettingsPage({ initialTab = 'company', onTabChange }: SettingsPa
 
   return (
     <div className="px-7 py-6 max-w-[1400px] mx-auto">
-      <div className="flex items-center gap-1 mb-5 border-b border-stone-200/80 overflow-x-auto">
+      <div className="flex items-center gap-1 mb-5 border-b border-line/80 overflow-x-auto">
         {TAB_LIST.map((tb) => (
           <button
             key={tb.key}
             onClick={() => handleTabChange(tb.key)}
             className={`px-3 h-9 text-[12.5px] font-medium border-b-2 whitespace-nowrap transition ${
               tab === tb.key
-                ? 'border-teal-600 text-stone-900'
-                : 'border-transparent text-stone-500 hover:text-stone-800'
+                ? 'border-teal-600 dark:border-teal-400 text-ink'
+                : 'border-transparent text-ink-soft hover:text-ink'
             }`}
           >
             {tb.label}
@@ -61,6 +63,7 @@ export function SettingsPage({ initialTab = 'company', onTabChange }: SettingsPa
       </div>
 
       {tab === 'company' && <CompanyTab />}
+      {tab === 'appearance' && <AppearanceTab />}
       {tab === 'users' && <UsersPanel />}
       {tab === 'roles' && (
         <>
@@ -89,8 +92,8 @@ export function SettingsPage({ initialTab = 'company', onTabChange }: SettingsPa
       {tab === 'authority' && <AuthorityPanel />}
       {tab === 'integrations' && (
         <Card className="p-8 text-center">
-          <div className="text-[13px] font-medium text-stone-700">Integrációk</div>
-          <div className="text-[11.5px] text-stone-500 mt-1">Tartalom placeholder — ehhez a fülhöz design-folyamat van.</div>
+          <div className="text-[13px] font-medium text-ink">Integrációk</div>
+          <div className="text-[11.5px] text-ink-soft mt-1">Tartalom placeholder — ehhez a fülhöz design-folyamat van.</div>
         </Card>
       )}
     </div>
@@ -99,11 +102,31 @@ export function SettingsPage({ initialTab = 'company', onTabChange }: SettingsPa
 
 function EndpointPending({ endpoint }: { endpoint: string }) {
   return (
-    <div className="mb-4 rounded-xl border-2 border-dashed border-amber-200 bg-amber-50/60 px-6 py-4 flex flex-col items-start gap-1">
-      <div className="text-[13px] font-semibold text-amber-700">Backend endpoint nem elérhető</div>
-      <code className="text-[11px] text-amber-600 bg-amber-100 rounded px-2 py-0.5">{endpoint}</code>
-      <div className="text-[11px] text-stone-500">Az endpoint implementálása után lesz élő adat</div>
+    <div className="mb-4 rounded-xl border-2 border-dashed border-amber-200 dark:border-amber-900 bg-amber-50/60 dark:bg-amber-950/40 px-6 py-4 flex flex-col items-start gap-1">
+      <div className="text-[13px] font-semibold text-amber-700 dark:text-amber-300">Backend endpoint nem elérhető</div>
+      <code className="text-[11px] text-amber-600 dark:text-amber-300 bg-amber-100 dark:bg-amber-950 rounded px-2 py-0.5">{endpoint}</code>
+      <div className="text-[11px] text-ink-soft">Az endpoint implementálása után lesz élő adat</div>
     </div>
+  )
+}
+
+
+/**
+ * Megjelenés — téma-választó (design-system/dark-mode.html "Bevezetés"):
+ * rendszer / világos / sötét, localStorage-ben perzisztálva (jt-theme).
+ * Ugyanaz a ThemeToggle, mint a felhasználói menüben és a mobil drawerben.
+ */
+function AppearanceTab() {
+  return (
+    <Card className="p-5 max-w-[640px]">
+      <div className="text-[13px] font-semibold text-ink">Téma</div>
+      <p className="text-[11.5px] text-ink-muted mt-1 mb-4">
+        A „rendszer&rdquo; a készülék beállítását követi; a választás ezen a böngészőn megmarad.
+      </p>
+      <div className="max-w-[320px]">
+        <ThemeToggle />
+      </div>
+    </Card>
   )
 }
 
@@ -120,10 +143,10 @@ function CompanyTab() {
           { label: 'Telefon',   value: '+36 27 123 456' },
         ].map((f, i) => (
           <div key={i}>
-            <div className="text-[10.5px] uppercase tracking-wide text-stone-500 mb-1">{f.label}</div>
+            <div className="text-[10.5px] uppercase tracking-wide text-ink-soft mb-1">{f.label}</div>
             <input
               defaultValue={f.value}
-              className="w-full h-9 px-3 rounded-lg border border-stone-200 text-[12.5px] focus:outline-none focus:ring-2 focus:ring-teal-500/30"
+              className="w-full h-9 px-3 rounded-lg border border-line bg-surface-card text-ink text-[12.5px] focus:outline-none focus:ring-2 focus:ring-world-ring/30"
             />
           </div>
         ))}

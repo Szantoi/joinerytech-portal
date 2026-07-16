@@ -10,8 +10,10 @@ export function Card({ children, className = '', interactive = false }: CardProp
   return (
     <div
       className={cn(
-        'bg-white dark:bg-stone-900 border border-stone-200/80 dark:border-stone-700/80 rounded-xl',
-        interactive && 'hover:border-stone-300 dark:hover:border-stone-600 transition cursor-pointer',
+        // Szemantikus tokenek (design-system/dark-mode.html): kártya = surface-card,
+        // keret = border. Sötétben a border teljes erővel tagol (a shadow eltűnik).
+        'bg-surface-card border border-line/80 dark:border-line rounded-xl',
+        interactive && 'hover:border-line-strong transition cursor-pointer',
         className,
       )}
     >

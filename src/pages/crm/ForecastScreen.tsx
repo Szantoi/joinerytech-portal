@@ -9,7 +9,7 @@ import { OPP_STATUS_LABELS, formatMoney } from './labels'
  * oszlopvég, visszafogott rács — dataviz irányelvek) + részletes táblázat.
  */
 
-const BAR_FILL = '#3b82f6' // Tailwind blue-500 — a CRM világ-akcent (worldAccents: crm=blue)
+const BAR_FILL = 'var(--acc-mid)' // token: CRM világ-akcent (light: blue-500, dark: oklch-recept)
 
 export function ForecastScreen() {
   const opps = useOpps()
@@ -65,18 +65,18 @@ export function ForecastScreen() {
           <div aria-hidden="true">
             <ResponsiveContainer width="100%" height={240}>
               <BarChart data={chartData} margin={{ top: 5, right: 10, left: 0, bottom: 5 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#e7e5e4" vertical={false} />
-                <XAxis dataKey="name" tick={{ fontSize: 11, fill: '#78716c' }} tickLine={false} axisLine={false} />
+                <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" vertical={false} />
+                <XAxis dataKey="name" tick={{ fontSize: 11, fill: 'var(--text-secondary)' }} tickLine={false} axisLine={false} />
                 <YAxis
-                  tick={{ fontSize: 11, fill: '#78716c' }}
+                  tick={{ fontSize: 11, fill: 'var(--text-secondary)' }}
                   tickLine={false}
                   axisLine={false}
                   tickFormatter={(v: number) => formatMoney(v)}
                   width={72}
                 />
                 <Tooltip
-                  cursor={{ fill: 'rgba(120, 113, 108, 0.08)' }}
-                  contentStyle={{ fontSize: 12, borderRadius: 8, border: '1px solid #e7e5e4' }}
+                  cursor={{ fill: 'var(--text-secondary)', fillOpacity: 0.08 }}
+                  contentStyle={{ fontSize: 12, borderRadius: 8, border: '1px solid var(--border)', background: 'var(--surface-card)', color: 'var(--text-primary)' }} labelStyle={{ color: 'var(--text-primary)' }}
                   formatter={(value) => [typeof value === 'number' ? formatMoney(value) : '—', 'Súlyozott érték']}
                 />
                 <Bar dataKey="weighted" fill={BAR_FILL} radius={[4, 4, 0, 0]} maxBarSize={48} />

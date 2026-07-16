@@ -42,7 +42,7 @@ export function SidebarDark({ current, onNav, t }: SidebarDarkProps) {
   const displayInitials = displayName !== DEMO_USER.name ? getInitials(displayName) : DEMO_USER.initials
 
   return (
-    <aside className="hidden md:flex bg-[#0b1220] text-white/85 w-[64px] lg:w-[232px] shrink-0 flex-col h-screen sticky top-0 border-r border-white/5">
+    <aside className="hidden md:flex bg-sidebar text-white/85 w-[64px] lg:w-[232px] shrink-0 flex-col h-screen sticky top-0 border-r border-white/5">
       <div className="px-4 pt-5 pb-4 hidden lg:block">
         <Wordmark tone="dark" size={15} />
       </div>
