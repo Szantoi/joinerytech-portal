@@ -1,5 +1,6 @@
 import { EXPIRY_WARN_DAYS } from './config'
 import type { DocumentStatus } from './fsm'
+import { diffDays as daysBetween } from '../dateUtils'
 
 /**
  * calc — a DMS lekérdezés-logikáinak tükre, tiszta (tesztelhető) függvényekként
@@ -21,37 +22,11 @@ import type { DocumentStatus } from './fsm'
  * igazságforrás.
  */
 
-// ── Dátum-helperek (helyi idő, YYYY-MM-DD kulcsok) ──────────────────────────
-// MEGJEGYZÉS: azonos helperek élnek a services/{hr,maintenance,qa}/calc.ts
-// fájlokban — közös services/dateUtils-ba emelésük dokumentált follow-up
-// (F2-MAINTENANCE-FE 6. / F2-QA-FE 8. pont). NE `new Date(iso)`: az a
-// dátum-only stringet UTC-ként értelmezi (review-lecke — UTC-csapda).
+// ── Dátum-helperek — a közös services/dateUtils-ból (helyi idő, YYYY-MM-DD) ──
+// Re-export, hogy a modul-API (services/dms) változatlan maradjon; a
+// `daysBetween` a közös `diffDays` DMS-beli neve (b − a; negatív, ha b a múltban).
 
-const DAY_MS = 86_400_000
-
-export function parseDay(iso: string): Date {
-  const [y, m, d] = iso.slice(0, 10).split('-').map(Number)
-  return new Date(y, m - 1, d)
-}
-
-export function formatDay(date: Date): string {
-  const pad = (n: number) => String(n).padStart(2, '0')
-  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`
-}
-
-export function addDays(iso: string, days: number): string {
-  return formatDay(new Date(parseDay(iso).getTime() + days * DAY_MS))
-}
-
-/** Mai nap (helyi idő) YYYY-MM-DD kulcsként. */
-export function todayIso(): string {
-  return formatDay(new Date())
-}
-
-/** Naptári napok száma a-tól b-ig (b − a; negatív, ha b a múltban van). */
-export function daysBetween(a: string, b: string): number {
-  return Math.round((parseDay(b).getTime() - parseDay(a).getTime()) / DAY_MS)
-}
+export { parseDay, formatDay, addDays, todayIso, diffDays as daysBetween } from '../dateUtils'
 
 // ── Érvényes (kiadott) verzió — DocsEngine.runtimeVersion tükör ─────────────
 

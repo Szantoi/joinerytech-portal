@@ -1,5 +1,6 @@
 import { PLAN_DUE_SOON_DAYS, PLAN_DUE_SOON_HOURS, SCHEDULE_WINDOW_DAYS } from './config'
 import { type WorkOrderStatus } from './fsm'
+import { addDays, diffDays } from '../dateUtils'
 
 /**
  * calc — a Maintenance backend két domain-service-ének tükre, tiszta
@@ -19,35 +20,10 @@ import { type WorkOrderStatus } from './fsm'
  * a kliens SOSEM számol saját eszköz-státuszt, a válaszban kapott jelenik meg.
  */
 
-// ── Dátum-helperek (helyi idő, YYYY-MM-DD kulcsok) ──────────────────────────
-// MEGJEGYZÉS: azonos helperek élnek a services/hr/calc.ts-ben — közös
-// services/dateUtils-ba emelésük follow-up (a fsmGuards-kiemelés mintájára).
+// ── Dátum-helperek — a közös services/dateUtils-ból (helyi idő, YYYY-MM-DD) ──
+// Re-export, hogy a modul-API (services/maintenance) változatlan maradjon.
 
-const DAY_MS = 86_400_000
-
-export function parseDay(iso: string): Date {
-  const [y, m, d] = iso.split('-').map(Number)
-  return new Date(y, m - 1, d)
-}
-
-export function formatDay(date: Date): string {
-  const pad = (n: number) => String(n).padStart(2, '0')
-  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`
-}
-
-export function addDays(iso: string, days: number): string {
-  return formatDay(new Date(parseDay(iso).getTime() + days * DAY_MS))
-}
-
-/** Előjeles naptári nap-különbség: b - a (b a jövőben → pozitív). */
-export function diffDays(a: string, b: string): number {
-  return Math.round((parseDay(b).getTime() - parseDay(a).getTime()) / DAY_MS)
-}
-
-/** Mai nap (helyi idő) YYYY-MM-DD kulcsként. */
-export function todayIso(): string {
-  return formatDay(new Date())
-}
+export { parseDay, formatDay, addDays, diffDays, todayIso } from '../dateUtils'
 
 /** Az ütemterv-rács napjai: a kezdőnaptól SCHEDULE_WINDOW_DAYS naptári nap. */
 export function scheduleWindow(startIso: string, days: number = SCHEDULE_WINDOW_DAYS): string[] {

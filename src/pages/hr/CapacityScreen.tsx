@@ -1,10 +1,9 @@
 import { useState } from 'react'
-import { Button, Card } from '../../components/ui'
+import { Button, Card, QueryGate } from '../../components/ui'
 import {
   addDays, capacityWeekOf, loadBand, todayIso,
   useEmployees, useWeekCapacity, type DayLoad,
 } from '../../services/hr'
-import { QueryGate } from '../ehs/QueryGate'
 import { ABSENCE_TYPE_META, LOAD_BAND_META, formatGridDay, formatHours } from './labels'
 import { EmployeeAvatar } from './EmployeeAvatar'
 import { EmployeeDetailSlideOver } from './EmployeeDetailSlideOver'

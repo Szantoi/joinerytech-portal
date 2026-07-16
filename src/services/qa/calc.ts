@@ -3,6 +3,7 @@ import {
   isInspectionDone, isTicketOpen,
   type InspectionStatus, type TicketStatus,
 } from './fsm'
+import { addDays, formatDay, parseDay } from '../dateUtils'
 
 /**
  * calc — a QA backend lekérdezés-logikáinak tükre, tiszta (tesztelhető)
@@ -24,32 +25,12 @@ import {
  * blocking/openTickets mezők kiszolgálás-kori számítása) — egy igazságforrás.
  */
 
-// ── Dátum-helperek (helyi idő, YYYY-MM-DD kulcsok) ──────────────────────────
-// MEGJEGYZÉS: azonos helperek élnek a services/hr/calc.ts és a
-// services/maintenance/calc.ts fájlokban — közös services/dateUtils-ba
-// emelésük dokumentált follow-up (F2-MAINTENANCE-FE.md 6. pont).
+// ── Dátum-helperek — a közös services/dateUtils-ból (helyi idő, YYYY-MM-DD) ──
+// Re-export, hogy a modul-API (services/qa) változatlan maradjon.
 
-const DAY_MS = 86_400_000
+export { parseDay, formatDay, addDays, todayIso } from '../dateUtils'
+
 const HOUR_MS = 3_600_000
-
-export function parseDay(iso: string): Date {
-  const [y, m, d] = iso.slice(0, 10).split('-').map(Number)
-  return new Date(y, m - 1, d)
-}
-
-export function formatDay(date: Date): string {
-  const pad = (n: number) => String(n).padStart(2, '0')
-  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`
-}
-
-export function addDays(iso: string, days: number): string {
-  return formatDay(new Date(parseDay(iso).getTime() + days * DAY_MS))
-}
-
-/** Mai nap (helyi idő) YYYY-MM-DD kulcsként. */
-export function todayIso(): string {
-  return formatDay(new Date())
-}
 
 /** A napot tartalmazó naptári hét hétfője (YYYY-MM-DD). */
 export function startOfWeek(iso: string): string {

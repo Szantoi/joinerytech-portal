@@ -1,8 +1,7 @@
 import { useState } from 'react'
-import { DataTable, Icon, StatusPill, type DataTableColumn } from '../../components/ui'
+import { DataTable, Icon, QueryGate, StatusPill, type DataTableColumn } from '../../components/ui'
 import { useTickets, type TicketStatus } from '../../services/qa'
 import type { Ticket } from '../../services/qa/tickets'
-import { QueryGate } from '../ehs/QueryGate'
 import {
   TICKET_PRIORITY_META, TICKET_STATUS_META, TICKET_TYPE_META, formatDate,
 } from './labels'

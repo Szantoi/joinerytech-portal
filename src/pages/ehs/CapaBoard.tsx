@@ -1,8 +1,7 @@
 import { useState } from 'react'
-import { Button, DataTable, StatusPill, type DataTableColumn } from '../../components/ui'
+import { Button, DataTable, QueryGate, StatusPill, type DataTableColumn } from '../../components/ui'
 import { useCapas, useCompleteCapa, employeeName, type Capa } from '../../services/ehs'
 import { CAPA_SOURCE_LABELS, formatDate, isOverdue } from './labels'
-import { QueryGate } from './QueryGate'
 import { SelectField } from './formFields'
 
 /**

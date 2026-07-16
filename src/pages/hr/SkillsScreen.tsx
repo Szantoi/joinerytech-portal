@@ -1,7 +1,6 @@
 import { useState } from 'react'
-import { Card, Icon, StatusPill } from '../../components/ui'
+import { Card, Icon, QueryGate, StatusPill } from '../../components/ui'
 import { useEmployees, type SkillKey, type SkillLevel } from '../../services/hr'
-import { QueryGate } from '../ehs/QueryGate'
 import { SKILL_LABELS, SKILL_LEVEL_META, SKILL_ORDER } from './labels'
 import { EmployeeAvatar } from './EmployeeAvatar'
 import { EmployeeDetailSlideOver } from './EmployeeDetailSlideOver'

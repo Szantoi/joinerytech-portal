@@ -1,11 +1,10 @@
 import { useState } from 'react'
-import { DataTable, StatusPill, type DataTableColumn } from '../../components/ui'
+import { DataTable, QueryGate, StatusPill, type DataTableColumn } from '../../components/ui'
 import {
   useHazardousMaterials, useEhsLocations, locationNameMap,
   type HazardousMaterialListItem,
 } from '../../services/ehs'
 import { MATERIAL_STATUS_LABELS, SDS_VALIDITY_META, formatDate } from './labels'
-import { QueryGate } from './QueryGate'
 import { SdsDetailSlideOver } from './SdsDetailSlideOver'
 
 /**

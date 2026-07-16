@@ -1,7 +1,6 @@
 import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
-import { Card, StatusPill } from '../../components/ui'
+import { Card, QueryGate, StatusPill } from '../../components/ui'
 import { useOpps, weightedValue, OPP_OPEN_STAGES, OPP_STAGE_PROBABILITY } from '../../services/crm'
-import { QueryGate } from '../ehs/QueryGate'
 import { OPP_STATUS_LABELS, formatMoney } from './labels'
 
 /**

@@ -1,5 +1,5 @@
 import type { Tone } from '../../theme/statusTones'
-import type { AbsenceAction, AbsenceStatus, LoadBand } from '../../services/hr'
+import { parseDay, type AbsenceAction, type AbsenceStatus, type LoadBand } from '../../services/hr'
 import type { AbsenceType } from '../../services/hr/absences'
 import type { HrDept, PayGrade, SkillKey, SkillLevel } from '../../services/hr/employees'
 
@@ -115,9 +115,10 @@ export function formatRate(rate: number): string {
   return `${rate.toLocaleString('hu-HU')} Ft/ó`
 }
 
+/** Dátum — a nap-kulcsot a HELYI idejű parseDay bontja (NE `new Date(iso)`: UTC-csapda). */
 export function formatDate(iso: string | null | undefined): string {
   if (!iso) return '—'
-  return new Date(iso).toLocaleDateString('hu-HU')
+  return parseDay(iso).toLocaleDateString('hu-HU')
 }
 
 /** Rövid nap-fejléc a kapacitás-rácshoz: „H 7.13". */
@@ -125,6 +126,6 @@ const DOW_SHORT = ['V', 'H', 'K', 'Sze', 'Cs', 'P', 'Szo']
 
 export function formatGridDay(iso: string): string {
   const [, m, d] = iso.split('-').map(Number)
-  const dow = new Date(iso).getDay()
+  const dow = parseDay(iso).getDay()
   return `${DOW_SHORT[dow]} ${m}.${d}`
 }

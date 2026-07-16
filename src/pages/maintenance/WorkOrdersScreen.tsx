@@ -1,8 +1,7 @@
 import { useState } from 'react'
-import { DataTable, Icon, StatusPill, type DataTableColumn } from '../../components/ui'
+import { DataTable, Icon, QueryGate, StatusPill, type DataTableColumn } from '../../components/ui'
 import { useWorkOrders, type WorkOrderStatus } from '../../services/maintenance'
 import type { WorkOrder } from '../../services/maintenance/workOrders'
-import { QueryGate } from '../ehs/QueryGate'
 import {
   WO_PRIORITY_META, WO_STATUS_LABELS, WO_TYPE_META, formatDate,
 } from './labels'

@@ -1,7 +1,6 @@
 import { useState } from 'react'
-import { DataTable, Icon, StatusPill, type DataTableColumn } from '../../components/ui'
+import { DataTable, Icon, QueryGate, StatusPill, type DataTableColumn } from '../../components/ui'
 import { useLeads, type Lead, type LeadStatus } from '../../services/crm'
-import { QueryGate } from '../ehs/QueryGate'
 import { LEAD_STATUS_LABELS, SOURCE_LABELS, formatDate, formatMoney } from './labels'
 import { LeadDetailSlideOver } from './LeadDetailSlideOver'
 

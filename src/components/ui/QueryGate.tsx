@@ -1,9 +1,10 @@
 import type { ReactNode } from 'react'
-import { Button } from '../../components/ui'
+import { Button } from './Button'
 
 /**
- * QueryGate — egységes betöltés/hiba keret a query-vezérelt EHS képernyőkhöz.
+ * QueryGate — egységes betöltés/hiba keret a query-vezérelt képernyőkhöz.
  * Betöltés: skeleton sorok (aria-busy); hiba: üzenet + Újra gomb (refetch).
+ * (Az EHS alól promótált közös primitív — QA-review M1: mind a 7 modul használja.)
  */
 interface QueryGateProps {
   isPending: boolean

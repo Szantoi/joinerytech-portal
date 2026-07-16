@@ -1,7 +1,6 @@
 import { useState } from 'react'
-import { DataTable, Icon, StatusPill, type DataTableColumn } from '../../components/ui'
+import { DataTable, Icon, QueryGate, StatusPill, type DataTableColumn } from '../../components/ui'
 import { useProjects, type ProjectStatus, type ProjectSummary } from '../../services/controlling'
-import { QueryGate } from '../ehs/QueryGate'
 import { MarginPill, VariancePill } from './MarginVisuals'
 import { PROJECT_STATUS_LABELS, formatHufM } from './labels'
 import { ProjectDetailSlideOver } from './ProjectDetailSlideOver'

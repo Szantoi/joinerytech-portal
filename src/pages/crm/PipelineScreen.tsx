@@ -1,11 +1,10 @@
 import { useState } from 'react'
-import { Button, StatusPill } from '../../components/ui'
+import { Button, QueryGate, StatusPill } from '../../components/ui'
 import {
   useOpps, useOppTransition,
   OPP_OPEN_STAGES, nextOppAction, weightedValue,
   type Opportunity, type OppStatus,
 } from '../../services/crm'
-import { QueryGate } from '../ehs/QueryGate'
 import { OPP_ACTION_LABELS, OPP_STATUS_LABELS, formatMoney } from './labels'
 import { OppDetailSlideOver } from './OppDetailSlideOver'
 

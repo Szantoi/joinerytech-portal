@@ -1,7 +1,6 @@
-import { StatusPill } from '../../components/ui'
+import { QueryGate, StatusPill } from '../../components/ui'
 import { SlideOver } from '../../components/ui/SlideOver'
 import { useAdjustments, useProject, useProjectCalc } from '../../services/controlling'
-import { QueryGate } from '../ehs/QueryGate'
 import { MarginBar, MarginPill } from './MarginVisuals'
 import { CATEGORY_LABELS, PROJECT_STATUS_LABELS, formatDate, formatHuf, formatSignedHuf } from './labels'
 

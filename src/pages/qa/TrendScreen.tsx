@@ -1,10 +1,9 @@
-import { Card } from '../../components/ui'
+import { Card, QueryGate } from '../../components/ui'
 import {
   TREND_WINDOW_WEEKS, calcQaMetrics, todayIso, useInspections, useTickets,
   weeklyInspectionTrend,
 } from '../../services/qa'
 import type { FailureType } from '../../services/qa/inspections'
-import { QueryGate } from '../ehs/QueryGate'
 import {
   FAILURE_TYPE_LABELS, PASS_RATE_TARGET_LABEL,
   formatHours, formatPct, formatWeekLabel,

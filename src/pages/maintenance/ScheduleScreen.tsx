@@ -1,10 +1,9 @@
 import { useState } from 'react'
-import { STATUS_TONES } from '../../components/ui'
+import { QueryGate, STATUS_TONES } from '../../components/ui'
 import {
   SCHEDULE_WINDOW_DAYS, scheduleWindow, todayIso, useWorkOrders,
 } from '../../services/maintenance'
 import type { WorkOrder, WorkOrderType } from '../../services/maintenance/workOrders'
-import { QueryGate } from '../ehs/QueryGate'
 import {
   WO_STATUS_LABELS, WO_TYPE_META, formatDate, formatGridDay, isWeekend,
 } from './labels'

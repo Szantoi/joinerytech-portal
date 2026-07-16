@@ -1,7 +1,6 @@
 import { useState } from 'react'
-import { DataTable, Icon, StatusPill, type DataTableColumn } from '../../components/ui'
+import { DataTable, Icon, QueryGate, StatusPill, type DataTableColumn } from '../../components/ui'
 import { useOpps, weightedValue, type Opportunity, type OppStatus } from '../../services/crm'
-import { QueryGate } from '../ehs/QueryGate'
 import { OPP_STATUS_LABELS, formatDate, formatMoney } from './labels'
 import { OppDetailSlideOver } from './OppDetailSlideOver'
 

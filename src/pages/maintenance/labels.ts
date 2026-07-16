@@ -1,6 +1,6 @@
 import type { Tone } from '../../theme/statusTones'
 import {
-  PLAN_DUE_SOON_DAYS, PLAN_DUE_SOON_HOURS,
+  PLAN_DUE_SOON_DAYS, PLAN_DUE_SOON_HOURS, parseDay,
   type AssetKind, type AssetStatus, type PlanDueInfo,
   type WorkOrderAction, type WorkOrderStatus,
 } from '../../services/maintenance'
@@ -101,9 +101,10 @@ export function formatHours(h: number): string {
   return `${String(rounded).replace('.', ',')} ó`
 }
 
+/** Dátum — a nap-kulcsot a HELYI idejű parseDay bontja (NE `new Date(iso)`: UTC-csapda, review M1). */
 export function formatDate(iso: string | null | undefined): string {
   if (!iso) return '—'
-  return new Date(iso).toLocaleDateString('hu-HU')
+  return parseDay(iso).toLocaleDateString('hu-HU')
 }
 
 /** Üzemóra ezres tagolással („12 400 üó"). */
@@ -140,12 +141,12 @@ const DOW_SHORT = ['V', 'H', 'K', 'Sze', 'Cs', 'P', 'Szo']
 
 export function formatGridDay(iso: string): string {
   const [, m, d] = iso.split('-').map(Number)
-  const dow = new Date(iso).getDay()
+  const dow = parseDay(iso).getDay()
   return `${DOW_SHORT[dow]} ${m}.${d}`
 }
 
 /** Hétvége-e a nap (az ütemterv-rács halvány oszlopaihoz). */
 export function isWeekend(iso: string): boolean {
-  const dow = new Date(iso).getDay()
+  const dow = parseDay(iso).getDay()
   return dow === 0 || dow === 6
 }

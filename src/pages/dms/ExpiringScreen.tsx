@@ -1,10 +1,9 @@
 import { useState } from 'react'
-import { DataTable, StatusPill, type DataTableColumn } from '../../components/ui'
+import { DataTable, QueryGate, StatusPill, type DataTableColumn } from '../../components/ui'
 import {
   EXPIRY_WARN_DAYS, daysUntilExpiry, todayIso, useDocuments,
 } from '../../services/dms'
 import type { DmsDocument } from '../../services/dms/documents'
-import { QueryGate } from '../ehs/QueryGate'
 import {
   DOCUMENT_STATUS_LABELS, DOC_TYPE_META, EXPIRY_META, EXPIRY_WINDOW_LABEL,
   formatDate, formatExpiryDays,

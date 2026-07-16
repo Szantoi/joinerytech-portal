@@ -1,8 +1,7 @@
 import { useState } from 'react'
-import { DataTable, Icon, StatusPill, type DataTableColumn } from '../../components/ui'
+import { DataTable, Icon, QueryGate, StatusPill, type DataTableColumn } from '../../components/ui'
 import { useInspections, type InspectionStatus } from '../../services/qa'
 import type { Inspection } from '../../services/qa/inspections'
-import { QueryGate } from '../ehs/QueryGate'
 import {
   CHECKPOINT_TYPE_META, CRITICAL_LEVEL_META, INSPECTION_STATUS_LABELS, formatDate,
 } from './labels'

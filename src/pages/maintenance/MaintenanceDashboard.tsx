@@ -1,9 +1,8 @@
 import { useState } from 'react'
-import { Card, StatusPill } from '../../components/ui'
+import { Card, QueryGate, StatusPill } from '../../components/ui'
 import {
   isWorkOrderOpen, planDueInfo, todayIso, useAssets, useWorkOrders,
 } from '../../services/maintenance'
-import { QueryGate } from '../ehs/QueryGate'
 import {
   ASSET_STATUS_META, PLAN_DUE_SOON_LABEL, WO_PRIORITY_META, WO_PRIORITY_ORDER,
   WO_STATUS_LABELS, WO_TYPE_META, formatDate, planDueLabel,

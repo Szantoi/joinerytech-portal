@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react'
 import {
-  Button, DataTable, StatusPill, Tabs, TabPanel, type DataTableColumn,
+  Button, DataTable, QueryGate, StatusPill, Tabs, TabPanel, type DataTableColumn,
 } from '../../components/ui'
 import {
   usePpeItems, usePpeIssuances, usePpeTransition,
@@ -9,7 +9,6 @@ import {
   type PpeIssuance, type PpeItem, type PpeIssuanceAction,
 } from '../../services/ehs'
 import { PPE_CATEGORY_LABELS, PPE_STATUS_LABELS, formatDate } from './labels'
-import { QueryGate } from './QueryGate'
 import { SelectField } from './formFields'
 import { PpeIssueForm } from './PpeIssueForm'
 

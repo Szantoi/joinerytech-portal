@@ -1,4 +1,5 @@
 import type { Tone } from '../../theme/statusTones'
+import { parseDay } from '../../services/dateUtils'
 import type { LeadAction, LeadStatus, OppAction, OppStatus } from '../../services/crm/fsm'
 import type { ActivityKind } from '../../services/crm/activities'
 import type { CrmSource } from '../../services/crm/leads'
@@ -106,7 +107,8 @@ export function formatMoney(n: number): string {
   return n + ' Ft'
 }
 
+/** Dátum — a nap-kulcsot a HELYI idejű parseDay bontja (NE `new Date(iso)`: UTC-csapda). */
 export function formatDate(iso: string | null | undefined): string {
   if (!iso) return '—'
-  return new Date(iso).toLocaleDateString('hu-HU')
+  return parseDay(iso).toLocaleDateString('hu-HU')
 }

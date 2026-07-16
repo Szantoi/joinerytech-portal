@@ -1,11 +1,10 @@
 import { useState } from 'react'
-import { Card, StatusPill } from '../../components/ui'
+import { Card, QueryGate, StatusPill } from '../../components/ui'
 import {
   EXPIRY_WARN_DAYS, RECENT_DOCS_LIMIT, daysUntilExpiry, docStats,
   isDocumentInReview, todayIso, useDocuments,
 } from '../../services/dms'
 import type { DmsDocument } from '../../services/dms/documents'
-import { QueryGate } from '../ehs/QueryGate'
 import {
   DOCUMENT_STATUS_LABELS, DOC_TYPE_META, EXPIRY_META,
   formatDate, formatExpiryDays,

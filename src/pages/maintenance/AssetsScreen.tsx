@@ -1,7 +1,6 @@
 import { useState } from 'react'
-import { DataTable, Icon, StatusPill, type DataTableColumn } from '../../components/ui'
+import { DataTable, Icon, QueryGate, StatusPill, type DataTableColumn } from '../../components/ui'
 import { useAssets, type Asset, type AssetKind } from '../../services/maintenance'
-import { QueryGate } from '../ehs/QueryGate'
 import {
   ASSET_KIND_META, ASSET_KIND_ORDER, ASSET_STATUS_META, formatOperatingHours,
 } from './labels'

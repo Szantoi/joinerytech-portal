@@ -1,4 +1,5 @@
 import type { Tone } from '../../theme/statusTones'
+import { parseDay } from '../../services/dateUtils'
 import type { CostCategory, MarginBand } from '../../services/controlling/calc'
 import type { ProjectStatus } from '../../services/controlling/projects'
 import type { AdjustmentScope } from '../../services/controlling/adjustments'
@@ -63,12 +64,13 @@ export function formatPct(x: number | null): string {
   return x == null ? '—' : Math.round(x * 100) + '%'
 }
 
+/** Dátum — a nap-kulcsot a HELYI idejű parseDay bontja (NE `new Date(iso)`: UTC-csapda). */
 export function formatDate(iso: string | null | undefined): string {
   if (!iso) return '—'
-  return new Date(iso).toLocaleDateString('hu-HU')
+  return parseDay(iso).toLocaleDateString('hu-HU')
 }
 
-/** Trend-hónap (YYYY-MM) → rövid magyar hónapnév. */
+/** Trend-hónap (YYYY-MM) → rövid magyar hónapnév (helyi idejű parse — UTC-csapda ellen). */
 export function formatMonth(month: string): string {
-  return new Date(`${month}-01`).toLocaleDateString('hu-HU', { month: 'short' })
+  return parseDay(`${month}-01`).toLocaleDateString('hu-HU', { month: 'short' })
 }

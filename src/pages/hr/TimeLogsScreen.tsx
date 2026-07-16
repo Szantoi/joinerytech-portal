@@ -1,9 +1,8 @@
-import { Button, DataTable, StatusPill, type DataTableColumn } from '../../components/ui'
+import { Button, DataTable, QueryGate, StatusPill, type DataTableColumn } from '../../components/ui'
 import {
   isTimeLogPushable, manageBlockReason, useHrPermissions, usePushTimeLogs,
   useTimeLogs, type TimeLog,
 } from '../../services/hr'
-import { QueryGate } from '../ehs/QueryGate'
 import { formatDate, formatHours } from './labels'
 
 /**

@@ -1,8 +1,7 @@
 import { useState } from 'react'
-import { StatusPill } from '../../components/ui'
+import { QueryGate, StatusPill } from '../../components/ui'
 import { useIncidents } from '../../services/ehs'
 import { INCIDENT_STATUS_LABELS, INCIDENT_TYPE_LABELS, SEVERITY_LABELS, formatDate } from './labels'
-import { QueryGate } from './QueryGate'
 import { IncidentDetailSlideOver } from './IncidentDetailSlideOver'
 
 /**

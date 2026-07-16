@@ -1,7 +1,6 @@
 import { Suspense, lazy } from 'react'
-import { Button, Card } from '../../components/ui'
+import { Button, Card, QueryGate } from '../../components/ui'
 import { AT_RISK_MARGIN_THRESHOLD, usePortfolioSummary } from '../../services/controlling'
-import { QueryGate } from '../ehs/QueryGate'
 import { MarginPill } from './MarginVisuals'
 import { formatHufM, formatPct } from './labels'
 

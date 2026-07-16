@@ -1,10 +1,9 @@
-import { Card, Icon, StatusPill } from '../../components/ui'
+import { Card, Icon, QueryGate, StatusPill } from '../../components/ui'
 import {
   useAbsences, useEmployees, useWeekCapacity,
-  capacityWeekOf, todayIso, isWorkday,
+  capacityWeekOf, loadBand, todayIso, isWorkday,
   isAbsenceBlocking, isAbsenceRequested,
 } from '../../services/hr'
-import { QueryGate } from '../ehs/QueryGate'
 import {
   ABSENCE_STATUS_LABELS, ABSENCE_TYPE_META, formatDate, formatHours,
 } from './labels'
@@ -193,6 +192,9 @@ export function HrDashboard({ onScreen }: { onScreen: (s: string) => void }) {
               if (!emp) return null
               const pct = Math.min(100, Math.round(r.utilization * 100))
               const over = r.days.some((d) => d.overloaded)
+              // Sáv-tónus a config-vezérelt loadBand-ből (HR-review M1) —
+              // ugyanaz a küszöb-forrás, mint a Dolgozók képernyő pilljein.
+              const band = loadBand(r.assigned, r.capacity)
               return (
                 <li key={r.empId} className="flex items-center gap-3 border-b border-line px-4 py-2.5 last:border-0">
                   <EmployeeAvatar color={emp.color} initials={emp.initials} size={28} />
@@ -209,7 +211,7 @@ export function HrDashboard({ onScreen }: { onScreen: (s: string) => void }) {
                     </div>
                     <div className="h-2 overflow-hidden rounded-full bg-surface-2" role="presentation">
                       <div
-                        className={`h-full ${over ? 'bg-rose-500 dark:bg-rose-400' : pct > 85 ? 'bg-amber-500 dark:bg-amber-400' : 'bg-emerald-500 dark:bg-emerald-400'}`}
+                        className={`h-full ${over || band === 'over' ? 'bg-rose-500 dark:bg-rose-400' : band === 'high' ? 'bg-amber-500 dark:bg-amber-400' : 'bg-emerald-500 dark:bg-emerald-400'}`}
                         style={{ width: `${pct}%` }}
                       />
                     </div>

@@ -1,11 +1,10 @@
 import { useState } from 'react'
-import { DataTable, Icon, StatusPill, type DataTableColumn } from '../../components/ui'
+import { DataTable, Icon, QueryGate, StatusPill, type DataTableColumn } from '../../components/ui'
 import {
   useDocuments,
   type DocLinkType, type DocType, type DocumentStatus,
 } from '../../services/dms'
 import type { DmsDocument, DocumentFilters } from '../../services/dms/documents'
-import { QueryGate } from '../ehs/QueryGate'
 import {
   DOCUMENT_STATUS_LABELS, DOC_LINK_LABELS, DOC_LINK_ORDER, DOC_TYPE_META,
   DOC_TYPE_ORDER, EXPIRY_META, formatDate,

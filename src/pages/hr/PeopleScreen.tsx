@@ -1,10 +1,9 @@
 import { useState } from 'react'
-import { DataTable, Icon, StatusPill, type DataTableColumn } from '../../components/ui'
+import { DataTable, Icon, QueryGate, StatusPill, type DataTableColumn } from '../../components/ui'
 import {
   capacityWeekOf, loadBand, todayIso,
   useEmployees, useWeekCapacity, type Employee, type HrDept,
 } from '../../services/hr'
-import { QueryGate } from '../ehs/QueryGate'
 import {
   DEPT_META, DEPT_ORDER, LOAD_BAND_META, SKILL_LABELS, SKILL_LEVEL_META,
   formatHours,

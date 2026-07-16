@@ -1,7 +1,6 @@
 import { useState } from 'react'
-import { Button, StatusPill } from '../../components/ui'
+import { Button, QueryGate, StatusPill } from '../../components/ui'
 import { useTasks, useCompleteTask, computeTaskSla, type CrmTask } from '../../services/crm'
-import { QueryGate } from '../ehs/QueryGate'
 import { PRIORITY_META, SLA_META, formatDate } from './labels'
 
 /**

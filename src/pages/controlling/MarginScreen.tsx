@@ -1,7 +1,6 @@
 import { useState } from 'react'
-import { Card, StatusPill } from '../../components/ui'
+import { Card, QueryGate, StatusPill } from '../../components/ui'
 import { useProjects, type ProjectSummary } from '../../services/controlling'
-import { QueryGate } from '../ehs/QueryGate'
 import { MarginBar, MarginPill, VariancePill } from './MarginVisuals'
 import { CATEGORY_LABELS, PROJECT_STATUS_LABELS, formatHuf, formatHufM, formatPct } from './labels'
 import { ProjectDetailSlideOver } from './ProjectDetailSlideOver'

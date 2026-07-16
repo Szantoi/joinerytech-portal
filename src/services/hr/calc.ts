@@ -1,5 +1,6 @@
 import { OVERLOAD_EPSILON, UTILIZATION_WARN_THRESHOLD, WORKDAYS_PER_WEEK } from './config'
 import { isAbsenceBlocking, type AbsenceStatus } from './fsm'
+import { addDays, parseDay } from '../dateUtils'
 
 /**
  * calc — a HR backend kapacitás-számításának tükre, tiszta (tesztelhető)
@@ -15,23 +16,10 @@ import { isAbsenceBlocking, type AbsenceStatus } from './fsm'
  * (a /capacity válasz kiszámítása) — egy igazságforrás.
  */
 
-const DAY_MS = 86_400_000
+// ── Dátum-helperek — a közös services/dateUtils-ból (helyi idő, YYYY-MM-DD) ──
+// Re-export, hogy a modul-API (services/hr) változatlan maradjon.
 
-// ── Dátum-helperek (helyi idő, YYYY-MM-DD kulcsok) ──────────────────────────
-
-export function parseDay(iso: string): Date {
-  const [y, m, d] = iso.split('-').map(Number)
-  return new Date(y, m - 1, d)
-}
-
-export function formatDay(date: Date): string {
-  const pad = (n: number) => String(n).padStart(2, '0')
-  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`
-}
-
-export function addDays(iso: string, days: number): string {
-  return formatDay(new Date(parseDay(iso).getTime() + days * DAY_MS))
-}
+export { parseDay, formatDay, addDays, todayIso } from '../dateUtils'
 
 export function isWorkday(iso: string): boolean {
   const dow = parseDay(iso).getDay()
@@ -42,11 +30,6 @@ export function isWorkday(iso: string): boolean {
 export function mondayOf(iso: string): string {
   const dow = parseDay(iso).getDay()
   return addDays(iso, dow === 0 ? -6 : 1 - dow)
-}
-
-/** Mai nap (helyi idő) YYYY-MM-DD kulcsként. */
-export function todayIso(): string {
-  return formatDay(new Date())
 }
 
 /**

@@ -1,4 +1,5 @@
 import { TASK_SLA_SOON_DAYS } from './config'
+import { DAY_MS, parseDay } from '../dateUtils'
 
 /**
  * Feladat-SLA — SZÁMÍTOTT mező (a backend számításának előképe, tesztelhető
@@ -11,11 +12,9 @@ import { TASK_SLA_SOON_DAYS } from './config'
 
 export type TaskSla = 'ok' | 'soon' | 'overdue'
 
-const DAY_MS = 24 * 60 * 60 * 1000
-
 /** Hátralévő egész napok a határidőig (negatív = lejárt), nap végéig számolva. */
 export function daysUntilDue(dueDate: string, now: Date = new Date()): number {
-  const due = new Date(dueDate)
+  const due = parseDay(dueDate) // HELYI idejű nap-parse (NE `new Date(iso)`: UTC-csapda)
   due.setHours(23, 59, 59, 999) // a határidő napja még nem késés
   return Math.floor((due.getTime() - now.getTime()) / DAY_MS)
 }

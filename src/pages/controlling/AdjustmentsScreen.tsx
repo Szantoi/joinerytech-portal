@@ -1,7 +1,6 @@
 import { useMemo, useState } from 'react'
-import { Button, DataTable, StatusPill, type DataTableColumn } from '../../components/ui'
+import { Button, DataTable, QueryGate, StatusPill, type DataTableColumn } from '../../components/ui'
 import { useAdjustments, useDeleteAdjustment, useProjects, type CostAdjustment } from '../../services/controlling'
-import { QueryGate } from '../ehs/QueryGate'
 import { AdjustmentForm } from './AdjustmentForm'
 import { CATEGORY_LABELS, SCOPE_LABELS, formatDate, formatSignedHuf } from './labels'
 

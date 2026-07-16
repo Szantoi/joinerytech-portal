@@ -1,10 +1,9 @@
 import { useState } from 'react'
-import { Card, StatusPill } from '../../components/ui'
+import { Card, QueryGate, StatusPill } from '../../components/ui'
 import {
   PASS_RATE_WARN_THRESHOLD, calcQaMetrics, isInspectionDone, isInspectionOpen,
   isTicketOpen, pct, useInspections, useTickets,
 } from '../../services/qa'
-import { QueryGate } from '../ehs/QueryGate'
 import {
   CRITICAL_LEVEL_META, INSPECTION_STATUS_LABELS, PASS_RATE_TARGET_LABEL,
   TICKET_PRIORITY_META, TICKET_PRIORITY_ORDER, TICKET_STATUS_META,

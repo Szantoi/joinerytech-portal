@@ -1,9 +1,8 @@
-import { Card, StatusPill } from '../../components/ui'
+import { Card, QueryGate, StatusPill } from '../../components/ui'
 import {
   useLeads, useOpps, useTasks, useRecentActivities,
   weightedValue, computeTaskSla, OPP_OPEN_STAGES,
 } from '../../services/crm'
-import { QueryGate } from '../ehs/QueryGate'
 import { ACTIVITY_KIND_LABELS, OPP_STATUS_LABELS, formatMoney } from './labels'
 
 /**

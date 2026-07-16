@@ -1,7 +1,6 @@
 import { useState } from 'react'
-import { DataTable, Icon, StatusPill, type DataTableColumn } from '../../components/ui'
+import { DataTable, Icon, QueryGate, StatusPill, type DataTableColumn } from '../../components/ui'
 import { useAbsences, type Absence, type AbsenceStatus } from '../../services/hr'
-import { QueryGate } from '../ehs/QueryGate'
 import { ABSENCE_STATUS_LABELS, ABSENCE_TYPE_META, formatDate } from './labels'
 import { AbsenceDetailSlideOver } from './AbsenceDetailSlideOver'
 

@@ -1,7 +1,6 @@
 import { useState } from 'react'
-import { Card, Icon } from '../../components/ui'
+import { Card, Icon, QueryGate } from '../../components/ui'
 import { useVariance, type VarianceRow } from '../../services/controlling'
-import { QueryGate } from '../ehs/QueryGate'
 import { VariancePill } from './MarginVisuals'
 import { CATEGORY_LABELS, formatHuf, formatPct } from './labels'
 

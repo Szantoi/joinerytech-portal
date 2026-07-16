@@ -1,8 +1,7 @@
-import { SlideOver, StatusPill } from '../../components/ui'
+import { QueryGate, SlideOver, StatusPill } from '../../components/ui'
 import {
   planDueInfo, todayIso, useAsset, useWorkOrders,
 } from '../../services/maintenance'
-import { QueryGate } from '../ehs/QueryGate'
 import {
   ASSET_KIND_META, ASSET_STATUS_META, PLAN_TRIGGER_LABELS, WO_STATUS_LABELS,
   WO_TYPE_META, formatDate, formatHours, formatOperatingHours, planDueLabel,
