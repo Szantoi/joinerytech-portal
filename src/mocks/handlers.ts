@@ -10,6 +10,7 @@ import { hrApiHandlers } from '../modules/hr/mocks'
 import { maintenanceApiHandlers } from '../modules/maintenance/mocks'
 import { qaApiHandlers } from '../modules/qa/mocks'
 import { dmsApiHandlers } from '../modules/dms/mocks'
+import { productionApiHandlers } from '../modules/production/mocks'
 
 export const handlers = [
   // EHS modul-API (openapi-tükör, állapottartó store + FSM guardok) — ld. ./ehsApi
@@ -32,6 +33,11 @@ export const handlers = [
 
   // DMS modul-API (MSW-first kontraktus, dokumentum-FSM + verzió-lánc, számított releasedVersion/expiry) — ld. ./dmsApi
   ...dmsApiHandlers,
+
+  // Production modul-API (API-FIRST kontraktus-tükör: cutting+joinery valós DTO/FSM/hibakód,
+  // WORLDS_API_CONTRACTS_2026-07-18.md szerint) — ld. ./productionApi. VITE_DATA_MODE=api
+  // esetén ez irreleváns: a worker maga sem indul (src/main.tsx).
+  ...productionApiHandlers,
 
   // POST /api/products/configure
   http.post('/api/products/configure', async ({ request }) => {

@@ -8,7 +8,6 @@ import { RequireAuth } from './auth/RequireAuth'
 import { HomeScreen } from './components/layout/HomeScreen'
 import { WorldShell } from './components/layout/WorldShell'
 import { RouteFallback } from './components/layout/RouteFallback'
-import { ErrorBoundary } from './components/ErrorBoundary'
 
 /**
  * Route-level code splitting (UI_GAP_ANALYSIS §1 / Fázis 1.3).
@@ -27,15 +26,14 @@ function lazyPage<M, C extends ComponentType<any>>(load: () => Promise<M>, pick:
 
 const LandingPage = lazyPage(() => import('./pages/LandingPage'), (m) => m.LandingPage)
 const LoginPage = lazyPage(() => import('./pages/LoginPage'), (m) => m.LoginPage)
-const ProductionPage = lazyPage(() => import('./pages/ProductionPage'), (m) => m.ProductionPage)
-const ProductionDashboardPage = lazyPage(() => import('./pages/production/ProductionDashboardPage'), (m) => m.ProductionDashboardPage)
+// Production world — MODULE-FOLDERS diszpécser-precedens (mint CrmPage/EhsPage):
+// a képernyők ./modules/production alatt élnek, egyetlen lazy chunk mögött.
+const ProductionWorldPage = lazyPage(() => import('./pages/ProductionPage'), (m) => m.ProductionWorldPage)
 const MovementsPage = lazyPage(() => import('./pages/warehouse/MovementsPage'), (m) => m.MovementsPage)
 const SalesWorldPage = lazyPage(() => import('./pages/SalesPage'), (m) => m.SalesWorldPage)
 const DesignWorldPage = lazyPage(() => import('./pages/DesignPage'), (m) => m.DesignWorldPage)
-const WorkflowPage = lazyPage(() => import('./pages/WorkflowPage'), (m) => m.WorkflowPage)
 const InventoryPage = lazyPage(() => import('./pages/InventoryPage'), (m) => m.InventoryPage)
 const ProcurementPage = lazyPage(() => import('./pages/ProcurementPage'), (m) => m.ProcurementPage)
-const CuttingAnalyticsPage = lazyPage(() => import('./pages/CuttingAnalyticsPage'), (m) => m.CuttingAnalyticsPage)
 const SettingsPage = lazyPage(() => import('./pages/SettingsPage'), (m) => m.SettingsPage)
 const ShopFloorPage = lazyPage(() => import('./pages/ShopFloorPage'), (m) => m.ShopFloorPage)
 const ShopFloorKioskPage = lazyPage(() => import('./pages/ShopFloorKioskPage'), (m) => m.ShopFloorKioskPage)
@@ -91,38 +89,6 @@ function HomePage() {
         }
       }}
     />
-  )
-}
-
-function ProductionWorldPage() {
-  const navigate = useNavigate()
-  const { screen } = useParams<{ screen?: string }>()
-  const currentScreen = screen ?? 'dash'
-
-  function renderContent() {
-    if (currentScreen === 'dash')      return <ProductionDashboardPage onScreen={(s) => navigate(`/w/production/${s}`)} />
-    if (currentScreen === 'machining') return <ProductionPage initialTab="machining" />
-    if (currentScreen === 'workflow')  return <WorkflowPage />
-    if (currentScreen === 'analytics') return <CuttingAnalyticsPage />
-    return <ProductionPage initialTab="cutting" />
-  }
-
-  return (
-    <WorldShell
-      worldKey="production"
-      screen={currentScreen}
-      onScreen={(key) => navigate(`/w/production/${key}`)}
-      onHome={() => navigate('/')}
-    >
-      <ErrorBoundary>
-        {/* Nested Suspense: screen chunks load without hiding the shell */}
-        <Suspense fallback={<RouteFallback fullscreen={false} />}>
-          <div key={currentScreen} className="contents">
-            {renderContent()}
-          </div>
-        </Suspense>
-      </ErrorBoundary>
-    </WorldShell>
   )
 }
 

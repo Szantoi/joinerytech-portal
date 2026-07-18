@@ -9,6 +9,8 @@ export const WORLDS: Record<string, World> = {
       { key: "dash", hu: "Áttekintés", en: "Overview" },
       { key: "cutting", hu: "Szabászat", en: "Cutting" },
       { key: "machining", hu: "Megmunkálás", en: "Machining" },
+      { key: "orders", hu: "Ajtórendelések", en: "Door orders" },
+      { key: "quotes", hu: "Árajánlatok", en: "Quotes" },
       { key: "workflow", hu: "Munkafolyamat", en: "Workflow" },
       { key: "analytics", hu: "Elemzések", en: "Analytics" },
     ],
