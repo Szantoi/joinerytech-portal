@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Card, Input } from '../components/ui';
 import { PieceInputRow } from '../components/quote/PieceInputRow';
 import { useMaterialCatalog } from '../hooks/useMaterialCatalog';
+import { checkQuotePieceLimit } from '../lib/quotePieceLimit';
 import type { CutPieceInput } from '../types/quote';
 
 export default function PublicQuoteRequestPage() {
@@ -17,9 +18,11 @@ export default function PublicQuoteRequestPage() {
 
   const { materials, loading: materialsLoading } = useMaterialCatalog();
 
+  const pieceLimit = checkQuotePieceLimit(pieces.length);
+
   const addPiece = () => {
-    if (pieces.length >= 50) {
-      setError('Maximum 50 pieces per quote request');
+    if (!pieceLimit.allowed) {
+      setError(pieceLimit.reason);
       return;
     }
     setPieces([
@@ -168,14 +171,20 @@ export default function PublicQuoteRequestPage() {
               <h3 className="text-lg font-semibold text-gray-900">
                 Igényelt lapszabászatok
               </h3>
-              <button
-                type="button"
-                onClick={addPiece}
-                className="flex items-center gap-2 px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium rounded-md transition-colors"
-                disabled={pieces.length >= 50}
-              >
-                + Tétel hozzáadása
-              </button>
+              <div className="flex flex-col items-end gap-1">
+                <button
+                  type="button"
+                  onClick={addPiece}
+                  className="flex items-center gap-2 px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium rounded-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  disabled={!pieceLimit.allowed}
+                  title={pieceLimit.reason ?? undefined}
+                >
+                  + Tétel hozzáadása
+                </button>
+                {!pieceLimit.allowed && (
+                  <span className="text-xs text-gray-500">{pieceLimit.reason}</span>
+                )}
+              </div>
             </div>
 
             {materialsLoading ? (

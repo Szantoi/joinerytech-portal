@@ -1,4 +1,4 @@
-import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect, vi, afterEach } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import PublicQuoteRequestPage from '../PublicQuoteRequestPage';
 
@@ -13,6 +13,29 @@ vi.mock('../../hooks/useMaterialCatalog', () => ({
     error: null,
   }),
 }));
+
+// Controllable override for the pure `checkQuotePieceLimit` helper (STAB-FE-TEST-GATE).
+// Lets a single test force the "limit reached" affordance without rendering
+// and clicking through 49 real piece-add cycles — the boundary logic itself
+// (49/50/51) is unit-tested DOM-free in `src/lib/__tests__/quotePieceLimit.test.ts`.
+const pieceLimitOverride = vi.hoisted(() => ({
+  active: false,
+  result: { allowed: false, reason: 'Maximum 50 pieces per quote request' },
+}));
+
+vi.mock('../../lib/quotePieceLimit', async () => {
+  const actual =
+    await vi.importActual<typeof import('../../lib/quotePieceLimit')>('../../lib/quotePieceLimit');
+  return {
+    ...actual,
+    checkQuotePieceLimit: (...args: Parameters<typeof actual.checkQuotePieceLimit>) =>
+      pieceLimitOverride.active ? pieceLimitOverride.result : actual.checkQuotePieceLimit(...args),
+  };
+});
+
+afterEach(() => {
+  pieceLimitOverride.active = false;
+});
 
 describe('PublicQuoteRequestPage', () => {
   it('renders the form', () => {
@@ -206,28 +229,22 @@ describe('PublicQuoteRequestPage', () => {
     }, { timeout: 5000 });
   });
 
-  it('prevents adding more than 50 pieces', () => {
+  // NOTE (STAB-FE-TEST-GATE): the exhaustive 49/50/51 boundary check for the
+  // 50-piece limit moved to `src/lib/__tests__/quotePieceLimit.test.ts` — a
+  // pure, DOM-free unit test against `checkQuotePieceLimit`. Re-rendering this
+  // full page 49 times in a suite context timed out (isolated: 82.38s
+  // total/42.17s test/28.81s jsdom; in the full suite it never completed).
+  // What remains here is UI-affordance only, in 2 tests:
+  //  1. a single successful add (see 'adds a new piece input row' above)
+  //  2. the disabled state + disabled-reason text once the limit is reached
+  it('disables the add button and shows the limit reason once the limit is reached', () => {
+    pieceLimitOverride.active = true;
+
     render(<PublicQuoteRequestPage />);
 
     const addButton = screen.getByText('+ Tétel hozzáadása');
-
-    // Add pieces until we reach the limit (we start with 1, so add 49 more)
-    for (let i = 0; i < 49; i++) {
-      fireEvent.click(addButton);
-    }
-
-    // Should have 50 pieces (original 1 + 49 added)
-    let materialSelects = screen.getAllByLabelText(/Anyag/);
-    expect(materialSelects).toHaveLength(50);
-
-    // Button should be disabled when we have 50 pieces
     expect(addButton).toBeDisabled();
-
-    // Try clicking the disabled button - should not add more pieces
-    fireEvent.click(addButton);
-
-    // Still should have only 50 pieces
-    materialSelects = screen.getAllByLabelText(/Anyag/);
-    expect(materialSelects).toHaveLength(50);
-  }, 60000); // generous timeout: 49 clicks × 50-row re-renders is slow under full-suite worker contention
+    expect(addButton).toHaveAttribute('title', 'Maximum 50 pieces per quote request');
+    expect(screen.getByText('Maximum 50 pieces per quote request')).toBeInTheDocument();
+  });
 });
