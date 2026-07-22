@@ -1,13 +1,12 @@
 import { useState } from 'react'
-import { Button } from '../../../components/ui'
-import { Input } from '../../../components/ui'
+import { Button, Input, SelectField, TextAreaField } from '../../../components/ui'
 import {
   INCIDENT_FSM, transitionBlockReason, type IncidentAction,
   useIncidentTransition, type Incident, type IncidentTransitionPayloads,
   CURRENT_EMPLOYEE_ID, EHS_EMPLOYEE_DIRECTORY,
 } from '../services'
 import { INCIDENT_STATUS_LABELS } from './labels'
-import { EmployeeOptions, SelectField, TextAreaField } from './formFields'
+import { EmployeeOptions } from './EmployeeOptions'
 
 /**
  * Esemény FSM-akciók (plan 3. vezérelv): MINDEN átmenet-gomb látható;

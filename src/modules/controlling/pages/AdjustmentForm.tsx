@@ -1,15 +1,9 @@
 import { useState } from 'react'
-import { Button, Input, SlideOver } from '../../../components/ui'
+import { Button, Input, SelectField, SlideOver, TextAreaField } from '../../../components/ui'
 import {
   CONTROLLING_CURRENT_USER, COST_CATEGORIES, useCreateAdjustment, useProjects,
   type AdjustmentScope, type CostCategory,
 } from '../services'
-// KERESZT-MODUL függés (controlling → ehs): a MODULE-PACKAGES lépésben a
-// formFields a @joinerytech/ui-ba kerül. SZÁNDÉKOSAN mély import (nem az ehs
-// modul indexe): a barrel-en át a teljes EHS világ közös chunkba emelkedne
-// (~50 kB extra a controlling világnak) — így csak a ~1,7 kB-os formFields
-// chunk marad megosztva, a baseline bundle-layouttal egyezően.
-import { SelectField, TextAreaField } from '../../ehs/pages/formFields'
 import { CATEGORY_LABELS, SCOPE_LABELS } from './labels'
 
 /**

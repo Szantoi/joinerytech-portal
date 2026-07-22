@@ -1,9 +1,9 @@
 import { useState } from 'react'
-import { Button, Input, SlideOver } from '../../../components/ui'
+import { Button, Input, SelectField, SlideOver } from '../../../components/ui'
 import {
   useIssuePpe, usePpeItems, CURRENT_EMPLOYEE_ID, EHS_EMPLOYEE_DIRECTORY,
 } from '../services'
-import { EmployeeOptions, SelectField } from './formFields'
+import { EmployeeOptions } from './EmployeeOptions'
 
 /**
  * Új EVE-kiadás rögzítése (FSM belépő: Issued/kiadva).

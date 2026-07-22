@@ -1,8 +1,7 @@
 import { useState } from 'react'
-import { Button, DataTable, QueryGate, StatusPill, type DataTableColumn } from '../../../components/ui'
+import { Button, DataTable, QueryGate, SelectField, StatusPill, type DataTableColumn } from '../../../components/ui'
 import { useCapas, useCompleteCapa, employeeName, type Capa } from '../services'
 import { CAPA_SOURCE_LABELS, formatDate, isOverdue } from './labels'
-import { SelectField } from './formFields'
 
 /**
  * Egységes CAPA-tábla — az esemény-kivizsgálásból, bejárás-megállapításból és

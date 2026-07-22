@@ -7,14 +7,9 @@
  *    (src/components/EHS — bejelentő FAB, minden világból elérhető),
  * Az MSW kontraktus-tükör KÜLÖN belépési pont (./mocks — a csomagosításnál
  * "./mocks" subpath export lesz), hogy a világ lazy chunkjába ne kerüljön
- * mock-kód. Modulon belül maradj a relatív importoknál.
- *
- * SZÁNDÉKOSAN NINCS itt: a ./pages/formFields űrlap-segédek (SelectField,
- * TextAreaField), pedig a controlling modul (AdjustmentForm) is használja
- * őket — KERESZT-MODUL függés. Ha a barrel-en át exportálnánk, a teljes EHS
- * világ közös chunkba emelkedne (~50 kB extra a controlling világnak), ezért
- * ott mély import marad; a MODULE-PACKAGES lépésben a formFields a
- * @joinerytech/ui-ba kerül és a kivétel megszűnik.
+ * mock-kód. Modulon belül maradj a relatív importoknál. Az általános
+ * űrlap-primitívek a közös `components/ui` réteg tulajdonai; az EHS csak a
+ * saját alkalmazotti opció-adapterét tartja modulon belül.
  */
 export { EhsDashboard } from './pages/EhsDashboard'
 export { IncidentsScreen } from './pages/IncidentsScreen'

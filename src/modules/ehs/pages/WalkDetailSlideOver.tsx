@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Button, FsmStepper, SlideOver, StatusPill } from '../../../components/ui'
+import { Button, DateField, FsmStepper, SelectField, SlideOver, StatusPill, TextAreaField } from '../../../components/ui'
 import {
   useSafetyWalk, useWalkTransition, useAddWalkFinding,
   SAFETY_WALK_FSM, WALK_FINDING_ALLOWED_STATUS, transitionBlockReason,
@@ -7,7 +7,7 @@ import {
   type SafetyWalkAction, type FindingSeverity,
 } from '../services'
 import { FINDING_SEVERITY_LABELS, WALK_MAIN_PATH, WALK_STATUS_LABELS, formatDateTime } from './labels'
-import { EmployeeOptions, SelectField, TextAreaField, DateField } from './formFields'
+import { EmployeeOptions } from './EmployeeOptions'
 
 /**
  * Bejárás-részletek — FSM stepper (utemezett → folyamatban → intézkedés → lezárt,

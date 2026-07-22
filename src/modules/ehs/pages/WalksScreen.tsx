@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import {
-  Button, DataTable, QueryGate, SlideOver, StatusPill, Tabs, TabPanel, type DataTableColumn,
+  Button, DataTable, DateField, QueryGate, SelectField, SlideOver, StatusPill, Tabs, TabPanel,
+  type DataTableColumn,
 } from '../../../components/ui'
 import {
   useSafetyWalks, useScheduleWalk, useEhsLocations, locationNameMap,
@@ -8,7 +9,7 @@ import {
   type SafetyWalkListItem,
 } from '../services'
 import { WALK_STATUS_LABELS, formatDateTime } from './labels'
-import { EmployeeOptions, SelectField, DateField } from './formFields'
+import { EmployeeOptions } from './EmployeeOptions'
 import { WalkDetailSlideOver } from './WalkDetailSlideOver'
 import { CapaBoard } from './CapaBoard'
 
