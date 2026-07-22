@@ -23,7 +23,10 @@ describe('CAPA ADR-059 source wire contract', () => {
     expect(rows.every((row) => row.source === source)).toBe(true)
   })
 
-  it.each(['Incident', 'SafetyWalk', 'RiskAssessment'])('elutasítja az angol %s kulcsot', async (source) => {
+  it.each([
+    'Incident', 'SafetyWalk', 'RiskAssessment',
+    '', 'Kockazatertekeles', 'ismeretlen',
+  ])('elutasítja a nem kanonikus "%s" kulcsot', async (source) => {
     expect(capaSourceSchema.safeParse(source).success).toBe(false)
 
     await expect(fetchCapas({ source: source as CapaSource }))

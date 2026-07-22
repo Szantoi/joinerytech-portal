@@ -165,7 +165,9 @@ export const walkHandlers = [
 
     let rows = getEhsDb().capas
     if (completed !== null) rows = rows.filter((c) => c.isCompleted === (completed === 'true'))
-    if (source) {
+    // WireQuery backend-semantika: csak a hiányzó paraméter (null) jelent
+    // szűretlen listát; a jelen lévő, de üres `?source=` hibás wire-kulcs.
+    if (source !== null) {
       const parsedSource = capaSourceSchema.safeParse(source)
       if (!parsedSource.success) {
         return jsonError(
