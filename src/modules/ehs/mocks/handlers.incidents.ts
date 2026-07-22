@@ -76,7 +76,7 @@ export const incidentHandlers = [
     db.capas.push({
       correctiveActionId: crypto.randomUUID(),
       tenantId: TENANT_ID,
-      source: 'Incident',
+      source: 'esemeny',
       sourceId: row.incidentId,
       incidentId: row.incidentId,
       description: body.description,

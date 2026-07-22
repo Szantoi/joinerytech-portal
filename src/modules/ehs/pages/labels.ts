@@ -91,9 +91,9 @@ export const FINDING_SEVERITY_LABELS: Record<FindingSeverity, { label: string; t
 }
 
 export const CAPA_SOURCE_LABELS: Record<CapaSource, string> = {
-  Incident: 'Esemény',
-  SafetyWalk: 'Bejárás',
-  RiskAssessment: 'Kockázat',
+  esemeny: 'Esemény',
+  bejaras: 'Bejárás',
+  kockazatertekeles: 'Kockázat',
 }
 
 // ── Dátum-megjelenítés ──────────────────────────────────────────────────────

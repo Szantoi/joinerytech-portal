@@ -111,10 +111,11 @@ describe('bejárás FSM (Scheduled → InProgress → ActionRequired → Closed,
     expect((error as ApiError).status).toBe(409)
   })
 
-  it('az egységes CAPA-tábla eseményt ÉS bejárást is tartalmaz', async () => {
+  it('az egységes CAPA-tábla mindhárom forrást tartalmazza', async () => {
     const capas = await fetchCapas()
     const sources = new Set(capas.map((c) => c.source))
-    expect(sources.has('Incident')).toBe(true)
-    expect(sources.has('SafetyWalk')).toBe(true)
+    expect(sources.has('esemeny')).toBe(true)
+    expect(sources.has('bejaras')).toBe(true)
+    expect(sources.has('kockazatertekeles')).toBe(true)
   })
 })

@@ -111,7 +111,7 @@ export function toWalkListItem(record: WalkRecord): SafetyWalkListItem {
 /** Az incidens CAPA-listája az egységes CAPA store-ból áll össze (unified CAPA). */
 export function toIncidentDto(record: IncidentRecord): Incident {
   const correctiveActions = db.capas
-    .filter((c) => c.source === 'Incident' && c.sourceId === record.incidentId)
+    .filter((c) => c.source === 'esemeny' && c.sourceId === record.incidentId)
     .map((c) => ({
       description: c.description,
       responsiblePerson: c.assignedTo,

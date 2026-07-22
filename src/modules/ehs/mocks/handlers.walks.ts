@@ -2,7 +2,7 @@ import { http, HttpResponse } from 'msw'
 import { EHS_API_BASE } from '../services/config'
 import { SAFETY_WALK_FSM, WALK_FINDING_ALLOWED_STATUS } from '../services/fsm'
 import type { AddFindingPayload, ScheduleWalkPayload } from '../services/safetyWalks'
-import type { Capa } from '../services/capa'
+import { capaSourceSchema, type Capa } from '../services/capa'
 import { TENANT_ID } from './seed'
 import { getEhsDb, guardTransition, jsonError, notFound, toWalkListItem, type WalkRecord } from './db'
 
@@ -86,7 +86,7 @@ export const walkHandlers = [
       const capa: Capa = {
         correctiveActionId: crypto.randomUUID(),
         tenantId: TENANT_ID,
-        source: 'SafetyWalk',
+        source: 'bejaras',
         sourceId: row.safetyWalkId,
         findingId,
         description: body.capaDescription ?? body.description,
@@ -131,7 +131,7 @@ export const walkHandlers = [
     const guard = guardTransition(SAFETY_WALK_FSM, 'close', row.status)
     if (guard) return guard
     const openCapas = db.capas.filter(
-      (c) => c.source === 'SafetyWalk' && c.sourceId === row.safetyWalkId && !c.isCompleted,
+      (c) => c.source === 'bejaras' && c.sourceId === row.safetyWalkId && !c.isCompleted,
     )
     if (openCapas.length > 0) {
       return jsonError(
@@ -165,7 +165,17 @@ export const walkHandlers = [
 
     let rows = getEhsDb().capas
     if (completed !== null) rows = rows.filter((c) => c.isCompleted === (completed === 'true'))
-    if (source) rows = rows.filter((c) => c.source === source)
+    if (source) {
+      const parsedSource = capaSourceSchema.safeParse(source)
+      if (!parsedSource.success) {
+        return jsonError(
+          400,
+          'BadRequest',
+          `Ismeretlen CAPA-forrás-kulcs: '${source}'. Lehetséges értékek: ${capaSourceSchema.options.join(', ')}.`,
+        )
+      }
+      rows = rows.filter((c) => c.source === parsedSource.data)
+    }
     if (sourceId) rows = rows.filter((c) => c.sourceId === sourceId)
     if (assignedTo) rows = rows.filter((c) => c.assignedTo === assignedTo)
     const items = [...rows].sort((a, b) => a.dueDate.localeCompare(b.dueDate))

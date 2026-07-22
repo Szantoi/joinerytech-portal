@@ -12,7 +12,8 @@ import { ehsKeys } from './keys'
 
 // ── Sémák ───────────────────────────────────────────────────────────────────
 
-export const capaSourceSchema = z.enum(['Incident', 'SafetyWalk', 'RiskAssessment'])
+export const CAPA_SOURCES = ['esemeny', 'bejaras', 'kockazatertekeles'] as const
+export const capaSourceSchema = z.enum(CAPA_SOURCES)
 export type CapaSource = z.infer<typeof capaSourceSchema>
 
 export const capaSchema = z.object({

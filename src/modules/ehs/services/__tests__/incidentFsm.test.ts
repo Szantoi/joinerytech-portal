@@ -68,7 +68,7 @@ describe('esemény FSM-átmenetek az API-n', () => {
       responsiblePerson: CURRENT_EMPLOYEE_ID,
       dueDate: '2026-08-01',
     })
-    const capas = await fetchCapas({ source: 'Incident', sourceId: id })
+    const capas = await fetchCapas({ source: 'esemeny', sourceId: id })
     expect(capas.some((c) => c.description === 'Polcrendszer megerősítése')).toBe(true)
   })
 

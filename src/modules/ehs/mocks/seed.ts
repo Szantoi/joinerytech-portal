@@ -61,6 +61,8 @@ export const SEED_IDS = {
   capaWalkOpen: '00000000-0000-4000-8000-00000000ca02',
   capaWalkDone: '00000000-0000-4000-8000-00000000ca03',
   capaIncidentDone: '00000000-0000-4000-8000-00000000ca04',
+  capaRiskOpen: '00000000-0000-4000-8000-00000000ca05',
+  riskWithCapa: '00000000-0000-4000-8000-0000000a1001',
 } as const
 
 const loc = (
@@ -207,21 +209,25 @@ export function seedWalks(): WalkRecord[] {
 
 export function seedCapas(): Capa[] {
   return [
-    { correctiveActionId: SEED_IDS.capaIncidentOpen, tenantId: TENANT_ID, source: 'Incident',
+    { correctiveActionId: SEED_IDS.capaIncidentOpen, tenantId: TENANT_ID, source: 'esemeny',
       sourceId: SEED_IDS.incActionPlanned, incidentId: SEED_IDS.incActionPlanned,
       description: 'Biztonsági burkolat javítása és rögzítés-ellenőrzés minden gépen.',
       assignedTo: emp(4), dueDate: daysFromNow(7), completedAt: null, isCompleted: false },
-    { correctiveActionId: SEED_IDS.capaWalkOpen, tenantId: TENANT_ID, source: 'SafetyWalk',
+    { correctiveActionId: SEED_IDS.capaWalkOpen, tenantId: TENANT_ID, source: 'bejaras',
       sourceId: SEED_IDS.walkActionRequired, findingId: SEED_IDS.findingOpen,
       description: 'Szellőző-szűrő csere és karbantartási terv frissítése.',
       assignedTo: emp(0), dueDate: daysFromNow(5), completedAt: null, isCompleted: false },
-    { correctiveActionId: SEED_IDS.capaWalkDone, tenantId: TENANT_ID, source: 'SafetyWalk',
+    { correctiveActionId: SEED_IDS.capaWalkDone, tenantId: TENANT_ID, source: 'bejaras',
       sourceId: SEED_IDS.walkClosed, findingId: '00000000-0000-4000-8000-000000fa0003',
       description: 'Targonca-útvonal jelölések felújítása.',
       assignedTo: emp(0), dueDate: daysFromNow(-12), completedAt: daysFromNow(-11), isCompleted: true },
-    { correctiveActionId: SEED_IDS.capaIncidentDone, tenantId: TENANT_ID, source: 'Incident',
+    { correctiveActionId: SEED_IDS.capaIncidentDone, tenantId: TENANT_ID, source: 'esemeny',
       sourceId: SEED_IDS.incClosed, incidentId: SEED_IDS.incClosed,
       description: 'Sérült tárolóedények cseréje a felületkezelőben.',
       assignedTo: emp(2), dueDate: daysFromNow(-25), completedAt: daysFromNow(-22), isCompleted: true },
+    { correctiveActionId: SEED_IDS.capaRiskOpen, tenantId: TENANT_ID, source: 'kockazatertekeles',
+      sourceId: SEED_IDS.riskWithCapa,
+      description: 'Forgó alkatrészek védőburkolatának teljes körű felülvizsgálata.',
+      assignedTo: emp(4), dueDate: daysFromNow(12), completedAt: null, isCompleted: false },
   ]
 }
