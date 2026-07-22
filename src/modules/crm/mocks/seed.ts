@@ -1,11 +1,11 @@
-import { LEADS, OPPS, CRM_TASKS } from '../../../mocks/worlds'
 import type { Lead } from '../services/leads'
 import type { Opportunity } from '../services/opportunities'
 import type { CrmTask } from '../services/tasks'
+import { CRM_LEAD_FIXTURES, CRM_OPPORTUNITY_FIXTURES, CRM_TASK_FIXTURES } from './fixtures'
 
 /**
- * CRM mock seed — a meglévő statikus mock-adatokat (mocks/worlds.ts) tölti be
- * az állapottartó store-ba (adat-újrahasznosítás, nem másolat). A feladat-
+ * CRM mock seed — a modul-saját, kanonikus API-alakú fixture-eket tölti be
+ * az állapottartó store-ba. A feladat-
  * határidők a „most"-hoz képest relatívak, így az SLA-számítás
  * (ok/soon/overdue) minden futásnál determinisztikus.
  */
@@ -51,15 +51,15 @@ const TASK_DUE_OFFSETS: Record<string, number> = {
 }
 
 export function seedLeads(): Lead[] {
-  return structuredClone(LEADS) as Lead[]
+  return structuredClone(CRM_LEAD_FIXTURES)
 }
 
 export function seedOpps(): Opportunity[] {
-  return structuredClone(OPPS) as Opportunity[]
+  return structuredClone(CRM_OPPORTUNITY_FIXTURES)
 }
 
 export function seedTasks(): CrmTask[] {
-  return structuredClone(CRM_TASKS).map((t) => ({
+  return structuredClone(CRM_TASK_FIXTURES).map((t) => ({
     ...t,
     due: dueInDays(TASK_DUE_OFFSETS[t.id] ?? 7),
   })) as CrmTask[]

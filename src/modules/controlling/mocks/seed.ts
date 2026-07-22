@@ -1,12 +1,11 @@
-import { CTRL_PROJECTS } from '../../../mocks/controlling'
-import type { ControllingProject, CostLine } from '../services/projects'
+import type { ControllingProject } from '../services/projects'
 import type { MarginTrendPoint } from '../services/portfolio'
 import type { StoredAdjustment } from './db'
+import { CONTROLLING_PROJECT_FIXTURES } from './fixtures'
 
 /**
- * Kontrolling mock seed — a meglévő statikus mock-adatokat (mocks/controlling.ts
- * CTRL_PROJECTS, rezsivel együtt) tölti be az állapottartó store-ba
- * (adat-újrahasznosítás, a crmApi/seed.ts mintája), kiegészítve
+ * Kontrolling mock seed — a modul-saját, kanonikus API-alakú fixture-eket tölti
+ * az állapottartó store-ba, kiegészítve
  *  - két új projekttel (draft + on_hold), hogy mind az 5 életciklus-címke és a
  *    „kockázatos projekt" KPI is élő adaton látszódjon,
  *  - determinisztikus korrekció- (utókalkuláció-) és fedezet-trend-seeddel.
@@ -26,7 +25,7 @@ export const CONTROLLING_SEED_IDS = {
   adjPortfolioOverhead: 'CADJ-003',// portfólió-hatályú rezsi-korrekció
 } as const
 
-/** Új projektek a seedhez (a CTRL_PROJECTS-ben nem szereplő címkékkel). */
+/** További projektek, hogy minden életciklus-címke és kockázati KPI éljen. */
 const EXTRA_PROJECTS: ControllingProject[] = [
   {
     id: CONTROLLING_SEED_IDS.projectDraft,
@@ -58,21 +57,8 @@ const EXTRA_PROJECTS: ControllingProject[] = [
   },
 ]
 
-/**
- * A legacy CTRL_PROJECTS sorai `cat` kulcsot használnak — átképezés a
- * kontraktus `category` mezőjére (a kulcskészlet azonos).
- */
 export function seedProjects(): ControllingProject[] {
-  const legacy: ControllingProject[] = CTRL_PROJECTS.map((p) => ({
-    id: p.id,
-    name: p.name,
-    customer: p.customer,
-    status: p.status,
-    contractValue: p.contractValue,
-    invoiced: p.invoiced,
-    lines: p.lines.map(({ cat, ...line }): CostLine => ({ category: cat, ...line })),
-  }))
-  return structuredClone([...legacy, ...EXTRA_PROJECTS])
+  return structuredClone([...CONTROLLING_PROJECT_FIXTURES, ...EXTRA_PROJECTS])
 }
 
 export function seedAdjustments(): StoredAdjustment[] {

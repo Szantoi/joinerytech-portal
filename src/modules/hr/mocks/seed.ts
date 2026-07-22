@@ -1,13 +1,13 @@
-import { EMPLOYEES, HR_PAY_GRADE_META } from '../../../mocks/hr'
 import type { Employee } from '../services/employees'
 import type { Absence } from '../services/absences'
 import type { Assignment } from '../services/assignments'
 import type { TimeLog } from '../services/timeLogs'
 import { addDays, isWorkday, todayIso } from '../services/calc'
+import { HR_EMPLOYEE_FIXTURES, HR_PAY_GRADE_HOURLY_RATES } from './fixtures'
 
 /**
- * HR mock seed — a dolgozó-törzs a meglévő statikus mockból (mocks/hr.ts)
- * jön (adat-újrahasznosítás, a CRM seed mintája); a DÁTUMOS adatok
+ * HR mock seed — a dolgozó-törzs és a mock órabérsávok a modul saját
+ * fixture-rétegéből jönnek; a DÁTUMOS adatok
  * (távollét, beosztás, munkaóra-napló) viszont a „mához" képest relatív
  * MUNKANAP-eltolással generáltak, így a kapacitás-rács és a dashboard
  * KPI-k minden futásnál determinisztikus szerkezetűek (hétvége-biztosan).
@@ -37,7 +37,7 @@ export function seedWorkday(n: number): string {
 
 /** Stabil azonosítók állapot szerint — a tesztek ezekre hivatkoznak. */
 export const HR_SEED_IDS = {
-  // dolgozók (mocks/hr.ts EMPLOYEES)
+  // dolgozók (modultulajdonú fixture-ök)
   empOverloaded: 'emp-kissa',    // két átfedő beosztás → túlterhelt napok
   empAbsentToday: 'emp-tothk',   // folyamatban lévő táppénz a horgony-napon
   empRequesting: 'emp-balogm',   // nyitott (kert) kérelem gazdája
@@ -53,29 +53,17 @@ export const HR_SEED_IDS = {
   timeLogPushed: 'TL-2426-001',
 } as const
 
-/** Dolgozó-törzs: a statikus mockból, a bérsáv órabérével kiegészítve. */
+/** Dolgozó-törzs: a modultulajdonú fixture-ből, a bérsáv órabérével kiegészítve. */
 export function seedEmployees(): Employee[] {
-  return EMPLOYEES.map((e) => ({
-    id: e.id,
-    name: e.name,
-    initials: e.initials,
-    role: e.role,
-    dept: e.dept,
-    payGrade: e.payGrade,
-    hourlyRate: HR_PAY_GRADE_META[e.payGrade].rate,
-    weeklyHours: e.weeklyHours,
-    employment: e.employment,
-    phone: e.phone,
-    email: e.email,
-    startedAt: e.startedAt,
-    active: e.active,
-    color: e.color,
-    skills: e.skills.map((s) => ({ key: s.key, level: s.level })),
+  return HR_EMPLOYEE_FIXTURES.map((employee) => ({
+    ...employee,
+    hourlyRate: HR_PAY_GRADE_HOURLY_RATES[employee.payGrade],
+    skills: employee.skills.map((skill) => ({ ...skill })),
   }))
 }
 
 function empName(empId: string): string {
-  return EMPLOYEES.find((e) => e.id === empId)?.name ?? empId
+  return HR_EMPLOYEE_FIXTURES.find((employee) => employee.id === empId)?.name ?? empId
 }
 
 /** Öt távollét — státuszonként egy, a horgonyhoz igazított munkanapokkal. */

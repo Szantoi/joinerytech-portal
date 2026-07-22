@@ -8,13 +8,13 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { STATUS_TONES, LEGACY_STATUS_TONES, isTone, resolveLegacyTone, type Tone } from '../statusTones'
 import { FSM_TONES, FSM_STATUS_ALIASES, FSM_EXTRA_TONES, resolveFsmTone, type FsmSet } from '../fsmTones'
-import { LEAD_STATUS_META, OPP_STATUS_META } from '../../mocks/worlds'
-import { ABS_STATUS_META } from '../../mocks/hr'
+import { LEAD_STATUS_LABELS, OPP_STATUS_LABELS } from '../../modules/crm/pages/labels'
+import { ABSENCE_STATUS_LABELS } from '../../modules/hr/pages/labels'
 import { TICKET_STATUS_META } from '../../mocks/maintenance'
 import { NCR_STATUS_META } from '../../mocks/quality'
 import { INCIDENT_STATUS_META } from '../../mocks/ehs'
 import { DOC_STATUS_META } from '../../mocks/docs'
-import { PROJECT_STATUS_META } from '../../mocks/controlling'
+import { PROJECT_STATUS_LABELS } from '../../modules/controlling/pages/labels'
 
 const ALL_TONES: Tone[] = ['neutral', 'info', 'progress', 'success', 'warn', 'danger', 'terminal']
 
@@ -87,14 +87,14 @@ describe('FSM_TONES — készletek és értékek', () => {
 describe('FSM_TONES — a portál valós státusz-készleteinek teljes lefedése', () => {
   // (FSM-készlet, a portál mock-rétegében definiált státusz-kulcsok) párok
   const cases: Array<[FsmSet, string[]]> = [
-    ['crmLead', Object.keys(LEAD_STATUS_META)],
-    ['crmOpportunity', Object.keys(OPP_STATUS_META)],
-    ['hrTavollet', Object.keys(ABS_STATUS_META)],
+    ['crmLead', Object.keys(LEAD_STATUS_LABELS)],
+    ['crmOpportunity', Object.keys(OPP_STATUS_LABELS)],
+    ['hrTavollet', Object.keys(ABSENCE_STATUS_LABELS)],
     ['maintenanceMunkalap', Object.keys(TICKET_STATUS_META)],
     ['qaEllenorzes', Object.keys(NCR_STATUS_META)],
     ['ehsBaleset', Object.keys(INCIDENT_STATUS_META)],
     ['dmsDokumentum', Object.keys(DOC_STATUS_META)],
-    ['kontrollingProjekt', Object.keys(PROJECT_STATUS_META)],
+    ['kontrollingProjekt', Object.keys(PROJECT_STATUS_LABELS)],
   ]
 
   it.each(cases)('%s: minden státusz tónusra oldódik, warning nélkül', (set, statuses) => {

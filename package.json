@@ -11,7 +11,8 @@
     "test": "vitest run",
     "test:pr": "vitest run src/modules src/lib src/hooks src/theme src/components/ui",
     "test:full": "vitest run",
-    "test:nightly": "vitest run src/pages src/components src/__tests__ src/auth src/mocks"
+    "test:nightly": "vitest run src/pages src/components src/__tests__ src/auth src/mocks",
+    "test:contract:production": "vitest run --config vitest.contract.config.ts"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",
