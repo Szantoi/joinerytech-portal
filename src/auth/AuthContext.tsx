@@ -72,7 +72,11 @@ const AUTH_MOCK = import.meta.env.DEV && import.meta.env.VITE_AUTH_MODE === 'moc
 
 const mockAuthValue: AuthContextValue = {
   user: {
-    profile: { name: 'Dev Felhasználó', preferred_username: 'dev' },
+    profile: {
+      sub: '11111111-1111-4111-8111-111111111111',
+      name: 'Dev Felhasználó',
+      preferred_username: 'dev',
+    },
     access_token: 'mock-token',
     expired: false,
   } as unknown as User,

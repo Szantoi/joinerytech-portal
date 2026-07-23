@@ -18,6 +18,9 @@ export type PpeIssuanceStatus = 'Issued' | 'Acknowledged' | 'Returned' | 'Replac
 
 export type SafetyWalkStatus = 'Scheduled' | 'InProgress' | 'ActionRequired' | 'Closed' | 'Cancelled'
 
+/** ADR-059 magyar wire-kulcsok — RiskAssessment FSM. */
+export type RiskStatus = 'piszkozat' | 'ellenorzes' | 'jovahagyva' | 'archivalt'
+
 // ── Átmenet-szabály: melyik akció melyik állapot(ok)ból indítható ───────────
 export interface FsmRule<S extends string> {
   /** Megengedett kiinduló állapotok. */
@@ -61,6 +64,16 @@ export const SAFETY_WALK_FSM = {
 } as const satisfies Record<string, FsmRule<SafetyWalkStatus>>
 
 export type SafetyWalkAction = keyof typeof SAFETY_WALK_FSM
+
+/** Kockázatértékelés FSM: Draft → UnderReview → Approved → Archived (+ return). */
+export const RISK_ASSESSMENT_FSM = {
+  submitForReview: { from: ['piszkozat'], to: 'ellenorzes' },
+  approve: { from: ['ellenorzes'], to: 'jovahagyva' },
+  returnToDraft: { from: ['ellenorzes'], to: 'piszkozat' },
+  archive: { from: ['jovahagyva'], to: 'archivalt' },
+} as const satisfies Record<string, FsmRule<RiskStatus>>
+
+export type RiskAction = keyof typeof RISK_ASSESSMENT_FSM
 
 /** Megállapítás-rögzítés guardja (nem átmenet, de állapothoz kötött). */
 export const WALK_FINDING_ALLOWED_STATUS: SafetyWalkStatus = 'InProgress'

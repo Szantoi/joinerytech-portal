@@ -15,13 +15,40 @@ function findIncident(id: string | readonly string[]) {
 
 /** A bejelentő wizard event-payloadja (stores/incidentDraftStore). */
 interface IncidentEventBody {
-  payload: {
-    reporterId: string
-    incidentType: 'near-miss' | 'injury' | 'property' | null
-    locationId: string | null
-    timestamp: string
-    description: string
+  eventId?: string
+  type?: string
+  payload?: {
+    reporterId?: string
+    incidentType?: 'near-miss' | 'injury' | 'property' | null
+    locationId?: string | null
+    timestamp?: string
+    photoS3Key?: string | null
+    description?: string
   }
+}
+
+// A backend ReportIncidentCommand validator hosszkorlátainak tükre.
+const LOCATION_ID_MAX_LENGTH = 100
+const DESCRIPTION_MAX_LENGTH = 2000
+const PHOTO_S3_KEY_MAX_LENGTH = 500
+
+const EMPTY_UUID = '00000000-0000-0000-0000-000000000000'
+const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+
+function isNonEmptyUuid(value: unknown): value is string {
+  return typeof value === 'string' && UUID_PATTERN.test(value) && value !== EMPTY_UUID
+}
+
+function wizardEventResponse(record: IncidentRecord, sequence: number, status: 200 | 201) {
+  return HttpResponse.json(
+    {
+      eventId: record.incidentId,
+      sequence,
+      status: 'accepted',
+      serverTimestamp: record.reportedAt,
+    },
+    { status },
+  )
 }
 
 const WIZARD_TYPE_MAP: Record<string, IncidentType> = {
@@ -116,17 +143,43 @@ export const incidentHandlers = [
     return HttpResponse.json(toIncidentDto(row))
   }),
 
-  // Wizard-bejelentés: POST /api/ehs/events → új Reported incidens a store-ban
+  // Wizard-bejelentés: POST /api/ehs/events → új Reported incidens a store-ban.
+  // A guard a legacy host ReportIncidentCommand validator kötelező minimumát
+  // tükrözi (EventId/ReporterId GUID, type, locationId, hosszkorlátok), hogy a
+  // mock mód ne lehessen zöld ott, ahol a valós backend 400-at adna.
   http.post(`${EHS_API_BASE}/events`, async ({ request }) => {
     const body = (await request.json()) as IncidentEventBody
     const p = body.payload
-    if (!p?.incidentType || !p.description) {
-      return jsonError(400, 'BadRequest', 'Hiányzó bejelentés-adatok.')
+    if (
+      !isNonEmptyUuid(body.eventId) ||
+      body.type !== 'INCIDENT_REPORTED' ||
+      !isNonEmptyUuid(p?.reporterId) ||
+      !p?.incidentType ||
+      !(p.incidentType in WIZARD_TYPE_MAP) ||
+      typeof p.locationId !== 'string' ||
+      !p.locationId.trim() ||
+      p.locationId.length > LOCATION_ID_MAX_LENGTH ||
+      typeof p.timestamp !== 'string' ||
+      !p.timestamp.trim() ||
+      typeof p.description !== 'string' ||
+      !p.description.trim() ||
+      p.description.length > DESCRIPTION_MAX_LENGTH ||
+      (p.photoS3Key != null &&
+        (typeof p.photoS3Key !== 'string' || p.photoS3Key.length > PHOTO_S3_KEY_MAX_LENGTH))
+    ) {
+      return jsonError(400, 'BadRequest', 'Hiányzó vagy érvénytelen bejelentés-adatok.')
     }
     const db = getEhsDb()
+
+    // Az event ID az idempotencia-kulcs: ismételt POST nem hoz létre új incidenst.
+    const existingIndex = db.incidents.findIndex((incident) => incident.incidentId === body.eventId)
+    if (existingIndex >= 0) {
+      return wizardEventResponse(db.incidents[existingIndex], existingIndex + 1, 200)
+    }
+
     const location = db.locations.find((l) => l.locationId === p.locationId)
     const record: IncidentRecord = {
-      incidentId: crypto.randomUUID(),
+      incidentId: body.eventId,
       tenantId: TENANT_ID,
       incidentType: WIZARD_TYPE_MAP[p.incidentType] ?? 'NearMiss',
       incidentDate: p.timestamp,
@@ -138,14 +191,6 @@ export const incidentHandlers = [
       reportedAt: new Date().toISOString(),
     }
     db.incidents.push(record)
-    return HttpResponse.json(
-      {
-        eventId: record.incidentId,
-        sequence: db.incidents.length,
-        status: 'accepted',
-        serverTimestamp: record.reportedAt,
-      },
-      { status: 201 },
-    )
+    return wizardEventResponse(record, db.incidents.length, 201)
   }),
 ]

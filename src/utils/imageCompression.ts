@@ -18,7 +18,7 @@ export async function compressPhoto(file: File): Promise<File> {
     );
     return compressed;
   } catch (error) {
-    console.error('Photo compression failed, using original:', error);
-    return file; // Fallback to original if compression fails
+    console.error('Photo compression failed; upload canceled:', error);
+    throw new Error('A fénykép biztonságos előkészítése nem sikerült.', { cause: error });
   }
 }

@@ -27,7 +27,9 @@ export function formatDay(date: Date): string {
 
 /** Nap-kulcs eltolása naptári napokkal (negatív = visszafelé). */
 export function addDays(iso: string, days: number): string {
-  return formatDay(new Date(parseDay(iso).getTime() + days * DAY_MS))
+  const date = parseDay(iso)
+  date.setDate(date.getDate() + days)
+  return formatDay(date)
 }
 
 /** Mai nap (helyi idő) YYYY-MM-DD kulcsként. */

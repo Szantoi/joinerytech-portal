@@ -61,7 +61,10 @@ describe('EhsPage', () => {
 
   it('mounts the incident report FAB in the EHS world (task 2)', () => {
     renderEhs()
-    expect(screen.getByLabelText('Baleset bejelentése')).toBeTruthy()
+    const fab = screen.getByLabelText('Baleset bejelentése')
+    expect(fab).toBeTruthy()
+    expect(fab).toHaveClass('z-30')
+    expect(fab).not.toHaveClass('z-40')
   })
 
   it('renders incidents screen from the API', async () => {
@@ -77,10 +80,11 @@ describe('EhsPage', () => {
     expect(screen.getByRole('button', { name: 'Lezárás' })).toHaveAttribute('aria-disabled', 'true')
   })
 
-  it('renders risks screen with risk matrix', () => {
+  it('renders the API-backed 5×5 risks screen', async () => {
     renderEhs('risks')
     expect(screen.getAllByText('Kockázatok').length).toBeGreaterThan(0)
-    expect(screen.getAllByText(/Forgó alkatrészek/).length).toBeGreaterThan(0)
+    expect(await screen.findByRole('table', { name: /5×5 kockázati mátrix/ })).toBeInTheDocument()
+    expect((await screen.findAllByText(/Forgó gépalkatrész elérése/)).length).toBeGreaterThan(0)
   })
 
   it('renders SDS screen (task 4a)', async () => {

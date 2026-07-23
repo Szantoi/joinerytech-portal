@@ -37,7 +37,7 @@ export async function uploadToS3(presigned: PresignedUrlResponse, file: File): P
   const response = await fetch(presigned.uploadUrl, {
     method: 'PUT',
     body: compressed,
-    headers: { 'Content-Type': file.type }
+    headers: { 'Content-Type': compressed.type || 'image/jpeg' }
   });
 
   if (!response.ok) {

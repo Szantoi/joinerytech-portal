@@ -5,11 +5,12 @@ import type { Capa } from '../services/capa'
 import type { HazardousMaterial, HazardousMaterialListItem } from '../services/materials'
 import type { PpeIssuance, PpeItem } from '../services/ppe'
 import type { SafetyWalk, SafetyWalkListItem } from '../services/safetyWalks'
+import type { RiskAssessment, RiskAssessmentListItem } from '../services/riskAssessments'
 import { computeSdsValidity, isPpeIssuanceExpired } from '../services/validity'
 import { canTransition, type FsmRule } from '../services/fsm'
 import {
   seedCapas, seedIncidents, seedLocations, seedMaterials,
-  seedPpeIssuances, seedPpeItems, seedWalks,
+  seedPpeIssuances, seedPpeItems, seedRisks, seedWalks,
 } from './seed'
 
 /**
@@ -24,6 +25,7 @@ export type MaterialRecord = Omit<HazardousMaterial, 'sdsValidity'>
 export type PpeIssuanceRecord = Omit<PpeIssuance, 'isExpired'>
 export type WalkRecord = Omit<SafetyWalk, 'findings'> & { findings: SafetyWalk['findings'] }
 export type IncidentRecord = Omit<Incident, 'correctiveActions'>
+export type RiskRecord = RiskAssessment
 
 export interface EhsDb {
   locations: EhsLocation[]
@@ -32,6 +34,7 @@ export interface EhsDb {
   ppeItems: PpeItem[]
   ppeIssuances: PpeIssuanceRecord[]
   walks: WalkRecord[]
+  risks: RiskRecord[]
   capas: Capa[]
 }
 
@@ -43,6 +46,7 @@ function createDb(): EhsDb {
     ppeItems: seedPpeItems(),
     ppeIssuances: seedPpeIssuances(),
     walks: seedWalks(),
+    risks: seedRisks(),
     capas: seedCapas(),
   }
 }
@@ -106,6 +110,17 @@ export function toIssuanceDto(record: PpeIssuanceRecord): PpeIssuance {
 export function toWalkListItem(record: WalkRecord): SafetyWalkListItem {
   const { safetyWalkId, locationId, scheduledDate, conductedBy, status } = record
   return { safetyWalkId, locationId, scheduledDate, conductedBy, status, findingCount: record.findings.length }
+}
+
+export function toRiskListItem(record: RiskRecord): RiskAssessmentListItem {
+  const {
+    riskAssessmentId, hazardDescription, locationId, severity, likelihood,
+    riskScore, riskLevel, status, assessedAt, reviewDueDate,
+  } = record
+  return {
+    riskAssessmentId, hazardDescription, locationId, severity, likelihood,
+    riskScore, riskLevel, status, assessedAt, reviewDueDate,
+  }
 }
 
 /** Az incidens CAPA-listája az egységes CAPA store-ból áll össze (unified CAPA). */

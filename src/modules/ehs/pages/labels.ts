@@ -1,11 +1,12 @@
 import type { Tone } from '../../../theme/statusTones'
-import type { IncidentStatus, PpeIssuanceStatus, SafetyWalkStatus } from '../services/fsm'
+import type { IncidentStatus, PpeIssuanceStatus, RiskStatus, SafetyWalkStatus } from '../services/fsm'
 import type { IncidentType } from '../services/incidents'
 import type { SdsValidity } from '../services/validity'
 import type { MaterialStatus } from '../services/materials'
 import type { PpeCategory } from '../services/ppe'
 import type { FindingSeverity } from '../services/safetyWalks'
 import type { CapaSource } from '../services/capa'
+import type { RiskLevel, RiskLikelihood, RiskSeverity } from '../services/riskAssessments'
 
 /**
  * EHS UI címke-térképek — a backend enum-kulcsok magyar megjelenítése.
@@ -95,6 +96,43 @@ export const CAPA_SOURCE_LABELS: Record<CapaSource, string> = {
   bejaras: 'Bejárás',
   kockazatertekeles: 'Kockázat',
 }
+
+export const RISK_STATUS_LABELS: Record<RiskStatus, string> = {
+  piszkozat: 'Piszkozat',
+  ellenorzes: 'Ellenőrzés alatt',
+  jovahagyva: 'Jóváhagyva',
+  archivalt: 'Archivált',
+}
+
+export const RISK_SEVERITY_LABELS: Record<RiskSeverity, string> = {
+  elhanyagolhato: 'Elhanyagolható',
+  enyhe: 'Enyhe',
+  kozepes: 'Közepes',
+  sulyos: 'Súlyos',
+  katasztrofalis: 'Katasztrofális',
+}
+
+export const RISK_LIKELIHOOD_LABELS: Record<RiskLikelihood, string> = {
+  ritka: 'Ritka',
+  valoszinutlen: 'Valószínűtlen',
+  lehetseges: 'Lehetséges',
+  valoszinu: 'Valószínű',
+  szinte_biztos: 'Szinte biztos',
+}
+
+export const RISK_LEVEL_META: Record<RiskLevel, { label: string; tone: Tone }> = {
+  alacsony: { label: 'Alacsony', tone: 'success' },
+  kozepes: { label: 'Közepes', tone: 'info' },
+  magas: { label: 'Magas', tone: 'warn' },
+  kritikus: { label: 'Kritikus', tone: 'danger' },
+}
+
+export const RISK_ACTION_LABELS = {
+  submitForReview: 'Ellenőrzésre küldés',
+  approve: 'Jóváhagyás',
+  returnToDraft: 'Visszaküldés piszkozatba',
+  archive: 'Archiválás',
+} as const
 
 // ── Dátum-megjelenítés ──────────────────────────────────────────────────────
 

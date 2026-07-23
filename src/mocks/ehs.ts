@@ -1,7 +1,6 @@
 export type IncidentType = 'accident' | 'near_miss' | 'environmental'
 export type IncidentSeverity = 'high' | 'medium' | 'low'
 export type IncidentStatus = 'reported' | 'investigating' | 'action' | 'closed'
-export type RiskLevel = 'critical' | 'high' | 'medium' | 'low'
 
 export interface EhsIncident {
   id: string
@@ -15,17 +14,6 @@ export interface EhsIncident {
   persons: string[]
   description: string
   investigationNote?: string
-}
-
-export interface EhsRisk {
-  id: string
-  title: string
-  area: string
-  probability: 1 | 2 | 3
-  impact: 1 | 2 | 3
-  level: RiskLevel
-  owner: string
-  lastReview: string
 }
 
 export interface EhsAction {
@@ -58,13 +46,6 @@ export const INCIDENT_STATUS_META: Record<IncidentStatus, { label: string; bg: s
   closed:       { label: 'Lezárva',      bg: 'bg-emerald-50', fg: 'text-emerald-700', dot: 'bg-emerald-500' },
 }
 
-export const RISK_LEVEL_META: Record<RiskLevel, { label: string; bg: string; fg: string }> = {
-  critical: { label: 'Kritikus', bg: 'bg-rose-100',    fg: 'text-rose-800' },
-  high:     { label: 'Magas',    bg: 'bg-rose-50',     fg: 'text-rose-700' },
-  medium:   { label: 'Közepes',  bg: 'bg-amber-50',    fg: 'text-amber-700' },
-  low:      { label: 'Alacsony', bg: 'bg-emerald-50',  fg: 'text-emerald-700' },
-}
-
 export const INCIDENTS: EhsIncident[] = [
   { id: 'INC-001', type: 'accident', severity: 'medium', status: 'action',
     title: 'Kézsérülés — szabászati gépnél',
@@ -89,21 +70,6 @@ export const INCIDENTS: EhsIncident[] = [
     date: '2026-04-25', location: 'Vác — főüzem / Udvar',
     reportedBy: 'Horváth Éva', persons: ['Horváth Éva'],
     description: 'A targonca kezelője nem látta az arra sétáló munkavállalót. Fékezéssel sikerült megállni.' },
-]
-
-export const RISKS: EhsRisk[] = [
-  { id: 'RSK-001', title: 'Forgó alkatrészek — kézsérülés veszély', area: 'Szabászat',
-    probability: 2, impact: 3, level: 'high', owner: 'Gábor Márton', lastReview: '2026-04-15' },
-  { id: 'RSK-002', title: 'Polcrendszer instabilitás', area: 'Raktár',
-    probability: 2, impact: 2, level: 'medium', owner: 'Tóth Kinga', lastReview: '2026-04-20' },
-  { id: 'RSK-003', title: 'Vegyszerek kezelése — égési sérülés', area: 'Felületkezelés',
-    probability: 1, impact: 3, level: 'high', owner: 'Kiss András', lastReview: '2026-03-30' },
-  { id: 'RSK-004', title: 'Targonca — gézolat forgalmi út', area: 'Udvar',
-    probability: 3, impact: 2, level: 'high', owner: 'Nagy János', lastReview: '2026-04-25' },
-  { id: 'RSK-005', title: 'Por és forgács — légzési kockázat', area: 'CNC megmunkáló',
-    probability: 2, impact: 2, level: 'medium', owner: 'Horváth Éva', lastReview: '2026-04-01' },
-  { id: 'RSK-006', title: 'Elektromos szerelvények — áramütés', area: 'Villamos rendszer',
-    probability: 1, impact: 3, level: 'high', owner: 'Varga László', lastReview: '2026-03-15' },
 ]
 
 export const ACTIONS: EhsAction[] = [

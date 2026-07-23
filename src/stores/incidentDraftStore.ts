@@ -5,6 +5,7 @@ import { getPresignedUrl, uploadToS3 } from '../services/ehsPhotoService';
 
 export interface IncidentDraft {
   id: string; // UUID v4 (idempotency)
+  reporterId: string | null;
   incidentType: 'near-miss' | 'injury' | 'property' | null;
   locationId: string | null;
   timestamp: string; // ISO8601
@@ -21,16 +22,20 @@ interface IncidentDraftStore {
   currentDraft: IncidentDraft | null;
   startNewDraft: () => void;
   updateDraft: (updates: Partial<IncidentDraft>) => void;
-  submitDraft: (onSuccess?: (eventId: string) => void) => Promise<void>;
+  submitDraft: (
+    reporterId?: string | null,
+    onSuccess?: (eventId: string) => void,
+  ) => Promise<void>;
   retryFailed: (draftId: string) => Promise<void>;
   deleteDraft: (draftId: string) => void;
   clearCurrentDraft: () => void;
 }
 
-// Helper function to get user ID (from auth context or mock)
-function getUserId(): string {
-  // TODO: Replace with actual auth context when available
-  return 'user-mock-id-001';
+const EMPTY_UUID = '00000000-0000-0000-0000-000000000000';
+const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+function isNonEmptyUuid(value: string | null | undefined): value is string {
+  return typeof value === 'string' && UUID_PATTERN.test(value) && value !== EMPTY_UUID;
 }
 
 // Helper function to get device ID
@@ -53,6 +58,7 @@ export const useIncidentDraftStore = create<IncidentDraftStore>()(
       startNewDraft: () => {
         const draft: IncidentDraft = {
           id: crypto.randomUUID(),
+          reporterId: null,
           incidentType: null,
           locationId: null,
           timestamp: new Date().toISOString(),
@@ -80,9 +86,17 @@ export const useIncidentDraftStore = create<IncidentDraftStore>()(
         });
       },
 
-      submitDraft: async (onSuccess) => {
+      submitDraft: async (reporterId, onSuccess) => {
         const draft = get().currentDraft;
         if (!draft) return;
+
+        const effectiveReporterId = reporterId ?? draft.reporterId;
+        if (!isNonEmptyUuid(effectiveReporterId)) {
+          throw new Error('A bejelentő azonosítója hiányzik vagy érvénytelen.');
+        }
+
+        // A retry pontosan ugyanazzal a bejelentővel és event ID-val folytatódjon.
+        get().updateDraft({ reporterId: effectiveReporterId });
 
         // Update status to uploading
         get().updateDraft({ status: 'uploading' });
@@ -105,9 +119,10 @@ export const useIncidentDraftStore = create<IncidentDraftStore>()(
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
+              eventId: draft.id,
               type: 'INCIDENT_REPORTED',
               payload: {
-                reporterId: getUserId(),
+                reporterId: effectiveReporterId,
                 incidentType: draft.incidentType,
                 locationId: draft.locationId,
                 timestamp: draft.timestamp,
@@ -155,7 +170,7 @@ export const useIncidentDraftStore = create<IncidentDraftStore>()(
         if (!draft) return;
 
         set({ currentDraft: draft });
-        await get().submitDraft();
+        await get().submitDraft(draft.reporterId);
       },
 
       deleteDraft: (draftId) => {

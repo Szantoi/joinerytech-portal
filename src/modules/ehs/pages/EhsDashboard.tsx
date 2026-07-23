@@ -1,11 +1,10 @@
 import { useState } from 'react'
 import { Card, Icon, StatusPill } from '../../../components/ui'
 import {
-  useIncidents, useExpiringSds, useExpiringPpe, useCapas, useSafetyWalks,
+  locationNameMap, useCapas, useEhsLocations, useExpiringPpe, useExpiringSds,
+  useIncidents, useRiskAssessments, useRiskMatrix, useSafetyWalks,
 } from '../services'
-import { RISKS } from '../../../mocks/ehs'
-import { INCIDENT_STATUS_LABELS, SEVERITY_LABELS, formatDate } from './labels'
-import { RiskLevelBadge } from './RisksScreen'
+import { INCIDENT_STATUS_LABELS, RISK_LEVEL_META, SEVERITY_LABELS, formatDate } from './labels'
 import { IncidentDetailSlideOver } from './IncidentDetailSlideOver'
 
 /**
@@ -61,9 +60,23 @@ export function EhsDashboard({ onScreen }: { onScreen: (s: string) => void }) {
   const openCapas = useCapas({ completed: false })
   const expiringPpe = useExpiringPpe()
   const dueWalks = useSafetyWalks({ status: 'Scheduled' })
+  const riskMatrix = useRiskMatrix()
+  const risks = useRiskAssessments()
+  const locations = useEhsLocations()
 
-  const highRisks = RISKS.filter((r) => r.level === 'critical' || r.level === 'high')
+  const highRiskCount = riskMatrix.isError
+    ? '—'
+    : riskMatrix.data
+      ? (riskMatrix.data.byRiskLevel.magas ?? 0) + (riskMatrix.data.byRiskLevel.kritikus ?? 0)
+      : undefined
+  const highRisks = risks.data?.filter((risk) =>
+    risk.status !== 'archivalt' && (risk.riskLevel === 'magas' || risk.riskLevel === 'kritikus')) ?? []
+  const locationNames = locationNameMap(locations.data)
   const recent = incidents.data?.items.slice(0, 4) ?? []
+  const riskSummaryError = risks.isError || riskMatrix.isError || locations.isError
+  const riskSummaryPending = !riskSummaryError &&
+    (risks.isPending || riskMatrix.isPending || locations.isPending)
+  const riskSummaryReady = !riskSummaryPending && !riskSummaryError
 
   return (
     <div className="mx-auto max-w-[1200px] px-4 py-5 md:px-7 md:py-6">
@@ -85,7 +98,7 @@ export function EhsDashboard({ onScreen }: { onScreen: (s: string) => void }) {
           tone="sky" icon="shield" onClick={() => onScreen('ppe')} />
         <KpiCard label="Esedékes bejárás" value={dueWalks.data?.length} sub="ütemezett bejárás"
           tone="teal" icon="calendar" onClick={() => onScreen('walks')} />
-        <KpiCard label="Magas kockázat" value={highRisks.length} sub="kockázati terület"
+        <KpiCard label="Magas kockázat" value={highRiskCount} sub="aktív kockázatértékelés"
           tone="rose" icon="alert" onClick={() => onScreen('risks')} />
       </div>
 
@@ -125,13 +138,32 @@ export function EhsDashboard({ onScreen }: { onScreen: (s: string) => void }) {
             </button>
           </div>
           <div className="divide-y divide-line">
-            {highRisks.map((r) => (
-              <div key={r.id} className="flex items-center gap-3 px-4 py-3">
+            {riskSummaryPending && (
+              <div aria-busy="true" className="px-4 py-6 text-[12px] text-ink-muted">Betöltés…</div>
+            )}
+            {riskSummaryError && (
+              <div className="flex items-center justify-between gap-3 px-4 py-5 text-[12px] text-rose-700 dark:text-rose-300">
+                <span>A kockázati kivonat nem tölthető be.</span>
+                <button
+                  className="font-medium text-rose-600 hover:underline dark:text-rose-300"
+                  onClick={() => { void risks.refetch(); void riskMatrix.refetch(); void locations.refetch() }}
+                >
+                  Újra
+                </button>
+              </div>
+            )}
+            {riskSummaryReady && highRisks.length === 0 && (
+                <div className="px-4 py-6 text-[12px] text-ink-muted">Nincs magas vagy kritikus aktív kockázat.</div>
+              )}
+            {riskSummaryReady && highRisks.map((r) => (
+              <div key={r.riskAssessmentId} className="flex items-center gap-3 px-4 py-3">
                 <div className="min-w-0 flex-1">
-                  <div className="truncate text-[12.5px] font-semibold text-ink">{r.title}</div>
-                  <div className="mt-0.5 text-[11px] text-ink-muted">{r.area} · Val. {r.probability} × Hatás {r.impact}</div>
+                  <div className="truncate text-[12.5px] font-semibold text-ink">{r.hazardDescription}</div>
+                  <div className="mt-0.5 text-[11px] text-ink-muted">
+                    {r.locationId ? (locationNames.get(r.locationId) ?? '—') : '—'} · Pontszám: {r.riskScore}
+                  </div>
                 </div>
-                <RiskLevelBadge level={r.level} />
+                <StatusPill size="sm" tone={RISK_LEVEL_META[r.riskLevel].tone} label={RISK_LEVEL_META[r.riskLevel].label} />
               </div>
             ))}
           </div>

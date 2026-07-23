@@ -34,7 +34,7 @@ export function IncidentReportFAB({ onSuccess }: IncidentReportFABProps) {
           Szín: world-akcent (EHS), NEM a danger-tónusú rose. */}
       <button
         onClick={handleOpenWizard}
-        className="fixed bottom-[calc(58px+env(safe-area-inset-bottom)+16px)] right-4 z-40 md:hidden w-14 h-14 bg-world hover:bg-world-hover text-world-fg rounded-full shadow-lg hover:shadow-xl transition-all flex items-center justify-center group"
+        className="fixed bottom-[calc(58px+env(safe-area-inset-bottom)+16px)] right-4 z-30 md:hidden w-14 h-14 bg-world hover:bg-world-hover text-world-fg rounded-full shadow-lg hover:shadow-xl transition-all flex items-center justify-center group"
         aria-label="Baleset bejelentése"
       >
         {failedDraftsCount > 0 && (

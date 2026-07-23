@@ -2,8 +2,11 @@ import type { EhsLocation } from '../services/locations'
 import type { Incident } from '../services/incidents'
 import type { Capa } from '../services/capa'
 import type { PpeItem } from '../services/ppe'
+import type { RiskAssessment, RiskLikelihood, RiskSeverity } from '../services/riskAssessments'
+import type { RiskStatus } from '../services/fsm'
 import { EHS_EMPLOYEE_DIRECTORY } from '../services/employees'
 import type { MaterialRecord, PpeIssuanceRecord, WalkRecord } from './db'
+import { calculateMockRisk } from './riskMatrix'
 
 /**
  * EHS mock seed — determinisztikus fixture-ök, a dátumok a "most"-hoz képest
@@ -63,6 +66,12 @@ export const SEED_IDS = {
   capaIncidentDone: '00000000-0000-4000-8000-00000000ca04',
   capaRiskOpen: '00000000-0000-4000-8000-00000000ca05',
   riskWithCapa: '00000000-0000-4000-8000-0000000a1001',
+  riskDraftLow: '00000000-0000-4000-8000-0000000a1002',
+  riskReviewMedium: '00000000-0000-4000-8000-0000000a1003',
+  riskApprovedCritical: '00000000-0000-4000-8000-0000000a1004',
+  riskArchived: '00000000-0000-4000-8000-0000000a1005',
+  riskDraftLowSecond: '00000000-0000-4000-8000-0000000a1006',
+  riskControlWithCapa: '00000000-0000-4000-8000-0000000a2001',
 } as const
 
 const loc = (
@@ -205,6 +214,125 @@ export function seedWalks(): WalkRecord[] {
         recordedAt: daysFromNow(-29),
       }] },
   ]
+}
+
+function risk(
+  riskAssessmentId: string,
+  hazardDescription: string,
+  locationId: string | null,
+  severity: RiskSeverity,
+  likelihood: RiskLikelihood,
+  status: RiskStatus,
+  assessedBy: string,
+  assessedDaysAgo: number,
+  reviewDueInDays: number,
+): RiskAssessment {
+  const calculated = calculateMockRisk(severity, likelihood)
+  const assessedAt = daysFromNow(-assessedDaysAgo)
+  return {
+    riskAssessmentId,
+    tenantId: TENANT_ID,
+    hazardDescription,
+    locationId,
+    severity,
+    likelihood,
+    ...calculated,
+    status,
+    assessedBy,
+    assessedAt,
+    reviewDueDate: daysFromNow(reviewDueInDays),
+    submittedAt: status === 'ellenorzes' || status === 'jovahagyva' || status === 'archivalt'
+      ? daysFromNow(-7)
+      : null,
+    approvedAt: status === 'jovahagyva' || status === 'archivalt' ? daysFromNow(-5) : null,
+    archivedAt: status === 'archivalt' ? daysFromNow(-1) : null,
+    controlMeasures: [],
+  }
+}
+
+/** 5×5 risk fixture: minden FSM-státusz és minden kockázati sáv jelen van. */
+export function seedRisks(): RiskAssessment[] {
+  const rows = [
+    risk(
+      SEED_IDS.riskDraftLow,
+      'Kézi anyagmozgatás közbeni kisebb zúzódás veszélye.',
+      SEED_IDS.locWarehouse,
+      'enyhe',
+      'valoszinutlen',
+      'piszkozat',
+      emp(0),
+      2,
+      45,
+    ),
+    risk(
+      SEED_IDS.riskReviewMedium,
+      'Faipari por tartós belégzése elszívási hiba esetén.',
+      SEED_IDS.locHallB,
+      'kozepes',
+      'lehetseges',
+      'ellenorzes',
+      emp(1),
+      8,
+      20,
+    ),
+    risk(
+      SEED_IDS.riskDraftLowSecond,
+      'Gyalogos elcsúszás nedves kültéri burkolaton.',
+      SEED_IDS.locYard,
+      'enyhe',
+      'valoszinutlen',
+      'piszkozat',
+      emp(3),
+      1,
+      60,
+    ),
+    risk(
+      SEED_IDS.riskWithCapa,
+      'Forgó gépalkatrész elérése hiányos védőburkolat mellett.',
+      SEED_IDS.locHallA,
+      'sulyos',
+      'valoszinu',
+      'jovahagyva',
+      emp(4),
+      15,
+      12,
+    ),
+    risk(
+      SEED_IDS.riskApprovedCritical,
+      'Robbanásveszélyes oldószergőz felhalmozódása a felületkezelőben.',
+      SEED_IDS.locHallC,
+      'katasztrofalis',
+      'szinte_biztos',
+      'jovahagyva',
+      emp(2),
+      4,
+      7,
+    ),
+    risk(
+      SEED_IDS.riskArchived,
+      'Korábbi, kivezetett kézi felületkezelési technológia.',
+      null,
+      'sulyos',
+      'lehetseges',
+      'archivalt',
+      emp(3),
+      120,
+      30,
+    ),
+  ]
+
+  const linked = rows.find((row) => row.riskAssessmentId === SEED_IDS.riskWithCapa)!
+  linked.controlMeasures.push({
+    riskControlId: SEED_IDS.riskControlWithCapa,
+    controlMeasure: 'A védőburkolatok műszakonkénti ellenőrzése.',
+    responsiblePerson: 'Munkavédelmi vezető',
+    implementedAt: daysFromNow(-6),
+    verifiedAt: null,
+    isVerified: false,
+    correctiveActionId: SEED_IDS.capaRiskOpen,
+  })
+
+  return rows
 }
 
 export function seedCapas(): Capa[] {

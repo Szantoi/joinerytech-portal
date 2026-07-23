@@ -13,6 +13,10 @@ export const ehsKeys = {
   incidents: (filters?: QueryParams) => [...ehsKeys.all, 'incidents', filters ?? {}] as const,
   incident: (id: string) => [...ehsKeys.all, 'incident', id] as const,
 
+  risks: (filters?: QueryParams) => [...ehsKeys.all, 'risks', filters ?? {}] as const,
+  risk: (id: string) => [...ehsKeys.all, 'risk', id] as const,
+  riskMatrix: () => [...ehsKeys.all, 'risk-matrix'] as const,
+
   materials: (filters?: QueryParams) => [...ehsKeys.all, 'materials', filters ?? {}] as const,
   material: (id: string) => [...ehsKeys.all, 'material', id] as const,
   expiringSds: (withinDays: number) => [...ehsKeys.all, 'materials-expiring', withinDays] as const,

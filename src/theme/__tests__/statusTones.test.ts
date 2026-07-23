@@ -15,6 +15,7 @@ import { NCR_STATUS_META } from '../../mocks/quality'
 import { INCIDENT_STATUS_META } from '../../mocks/ehs'
 import { DOC_STATUS_META } from '../../mocks/docs'
 import { PROJECT_STATUS_LABELS } from '../../modules/controlling/pages/labels'
+import { RISK_STATUS_LABELS } from '../../modules/ehs/pages/labels'
 
 const ALL_TONES: Tone[] = ['neutral', 'info', 'progress', 'success', 'warn', 'danger', 'terminal']
 
@@ -51,10 +52,10 @@ describe('STATUS_TONES', () => {
 })
 
 describe('FSM_TONES — készletek és értékek', () => {
-  it('mind a 10 FSM státusz-készlet definiált (8 terv-készlet + 2 EHS backend-készlet)', () => {
+  it('mind a 11 FSM státusz-készlet definiált', () => {
     expect(Object.keys(FSM_TONES).sort()).toEqual([
       'crmLead', 'crmOpportunity', 'dmsDokumentum', 'ehsBaleset',
-      'ehsBejaras', 'ehsPpeKiadas',
+      'ehsBejaras', 'ehsKockazat', 'ehsPpeKiadas',
       'hrTavollet', 'kontrollingProjekt', 'maintenanceMunkalap', 'qaEllenorzes',
     ])
   })
@@ -93,6 +94,7 @@ describe('FSM_TONES — a portál valós státusz-készleteinek teljes lefedése
     ['maintenanceMunkalap', Object.keys(TICKET_STATUS_META)],
     ['qaEllenorzes', Object.keys(NCR_STATUS_META)],
     ['ehsBaleset', Object.keys(INCIDENT_STATUS_META)],
+    ['ehsKockazat', Object.keys(RISK_STATUS_LABELS)],
     ['dmsDokumentum', Object.keys(DOC_STATUS_META)],
     ['kontrollingProjekt', Object.keys(PROJECT_STATUS_LABELS)],
   ]
@@ -114,6 +116,7 @@ describe('FSM_TONES — a portál valós státusz-készleteinek teljes lefedése
     expect(resolveFsmTone('hrTavollet', 'kert')).toBe('warn')
     expect(resolveFsmTone('kontrollingProjekt', 'on_hold')).toBe('warn')
     expect(resolveFsmTone('dmsDokumentum', 'archivalt')).toBe('terminal')
+    expect(resolveFsmTone('ehsKockazat', 'ellenorzes')).toBe('warn')
   })
 
   it('ismeretlen státusz → neutral + dev-warning', () => {

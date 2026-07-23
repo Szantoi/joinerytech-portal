@@ -53,6 +53,11 @@ export const FSM_TONES = {
     intezkedes: 'warn',      // nyitott CAPA-k, figyelmet igényel
     lezart: 'success', elmaradt: 'terminal',
   },
+  /** Kockázatértékelés — ADR-059 kanonikus magyar wire-kulcsok. */
+  ehsKockazat: {
+    piszkozat: 'neutral', ellenorzes: 'warn',
+    jovahagyva: 'success', archivalt: 'terminal',
+  },
   dmsDokumentum: {
     piszkozat: 'neutral', ellenorzes: 'warn',
     kiadott: 'success', archivalt: 'terminal',
@@ -63,7 +68,7 @@ export const FSM_TONES = {
   },
 } satisfies Record<string, Record<string, Tone>>
 
-/** A 8 FSM státusz-készlet azonosítói. */
+/** A platform FSM státusz-készleteinek azonosítói. */
 export type FsmSet = keyof typeof FSM_TONES
 
 /**

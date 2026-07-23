@@ -1,12 +1,15 @@
 import { describe, it, expect, beforeAll, afterAll, beforeEach, afterEach, vi } from 'vitest'
-import { render, screen, fireEvent } from '@testing-library/react'
+import { render, screen, fireEvent, within } from '@testing-library/react'
+import { http, HttpResponse } from 'msw'
 import { setupServer } from 'msw/node'
-import { ehsApiHandlers, resetEhsDb } from '../../mocks'
+import { ehsApiHandlers, getEhsDb, resetEhsDb } from '../../mocks'
+import { buildRiskMatrixSummary } from '../../mocks/riskMatrix'
 import { SdsScreen } from '../SdsScreen'
 import { PpeScreen } from '../PpeScreen'
 import { WalksScreen } from '../WalksScreen'
 import { EhsDashboard } from '../EhsDashboard'
 import { IncidentsScreen } from '../IncidentsScreen'
+import { RisksScreen } from '../RisksScreen'
 import { createEhsWrapper } from './ehsTestUtils'
 
 /** Smoke render tesztek az új EHS képernyőkre (MSW seed-adatokkal). */
@@ -63,11 +66,74 @@ describe('EHS képernyők — smoke render', () => {
     expect(screen.getByText('Esedékes bejárás')).toBeInTheDocument()
     // a legutóbbi események az API-ból töltődnek
     expect(await screen.findByText(/Targonca majdnem elütött/)).toBeInTheDocument()
+    expect(await screen.findByText(/Robbanásveszélyes oldószergőz/)).toBeInTheDocument()
+    expect(screen.getByText('Magas kockázat').closest('button')).toHaveTextContent('2')
+  })
+
+  it('Áttekintés: mátrixhiba alatt nem mutat részleges kockázati listát, az újrapróbálás helyreállítja', async () => {
+    let matrixAttempts = 0
+    let releaseLocations = () => {}
+    const heldLocations = new Promise<void>((resolve) => {
+      releaseLocations = resolve
+    })
+    const safetyRelease = setTimeout(releaseLocations, 2_000)
+    server.use(http.get('/api/ehs/risk-assessments/risk-matrix', () => {
+      matrixAttempts += 1
+      return matrixAttempts === 1
+        ? HttpResponse.json({ message: 'Átmeneti hiba' }, { status: 503 })
+        : HttpResponse.json(buildRiskMatrixSummary(getEhsDb().risks))
+    }), http.get('/api/ehs/locations', async () => {
+      await heldLocations
+      return HttpResponse.json(getEhsDb().locations)
+    }))
+
+    render(<EhsDashboard onScreen={vi.fn()} />, { wrapper: wrapper() })
+
+    const riskHeading = screen.getByText('Kockázati mátrix (kivonat)')
+    const riskCard = riskHeading.parentElement!.parentElement!
+    expect(await within(riskCard).findByText('A kockázati kivonat nem tölthető be.'))
+      .toBeInTheDocument()
+    expect(within(riskCard).queryByText('Betöltés…')).not.toBeInTheDocument()
+    expect(within(riskCard).queryByText(/Robbanásveszélyes oldószergőz/)).not.toBeInTheDocument()
+    fireEvent.click(within(riskCard).getByRole('button', { name: 'Újra' }))
+    releaseLocations()
+    clearTimeout(safetyRelease)
+
+    expect(await within(riskCard).findByText(/Robbanásveszélyes oldószergőz/)).toBeInTheDocument()
+    expect(matrixAttempts).toBe(2)
+  })
+
+  it('Áttekintés: helyszíntörzs-hiba is kapuzott és az újrapróbálás a törzset is frissíti', async () => {
+    let locationAttempts = 0
+    server.use(http.get('/api/ehs/locations', () => {
+      locationAttempts += 1
+      return locationAttempts === 1
+        ? HttpResponse.json({ message: 'Átmeneti hiba' }, { status: 503 })
+        : HttpResponse.json(getEhsDb().locations)
+    }))
+
+    render(<EhsDashboard onScreen={vi.fn()} />, { wrapper: wrapper() })
+
+    expect(await screen.findByText('A kockázati kivonat nem tölthető be.')).toBeInTheDocument()
+    expect(screen.queryByText(/Forgó gépalkatrész elérése/)).not.toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: 'Újra' }))
+
+    expect(await screen.findByText(/Forgó gépalkatrész elérése/)).toBeInTheDocument()
+    expect(screen.getByText(/A csarnok — szabászat/)).toBeInTheDocument()
+    expect(locationAttempts).toBe(2)
   })
 
   it('Események képernyő: API-lista + státusz-pillek', async () => {
     render(<IncidentsScreen />, { wrapper: wrapper() })
     expect(await screen.findByText(/Anyagleesés a polcrendszerről/)).toBeInTheDocument()
     expect((await screen.findAllByText('Bejelentve')).length).toBeGreaterThan(0)
+  })
+
+  it('Kockázatok képernyő: 25 cellás API-mátrix és lista', async () => {
+    render(<RisksScreen />, { wrapper: wrapper() })
+    const table = await screen.findByRole('table', { name: /5×5 kockázati mátrix/ })
+    expect(table.querySelectorAll('td')).toHaveLength(25)
+    expect((await screen.findAllByText(/Forgó gépalkatrész elérése/)).length).toBeGreaterThan(0)
+    expect(screen.getByText('5 aktív értékelés a mátrixban')).toBeInTheDocument()
   })
 })
