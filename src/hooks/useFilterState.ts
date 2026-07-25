@@ -53,6 +53,22 @@ const STORAGE_KEY = 'spaceos_filter_presets'
 const MAX_PRESETS = 10
 
 /**
+ * Két szűrősor-lista ÉRDEMI egyezése (a generált `id` mezőt figyelmen kívül
+ * hagyva) — az URL→state hatás azonosság-guardja használja.
+ */
+function sameFilterRows(a: FilterRow[], b: FilterRow[]): boolean {
+  if (a.length !== b.length) return false
+  return a.every((row, i) => {
+    const other = b[i]
+    return (
+      row.field === other.field &&
+      row.operator === other.operator &&
+      JSON.stringify(row.value) === JSON.stringify(other.value)
+    )
+  })
+}
+
+/**
  * useFilterState
  *
  * Core filter state management hook with URL sync and localStorage presets.
@@ -127,8 +143,16 @@ export function useFilterState<T = any>(
       }
     })
 
-    setActiveFilters(filters)
-  }, [searchParams, config.fields])
+    // ⚠ Azonosság-guard (STAB-FE-PROCUREMENT-OOM): a `filters` MINDEN futáskor
+    // új tömb (a sor-id-k `Date.now()`-ból készülnek), ezért a feltétel nélküli
+    // setState új rendert indítana, az pedig — inline `config` literált átadó
+    // fogyasztónál — újra lefuttatná ezt a hatást: végtelen hurok. Csak akkor
+    // frissítünk, ha a szűrők ÉRDEMBEN változtak (az id-k figyelmen kívül).
+    setActiveFilters((prev) => (sameFilterRows(prev, filters) ? prev : filters))
+    // A `searchParams` OBJEKTUM-identitása renderenként változhat; a
+    // string-alakja viszont pontosan akkor, amikor a tartalom.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchParams.toString(), config.fields])
 
   /**
    * Update URL params when filters change
@@ -197,6 +221,12 @@ export function useFilterState<T = any>(
       const updated = activeFilters.map((f) =>
         f.id === filterId ? { ...f, ...updates } : f
       )
+      // Bail-out (STAB-FE-PROCUREMENT-OOM, második kör): a `.map()` MINDIG új
+      // tömb-identitást ad, ezért a feltétel nélküli setState akkor is új
+      // rendert indít, ha semmi nem változott — és ezzel a hívó hatását is
+      // újrafuttatja. Az `updateUrlParams` ráadásul `setSearchParams`-t hív,
+      // ami böngészőben `history.replaceState`-spamot okozna.
+      if (sameFilterRows(activeFilters, updated)) return
       setActiveFilters(updated)
       updateUrlParams(updated)
     },

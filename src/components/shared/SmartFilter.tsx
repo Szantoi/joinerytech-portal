@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { FilterRow } from './FilterRow'
 import { FilterPresets } from './FilterPresets'
 import { useFilterState, type FilterConfig } from '../../hooks/useFilterState'
@@ -59,11 +59,39 @@ export function SmartFilter<T = any>({
   } = useFilterState<T>(config, data, presetKey)
 
   /**
-   * Emit filtered data to parent
+   * Emit filtered data to parent.
+   *
+   * ⚠ Az `onFilter` NEM lehet a hatás függősége (STAB-FE-PROCUREMENT-OOM):
+   * inline-arrow callbacknél minden render új identitást adna, és a hatásban
+   * hívott `setState` újabb rendert indítana — végtelen passzív-effekt hurok,
+   * amit a React csak `console.error`-ral jelez, NEM dob. RTL `act()`-en belül
+   * ez a `flushActQueue` tömbjét korlátlanul növeszti (heap-OOM), böngészőben
+   * pedig folyamatosan pörgeti a CPU-t. A ref-tükör miatt a hatás kizárólag a
+   * SZŰRÉS EREDMÉNYÉNEK változására fut.
    */
-  React.useEffect(() => {
-    onFilter(filteredData)
-  }, [filteredData, onFilter])
+  const onFilterRef = useRef(onFilter)
+  useLayoutEffect(() => {
+    onFilterRef.current = onFilter
+  })
+  const lastEmittedRef = useRef<T[] | null>(null)
+  useEffect(() => {
+    // Érték-alapú kapu: ha a szűrés eredménye ELEMENKÉNT ugyanaz, nem
+    // emittálunk újra. Enélkül egy instabil identitású `data` prop (pl.
+    // `data={items || []}`) minden renderben új `filteredData`-t adna, a
+    // szülő setState-je pedig újabb rendert — a hurok a fogyasztón múlna.
+    //
+    // ⚠ SZERZŐDÉS, amit ez a kapu NEM tud kikényszeríteni: az összehasonlítás
+    // ELEM-IDENTITÁS alapú. Ha a hívó minden renderben ÚJ elem-objektumokat
+    // gyárt (`data={rows.map(r => ({ ...r }))}`), a kapu nem fog, és a hurok
+    // visszatér. A `data` prop elemeinek referenciálisan stabilnak kell
+    // lenniük — a hívó memoizáljon (ld. ProcurementPage `ordersForFilter`).
+    const prev = lastEmittedRef.current
+    if (prev && prev.length === filteredData.length && prev.every((x, i) => x === filteredData[i])) {
+      return
+    }
+    lastEmittedRef.current = filteredData
+    onFilterRef.current(filteredData)
+  }, [filteredData])
 
   /**
    * Add a new empty filter row
@@ -78,14 +106,15 @@ export function SmartFilter<T = any>({
   /**
    * Update filter when FilterRow changes
    */
-  const handleFilterRowChange = (
-    filterId: string,
-    field: string,
-    operator: string,
-    value: any
-  ) => {
-    updateFilter(filterId, { field, operator, value })
-  }
+  // `useCallback`: a FilterRow-nak átadott callback identitása stabil marad,
+  // különben minden render új függvényt adna a sor-effektnek (a hurok-lánc
+  // másik fele — STAB-FE-PROCUREMENT-OOM, második kör).
+  const handleFilterRowChange = useCallback(
+    (filterId: string, field: string, operator: string, value: any) => {
+      updateFilter(filterId, { field, operator, value })
+    },
+    [updateFilter],
+  )
 
   if (collapsed) {
     return (
@@ -187,6 +216,3 @@ export function SmartFilter<T = any>({
     </div>
   )
 }
-
-// Fix missing React import for useEffect
-import React from 'react'

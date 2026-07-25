@@ -222,15 +222,73 @@ try {
     await ctx.close()
   }
 
+  // ── WORLDS-SHELL-H1 (részleges): MINDEN világ-route-nak legyen CÍME, és a
+  //    nav aktív eleme ugyanazt mondja, mint az oldalcím.
+  //
+  //    A „pontosan egy <h1>" cél NEM teljesíthető a shell-cím elvételével: a
+  //    fresh review bizonyította, hogy 8 legacy világ 38 route-ján a tartalom
+  //    nem ad saját címet. Ez az őr azt a REGRESSZIÓT fogja meg, amit az első
+  //    nekifutás majdnem beszállított (cím nélküli oldalak), a duplikáció
+  //    feloldása a WORLDS-SHELL-H1 következő körére marad.
+  {
+    const ctx = await browser.newContext({ viewport: { width: 1440, height: 900 } })
+    const page = await ctx.newPage()
+    const ROUTES = [
+      '/w/production', '/w/production/cutting', '/w/production/machining',
+      '/w/production/orders', '/w/production/quotes', '/w/production/workflow',
+      '/w/production/analytics',
+      '/w/crm', '/w/kontrolling', '/w/hr', '/w/maintenance', '/w/quality',
+      '/w/ehs', '/w/docs',
+      // Legacy világak — ezeken a shell címe az EGYETLEN cím:
+      '/w/sales', '/w/design', '/w/warehouse', '/w/finance', '/w/masterdata',
+      '/w/interior', '/w/service', '/w/settings',
+    ]
+    const titleless = []
+    const mismatches = []
+    const noActiveNav = []
+    for (const path of ROUTES) {
+      await page.goto(`${BASE}${path}`, { waitUntil: 'networkidle' })
+      await page.waitForTimeout(400)
+      const info = await page.evaluate(() => {
+        const h1s = [...document.querySelectorAll('h1')].map((h) => h.textContent?.trim() ?? '')
+        const active = document.querySelector('[aria-current="page"]')
+        return { h1s, active: active?.textContent?.trim() ?? null }
+      })
+      if (info.h1s.length === 0) titleless.push(path)
+      if (!info.active) noActiveNav.push(path)
+      else if (info.h1s.length > 0 && !info.h1s.includes(info.active)) {
+        mismatches.push({ path, nav: info.active, h1s: info.h1s })
+      }
+    }
+    check(
+      `SHELL-H1: minden világ-route-nak van címe (${ROUTES.length} route)`,
+      titleless.length === 0,
+      titleless.length ? `cím nélkül: ${titleless.join(', ')}` : 'mind kapott címet',
+    )
+    check(
+      'SHELL-H1: a nav aktív eleme (aria-current) minden route-on jelen van',
+      noActiveNav.length === 0,
+      noActiveNav.length ? noActiveNav.join(', ') : 'mind jelöli',
+    )
+    check(
+      'SHELL-H1: a nav aktív címkéje megjelenik az oldal címei között',
+      mismatches.length === 0,
+      mismatches.length ? JSON.stringify(mismatches.slice(0, 3)) : 'nincs eltérés',
+    )
+    await ctx.close()
+  }
+
   // ── M-10: dashboard szekció-linkek 44px-es érintési zónája ────────────────
   {
     const ctx = await browser.newContext({ viewport: { width: 1440, height: 900 } })
     const page = await ctx.newPage()
     await page.goto(`${BASE}/w/production`, { waitUntil: 'networkidle' })
-    const link = page.getByRole('button', { name: 'Vágástervezés →' })
+    const link = page.getByRole('button', { name: 'Vágótervezés →', exact: true })
     await link.waitFor({ timeout: 15_000 })
     const hit = await page.evaluate(() => {
-      const el = [...document.querySelectorAll('button')].find((b) => b.textContent?.includes('Vágástervezés'))
+      // A dash-szekció-linkek jellemzője a nyíl-utótag — a sidebar azonos
+      // szövegű nav-gombja NEM ilyen (a nav-címke és az oldalcím egyezik).
+      const el = [...document.querySelectorAll('button')].find((b) => /Vágótervezés\s*→\s*$/.test(b.textContent ?? ''))
       if (!el) return { ok: false, reason: 'nincs link' }
       const r = el.getBoundingClientRect()
       // A ::before kiterjesztett zóna a szöveg-doboz FELETT 12px-re is találjon.

@@ -126,7 +126,7 @@ export function ProductionDashboard({ onScreen }: { onScreen: (s: string) => voi
               {/* M-1: a diszpécser képernyő-kulcsa `cutting` (NEM `plans`) — a régi
                   kulcs nem létező képernyőre navigált, és a dashboardot töltötte vissza. */}
               <button onClick={() => onScreen('cutting')} className={SECTION_LINK_CLASS}>
-                Vágástervezés →
+                Vágótervezés →
               </button>
             </div>
             {planRows.length === 0 ? (
@@ -195,7 +195,7 @@ export function ProductionDashboard({ onScreen }: { onScreen: (s: string) => voi
               </h2>
               {/* M-1: a diszpécser képernyő-kulcsa `machining` (NEM `executions`). */}
               <button onClick={() => onScreen('machining')} className={SECTION_LINK_CLASS}>
-                Végrehajtás →
+                Megmunkálás →
               </button>
             </div>
             {openExecutions.length === 0 ? (

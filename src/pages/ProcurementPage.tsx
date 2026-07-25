@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { Card, StatusPill, PrimaryBtn } from '../components/ui'
 import { I18N } from '../mocks/data'
 import { useApi, API_BASE } from '../hooks/useApi'
@@ -136,7 +136,18 @@ export function ProcurementPage() {
   const rfqFilter = useRfqFilters(rfqItems)
 
   // Smart Filter state
+  //
+  // ⚠ STAB-FE-PROCUREMENT-OOM: a SmartFilter `data` propja NEM lehet minden
+  // renderben új tömb — az `apiOrders || []` korábban pont ezt csinálta (a
+  // lekérés token nélkül `null`-t ad), és a szűrő emit-effektjével együtt
+  // végtelen render-hurkot hajtott: a tesztben ~4GB heap-OOM, böngészőben
+  // folyamatos CPU-pörgés a Procurement oldalon.
+  const ordersForFilter = useMemo<ApiOrder[]>(() => apiOrders ?? [], [apiOrders])
+  // A szűrés eredményét MA semmi nem olvassa (a lista a `rfqFilter`-ből jön) —
+  // a blokk „SmartFilter Demo" címkével fut. Bekötés vagy eltávolítás: külön
+  // döntés, a hurok-javítás ettől független.
   const [filteredOrders, setFilteredOrders] = useState<ApiOrder[]>([])
+  void filteredOrders
 
   // KPI data (mock for now, can be replaced with API call later)
   const kpiData: KPIData = {
@@ -232,7 +243,7 @@ export function ProcurementPage() {
           <div className="mt-2">
             <SmartFilter
               config={RFQ_FILTER_CONFIG}
-              data={apiOrders || []}
+              data={ordersForFilter}
               onFilter={setFilteredOrders}
               presetKey="rfq"
               showPresets={true}

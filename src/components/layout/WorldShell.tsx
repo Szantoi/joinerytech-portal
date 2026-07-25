@@ -75,6 +75,7 @@ function ScreenNavButton({ screen, active, tall, onClick, lang }: {
   return (
     <button
       onClick={onClick}
+      aria-current={active ? 'page' : undefined}
       className={`w-full flex items-center gap-2.5 px-2.5 rounded-lg text-left transition motion-reduce:transition-none ${FOCUS_RING} ${
         tall ? 'h-11 text-[13.5px]' : 'h-9 text-[12.5px]'
       } ${
@@ -240,6 +241,14 @@ function WorldTopBar({ world, screen, onHome, lang, onMenu }: WorldTopBarProps) 
           <UserMenu lang={lang} />
         </div>
       </div>
+      {/* Oldalcím a fejlécben — ez az EGYETLEN cím, ami MINDEN világban létezik.
+          (A `WORLDS-SHELL-H1` első nekifutása leszemantizálta `<p>`-vé, hogy a
+          képernyők saját `<h1>`-e maradjon az egyetlen — a fresh review viszont
+          bizonyította, hogy 8 legacy világ 38 route-ján a tartalom NEM ad saját
+          címet, tehát azok az oldalak cím NÉLKÜL maradtak volna. A duplikáció
+          feloldása ezért a task következő körére marad: ott a modul-képernyők
+          duplikált címét kell elvenni, és ezt a `<h1>`-et mobilon is elérhetővé
+          tenni — nem fordítva.) */}
       <div className="hidden md:block px-7 pb-4">
         <h1 className="text-[22px] font-semibold tracking-tight text-ink">{screenLabel}</h1>
       </div>

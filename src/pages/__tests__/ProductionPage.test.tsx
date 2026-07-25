@@ -59,7 +59,10 @@ describe('ProductionWorldPage (route-diszpécser)', () => {
 
   it('cutting: vágótervezés-képernyő (a route-kulcs a legacy Design-integráció miatt változatlan)', async () => {
     renderProduction('cutting')
-    expect(await screen.findByText('Vágótervezés', {}, { timeout: ROUTE_TIMEOUT })).toBeTruthy()
+    // ⚠ A cím MA két helyen szerepel (WorldShell fejléc + képernyő) — ez a
+    // WORLDS-SHELL-H1 nyitott lelete, ezért findAllByRole kell. Ha a
+    // duplikáció megszűnik, ez a teszt továbbra is helyes marad.
+    expect((await screen.findAllByRole('heading', { name: 'Vágótervezés' }, { timeout: ROUTE_TIMEOUT })).length).toBeGreaterThan(0)
   }, ROUTE_TIMEOUT)
 
   it('cutting + highlightPlanId state: kiválasztja és kiemeli a tervet (legacy DesignPage-integráció tükre)', async () => {
@@ -72,9 +75,12 @@ describe('ProductionWorldPage (route-diszpécser)', () => {
     )).toBeTruthy()
   }, ROUTE_TIMEOUT)
 
-  it('machining: végrehajtás-képernyő', async () => {
+  it('machining: megmunkálás-képernyő', async () => {
     renderProduction('machining')
-    expect(await screen.findByText('Végrehajtás', {}, { timeout: ROUTE_TIMEOUT })).toBeTruthy()
+    // ⚠ A cím MA két helyen szerepel (WorldShell fejléc + képernyő) — ez a
+    // WORLDS-SHELL-H1 nyitott lelete, ezért findAllByRole kell. Ha a
+    // duplikáció megszűnik, ez a teszt továbbra is helyes marad.
+    expect((await screen.findAllByRole('heading', { name: 'Megmunkálás' }, { timeout: ROUTE_TIMEOUT })).length).toBeGreaterThan(0)
   }, ROUTE_TIMEOUT)
 
   // ⚠ A screen-tartalom h1-je szándékosan ugyanazt a magyar szót használja,

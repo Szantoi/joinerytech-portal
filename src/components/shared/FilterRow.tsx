@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import type { FilterField, FilterConfig } from '../../hooks/useFilterState'
 import { Icon } from '../ui'
 
@@ -51,13 +51,25 @@ export function FilterRow({
   }, [selectedField, selectedOperator, availableOperators])
 
   /**
-   * Emit onChange when all values are set
+   * Emit onChange when all values are set.
+   *
+   * ⚠ Az `onChange` NEM lehet a hatás függősége (STAB-FE-PROCUREMENT-OOM,
+   * második kör): a `SmartFilter` inline arrow-ként adja át, tehát minden
+   * renderben új identitást kap; a hívott `updateFilter` pedig új tömböt tesz
+   * state-be → a hatás újra lefut → végtelen passzív-effekt hurok. Ugyanaz a
+   * hibaosztály, mint a SmartFilter emit-effektjében volt, csak egy szinttel
+   * lejjebb — a fresh review találta meg. A ref-tükör miatt a hatás kizárólag
+   * a szűrősor ÉRTÉKEINEK változására fut.
    */
+  const onChangeRef = useRef(onChange)
+  useLayoutEffect(() => {
+    onChangeRef.current = onChange
+  })
   useEffect(() => {
     if (selectedField && selectedOperator && inputValue !== '') {
-      onChange(selectedField, selectedOperator, inputValue)
+      onChangeRef.current(selectedField, selectedOperator, inputValue)
     }
-  }, [selectedField, selectedOperator, inputValue, onChange])
+  }, [selectedField, selectedOperator, inputValue])
 
   /**
    * Handle field selection

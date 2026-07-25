@@ -34,7 +34,7 @@ export function DashboardScreen({ onScreen }: { onScreen: (screen: string) => vo
   return (
     <div className="mx-auto max-w-[1200px] space-y-4 px-4 py-5 md:px-7 md:py-6">
       <div>
-        <h1 className="text-[20px] font-semibold tracking-tight text-ink md:text-[24px]">Kontrolling</h1>
+        <h1 className="text-[20px] font-semibold tracking-tight text-ink md:text-[24px]">Áttekintés</h1>
         <p className="mt-0.5 text-[12.5px] text-ink-muted">
           Projekt-jövedelmezőség — terv vs. tény, EAC-vetítéssel
         </p>
