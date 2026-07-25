@@ -9,6 +9,10 @@ import { ToastContext, MIN_TOAST_DURATION_MS, type Toast, type ToastType } from 
  * - The live-region containers are ALWAYS in the DOM (even with zero toasts) —
  *   screen readers only announce changes inside an already-existing live region.
  *   (This fixes the old bug where the container returned null when empty.)
+ * - `data-inert-exempt`: nyitott SlideOver/dialógus mellett a useInertBackground
+ *   NEM teszi inertté a konténert — a dialógusból indított mutációk toastja
+ *   így AT-nak is bejelentődik, és az error-toast bezárható marad (M-S2 fix,
+ *   WORLDS_PRODUCTION_DESIGN_REVIEW_2026-07-24).
  * - success/info/warning → polite region (role="status"); error → assertive
  *   region (role="alert") and never auto-dismisses (manual close only).
  * - Auto-dismiss is min. 5000 ms; hover and focus pause the timer (WCAG 2.2.1).
@@ -50,7 +54,10 @@ function ToastContainer({ toasts, onClose }: { toasts: Toast[]; onClose: (id: st
   // NOTE: this container must never return null — the live regions have to
   // exist BEFORE a toast arrives for AT to announce it.
   return (
-    <div className="pointer-events-none fixed right-4 z-50 flex w-full max-w-sm flex-col gap-2 bottom-[calc(58px+env(safe-area-inset-bottom)+8px)] md:bottom-4">
+    <div
+      data-inert-exempt=""
+      className="pointer-events-none fixed right-4 z-50 flex w-full max-w-sm flex-col gap-2 bottom-[calc(58px+env(safe-area-inset-bottom)+8px)] md:bottom-4"
+    >
       <div role="status" aria-live="polite" className="contents">
         {politeToasts.map((toast) => (
           <ToastItem key={toast.id} toast={toast} onClose={() => onClose(toast.id)} />

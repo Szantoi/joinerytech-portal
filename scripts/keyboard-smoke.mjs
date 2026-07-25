@@ -1,0 +1,185 @@
+/**
+ * keyboard-smoke — browser-szintű a11y regressziós őr (WORLDS-SHELL-FIX).
+ *
+ * A jsdom-ban NEM fogható hibaosztályokat fedi (nincs layout-motor):
+ *  S-1: SlideOver fókuszcsapda desktopon — a display:none mobil „Vissza" gomb
+ *       nem lehet fókusz-cél; minden dialógus-vezérlő elérhető Tab-bal,
+ *       Escape után a fókusz a triggerre tér vissza (mobilon is).
+ *  M-S1: 768px-en nincs dokumentum-szintű vízszintes túlcsordulás.
+ *  M-S2: nyitott SlideOver mellett a toast live-region NEM inert.
+ *
+ * Futtatás: `npm run test:smoke:keyboard` — a script maga indít vite dev
+ * szervert (MSW mock mód) és le is állítja. Konfiguráció env-ből:
+ *  SMOKE_PORT (default 5211), CHROME_PATH (default: rendszer-Chrome/Edge).
+ */
+import { chromium } from 'playwright-core'
+import { spawn } from 'node:child_process'
+import { existsSync } from 'node:fs'
+import { fileURLToPath } from 'node:url'
+import process from 'node:process'
+
+const PORT = Number(process.env.SMOKE_PORT ?? 5211)
+const BASE = `http://localhost:${PORT}`
+const CHROME_CANDIDATES = [
+  process.env.CHROME_PATH,
+  'C:/Program Files/Google/Chrome/Application/chrome.exe',
+  'C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe',
+  '/usr/bin/google-chrome',
+  '/usr/bin/chromium',
+].filter(Boolean)
+
+const failures = []
+function check(name, ok, detail = '') {
+  const mark = ok ? 'PASS' : 'FAIL'
+  console.log(`  [${mark}] ${name}${detail ? ` — ${detail}` : ''}`)
+  if (!ok) failures.push(name)
+}
+
+async function waitForServer(url, timeoutMs = 60_000) {
+  const deadline = Date.now() + timeoutMs
+  while (Date.now() < deadline) {
+    try {
+      const res = await fetch(url)
+      if (res.ok) return
+    } catch {
+      /* még indul */
+    }
+    await new Promise((r) => setTimeout(r, 400))
+  }
+  throw new Error(`A dev szerver nem állt fel ${timeoutMs} ms alatt: ${url}`)
+}
+
+const executablePath = CHROME_CANDIDATES.find((p) => existsSync(p))
+if (!executablePath) {
+  console.error('Nincs Chrome/Edge — állítsd be a CHROME_PATH env-változót.')
+  process.exit(2)
+}
+
+console.log(`vite dev indítása a ${PORT} porton…`)
+const server = spawn('npx', ['vite', '--port', String(PORT), '--strictPort'], {
+  cwd: fileURLToPath(new URL('..', import.meta.url)),
+  shell: true,
+  stdio: 'ignore',
+  detached: false,
+})
+const killServer = () => {
+  if (process.platform === 'win32') {
+    spawn('taskkill', ['/pid', String(server.pid), '/T', '/F'], { shell: true, stdio: 'ignore' })
+  } else {
+    server.kill('SIGTERM')
+  }
+}
+
+let browser
+try {
+  await waitForServer(BASE)
+  browser = await chromium.launch({ executablePath, headless: true })
+
+  // ── S-1: desktop fókuszcsapda ─────────────────────────────────────────────
+  {
+    const ctx = await browser.newContext({ viewport: { width: 1440, height: 900 } })
+    const page = await ctx.newPage()
+    await page.goto(`${BASE}/w/production/cutting`, { waitUntil: 'networkidle' })
+    const row = page.getByRole('button', { name: /CPL-/ }).first()
+    await row.waitFor({ timeout: 15_000 })
+    await row.focus()
+    await page.keyboard.press('Enter')
+    await page.getByRole('dialog').waitFor({ timeout: 5_000 })
+
+    const focusInDialog = await page.evaluate(() => {
+      const dialog = document.querySelector('[role="dialog"]')
+      return Boolean(dialog && dialog.contains(document.activeElement) && document.activeElement !== document.body)
+    })
+    check('S-1 desktop: megnyitáskor a fókusz a dialóguson belül van', focusInDialog)
+
+    // Tab-séta: max 25 lépésben el kell érni a Bezárás gombot, és minden stop a dialógusban marad.
+    let reachedClose = false
+    let escaped = false
+    for (let i = 0; i < 25; i++) {
+      await page.keyboard.press('Tab')
+      const state = await page.evaluate(() => {
+        const dialog = document.querySelector('[role="dialog"]')
+        const el = document.activeElement
+        return {
+          inDialog: Boolean(dialog && el && dialog.contains(el)),
+          isBody: el === document.body,
+          label: el?.getAttribute('aria-label') ?? '',
+        }
+      })
+      if (state.isBody || !state.inDialog) {
+        escaped = true
+        break
+      }
+      if (state.label === 'Bezárás') reachedClose = true
+    }
+    check('S-1 desktop: a Tab a dialógusban marad (nincs body-holtpont)', !escaped)
+    check('S-1 desktop: a Bezárás gomb Tab-bal elérhető', reachedClose)
+
+    // M-S2: a toast live-region nyitott dialógus mellett sem inert.
+    const toastState = await page.evaluate(() => {
+      const toastRoot = document.querySelector('[data-inert-exempt]')
+      return {
+        exists: Boolean(toastRoot),
+        inert: Boolean(toastRoot && (toastRoot.hasAttribute('inert') || toastRoot.closest('[inert]'))),
+      }
+    })
+    check('M-S2: toast-konténer jelen van', toastState.exists)
+    check('M-S2: toast-konténer NEM inert nyitott SlideOver mellett', !toastState.inert)
+
+    await page.keyboard.press('Escape')
+    await page.waitForTimeout(300)
+    const focusBackOnTrigger = await page.evaluate(() => {
+      const el = document.activeElement
+      return Boolean(el && el !== document.body && /CPL-/.test(el.textContent ?? ''))
+    })
+    check('S-1 desktop: Escape után a fókusz a trigger-soron', focusBackOnTrigger)
+    await ctx.close()
+  }
+
+  // ── S-1 kontroll: mobil fókusz-ciklus változatlanul ép ────────────────────
+  {
+    const ctx = await browser.newContext({ viewport: { width: 360, height: 740 } })
+    const page = await ctx.newPage()
+    await page.goto(`${BASE}/w/production/cutting`, { waitUntil: 'networkidle' })
+    const row = page.getByRole('button', { name: /CPL-/ }).first()
+    await row.waitFor({ timeout: 15_000 })
+    await row.click()
+    await page.getByRole('dialog').waitFor({ timeout: 5_000 })
+    const focusInDialog = await page.evaluate(() => {
+      const dialog = document.querySelector('[role="dialog"]')
+      return Boolean(dialog && dialog.contains(document.activeElement))
+    })
+    check('S-1 mobil: megnyitáskor a fókusz a dialógusban (Vissza gomb él)', focusInDialog)
+    await page.keyboard.press('Escape')
+    await ctx.close()
+  }
+
+  // ── M-S1: 768px — nincs dokumentum-szintű h-scroll ────────────────────────
+  {
+    const ctx = await browser.newContext({ viewport: { width: 768, height: 1024 } })
+    const page = await ctx.newPage()
+    // A quotes route-ot szándékosan nem mérjük itt: a tooltip-túllógás
+    // (review M-8) a WORLDS-PRODUCTION-FIX scope-ja — ez a check a SHELL-t méri.
+    for (const path of ['/w/production', '/w/maintenance']) {
+      await page.goto(`${BASE}${path}`, { waitUntil: 'networkidle' })
+      await page.waitForTimeout(500)
+      const overflow = await page.evaluate(
+        () => document.documentElement.scrollWidth - document.documentElement.clientWidth,
+      )
+      check(`M-S1: ${path} 768px overflow = 0px`, overflow === 0, `mért: ${overflow}px`)
+    }
+    await ctx.close()
+  }
+} catch (err) {
+  console.error('Smoke-futás hiba:', err)
+  failures.push('runtime-error')
+} finally {
+  if (browser) await browser.close()
+  killServer()
+}
+
+if (failures.length > 0) {
+  console.error(`\n${failures.length} ellenőrzés BUKOTT: ${failures.join(', ')}`)
+  process.exit(1)
+}
+console.log('\nMinden keyboard/a11y smoke-ellenőrzés zöld.')

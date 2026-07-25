@@ -19,9 +19,24 @@ const FOCUSABLE_SELECTOR = [
   '[tabindex]:not([tabindex="-1"])',
 ].join(', ')
 
-/** All keyboard-focusable descendants of a container, in DOM order. */
+/**
+ * Rendered-visibility check. A display:none element (pl. a SlideOver `md:hidden`
+ * mobil „Vissza" gombja desktopon) selector-szinten fókuszálhatónak látszik, de
+ * a .focus() rajta no-op — ha ilyen az első jelölt, a csapda holtpontra fut
+ * (WORLDS_PRODUCTION_DESIGN_REVIEW_2026-07-24 S-1). `checkVisibility` hiányában
+ * (jsdom: nincs layout-motor, ott minden elem "látható" marad — a valós őr a
+ * browser-szintű keyboard-smoke: scripts/keyboard-smoke.mjs) az elem láthatónak
+ * számít, így a unit-teszt viselkedés változatlan. Böngésző-padló: evergreen
+ * Chrome/Edge/Firefox + Safari 17.4+ (checkVisibility nélküli böngészőben a
+ * szűrés kimarad — ott a viselkedés a fix előttivel azonos).
+ */
+function isRendered(el: HTMLElement): boolean {
+  return typeof el.checkVisibility === 'function' ? el.checkVisibility() : true
+}
+
+/** All keyboard-focusable, ténylegesen renderelt descendants of a container, in DOM order. */
 export function getFocusable(container: HTMLElement): HTMLElement[] {
-  return Array.from(container.querySelectorAll<HTMLElement>(FOCUSABLE_SELECTOR))
+  return Array.from(container.querySelectorAll<HTMLElement>(FOCUSABLE_SELECTOR)).filter(isRendered)
 }
 
 export function useFocusTrap(ref: RefObject<HTMLElement | null>, active: boolean) {

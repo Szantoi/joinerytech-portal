@@ -204,20 +204,24 @@ function WorldTopBar({ world, screen, onHome, lang, onMenu }: WorldTopBarProps) 
           <div className="text-[10px] font-medium text-world-soft-fg truncate">{lang === 'en' ? world.en : world.hu}</div>
           <div className="text-[14px] font-semibold tracking-tight text-ink leading-tight truncate">{screenLabel}</div>
         </div>
-        <div className="hidden md:flex items-center gap-2 text-[11.5px] text-ink-muted">
-          <button onClick={onHome} className="hover:text-ink">Home</button>
-          <Icon name="chevron" size={11} className="text-line-strong" />
-          <span className="text-world-soft-fg font-medium">{lang === 'en' ? world.en : world.hu}</span>
+        {/* M-S1 fix (WORLDS_PRODUCTION_DESIGN_REVIEW_2026-07-24): 768px-en a fix
+            szélességű jobb klaszter + breadcrumb túlcsordította a dokumentumot.
+            A breadcrumb zsugorítható (min-w-0 + truncate az utolsó tagon), a
+            kereső csak lg-től látszik, a jobb klaszter nem zsugorodik. */}
+        <div className="hidden md:flex items-center gap-2 text-[11.5px] text-ink-muted min-w-0 overflow-hidden whitespace-nowrap">
+          <button onClick={onHome} className="hover:text-ink shrink-0">Home</button>
+          <Icon name="chevron" size={11} className="text-line-strong shrink-0" />
+          <span className="text-world-soft-fg font-medium shrink-0">{lang === 'en' ? world.en : world.hu}</span>
           {screenObj && (
             <>
-              <Icon name="chevron" size={11} className="text-line-strong" />
-              <span className="text-ink font-medium">{screenLabel}</span>
+              <Icon name="chevron" size={11} className="text-line-strong shrink-0" />
+              <span className="text-ink font-medium truncate">{screenLabel}</span>
             </>
           )}
         </div>
         <div className="flex-1" />
-        <div className="hidden md:flex items-center gap-2">
-          <div className="relative">
+        <div className="hidden md:flex items-center gap-2 shrink-0">
+          <div className="relative hidden lg:block">
             <input
               aria-label={lang === 'en' ? 'Search' : 'Keresés'}
               placeholder={lang === 'en' ? 'Search…' : 'Keresés…'}

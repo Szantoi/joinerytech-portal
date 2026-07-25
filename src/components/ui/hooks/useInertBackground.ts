@@ -9,6 +9,12 @@ import { useEffect, type RefObject } from 'react'
  * readers and keyboard users cannot reach the background. Everything is
  * restored on cleanup.
  *
+ * KIVÉTEL: a `data-inert-exempt` attribútumú testvérek kimaradnak a sétából.
+ * A toast live-regionöknek nyitott dialógus mellett is az accessibility
+ * tree-ben KELL maradniuk (a dialógusból indított mutációk visszajelzése —
+ * WCAG 4.1.3; WORLDS_PRODUCTION_DESIGN_REVIEW_2026-07-24 M-S2), és az
+ * error-toast bezárhatóságához pointer-esemény is kell rájuk.
+ *
  * NOTE: consumers must call this hook BEFORE useFocusTrap so that on close the
  * inert attributes are removed before focus is returned to the trigger.
  */
@@ -22,7 +28,12 @@ export function useInertBackground(ref: RefObject<HTMLElement | null>, active: b
     let node: HTMLElement = el
     while (node.parentElement && node !== document.body) {
       for (const sibling of Array.from(node.parentElement.children)) {
-        if (sibling !== node && sibling instanceof HTMLElement && !sibling.hasAttribute('inert')) {
+        if (
+          sibling !== node &&
+          sibling instanceof HTMLElement &&
+          !sibling.hasAttribute('inert') &&
+          !sibling.hasAttribute('data-inert-exempt')
+        ) {
           sibling.setAttribute('inert', '')
           inerted.push(sibling)
         }

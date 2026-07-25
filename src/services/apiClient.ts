@@ -16,6 +16,30 @@ interface BackendError {
   error?: string
   message?: string
   details?: unknown
+  /** ASP.NET / cutting host változat: hibaüzenet-lista. */
+  errors?: unknown
+  /** Ardalis Result változat kulcs alatt (némely végpont így csomagolja). */
+  validationErrors?: unknown
+}
+
+/** Ardalis `Result.ValidationErrors` elem-alak: `[{ identifier, errorMessage }]`. */
+interface ValidationErrorItem {
+  identifier?: string
+  errorMessage?: string
+}
+
+/** Hibaüzenetek kinyerése tömb-alakú hibatestből (string[] VAGY ValidationErrorItem[]). */
+function messagesFromArray(items: unknown[]): string[] {
+  return items
+    .map((item) => {
+      if (typeof item === 'string') return item
+      if (item && typeof item === 'object') {
+        const v = item as ValidationErrorItem
+        if (typeof v.errorMessage === 'string' && v.errorMessage) return v.errorMessage
+      }
+      return undefined
+    })
+    .filter((m): m is string => Boolean(m))
 }
 
 export class ApiError extends Error {
@@ -55,12 +79,49 @@ function buildQueryString(query?: QueryParams): string {
   return s ? `?${s}` : ''
 }
 
+/**
+ * Hiba-normalizálás. Ismert hibatest-alakok (M-S3 fix,
+ * WORLDS_PRODUCTION_DESIGN_REVIEW_2026-07-24):
+ *  - `{ message }` / `{ error }` — openapi ErrorResponse (EHS-minta),
+ *  - `[{ identifier, errorMessage }]` — Ardalis Result.ValidationErrors CSUPASZ
+ *    tömbként (cutting planning 400 / executions 422, joinery 400),
+ *  - `{ errors: string[] }` és `{ validationErrors: [...] }` — host-változatok.
+ * Élő HTTP/2-n a `statusText` üres string, ezért a fallback minden ágon
+ * `statusText || 'HTTP <status>'` — üres toast-üzenet nem fordulhat elő.
+ */
 async function parseErrorMessage(res: Response): Promise<{ message: string; details?: unknown }> {
+  const fallback = res.statusText || `HTTP ${res.status}`
   try {
-    const data = (await res.json()) as BackendError
-    return { message: data.message ?? data.error ?? res.statusText, details: data.details }
+    const data: unknown = await res.json()
+
+    if (Array.isArray(data)) {
+      const messages = messagesFromArray(data)
+      return { message: messages.length > 0 ? messages.join(' ') : fallback, details: data }
+    }
+
+    if (data && typeof data === 'object') {
+      const body = data as BackendError
+      if (typeof body.message === 'string' && body.message) {
+        return { message: body.message, details: body.details }
+      }
+      if (typeof body.error === 'string' && body.error) {
+        return { message: body.error, details: body.details }
+      }
+      const listed = Array.isArray(body.errors)
+        ? messagesFromArray(body.errors)
+        : Array.isArray(body.validationErrors)
+          ? messagesFromArray(body.validationErrors)
+          : []
+      if (listed.length > 0) {
+        return { message: listed.join(' '), details: body.details ?? data }
+      }
+      // Ismeretlen objektum-alak: a details kontraktus megmarad (régi viselkedés).
+      return { message: fallback, details: body.details }
+    }
+
+    return { message: fallback }
   } catch {
-    return { message: res.statusText || `HTTP ${res.status}` }
+    return { message: fallback }
   }
 }
 
