@@ -17,7 +17,9 @@ import {
  *  - válasz-státusz: angol string (6 állapot, wire.ts),
  *  - request-enumok SZÁMKÉNT mennek (ProgressEventKind/ProofLevel/CancelReason
  *    — a wire.ts szótárak fordítanak),
- *  - hibaszemantika: állapot-sértés → 409, payload-sértés → 422 (Invalid).
+ *  - hibaszemantika: MINDEN elutasítás → **422** + csupasz ValidationErrors-tömb
+ *    (M-2, review 2026-07-24: az Execution szeletben 0 db `Result.Conflict`
+ *    producer van, tehát 409 itt nem fordulhat elő).
  * A start/progress a backend HMAC-mezőit is viszi (badge/esemény-aláírás) —
  * a portál űrlapról, a kontraktus-alak szerint.
  *
@@ -198,7 +200,7 @@ export type ExecutionMutationInput =
 
 /**
  * Végrehajtás FSM-akció mutáció, optimista státusz-frissítéssel a detail
- * cache-en (409/422 → rollback + a szerver guard-üzenete toastban).
+ * cache-en (422 → rollback + a szerver guard-üzenete toastban).
  * A végpontok üres 200-at adnak → siker után invalidálás hozza az új állapotot.
  */
 export function useExecutionMutation() {

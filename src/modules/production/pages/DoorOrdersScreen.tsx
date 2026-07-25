@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { QueryGate, StatusPill } from '../../../components/ui'
 import { ORDERS_PAGE_SIZE, useOrders } from '../services'
-import { DOOR_ORDER_STATUS_META, formatDate } from './labels'
+import { DOOR_ORDER_CREATED_AT_HINT, DOOR_ORDER_STATUS_META } from './labels'
 import { OrderDetailSlideOver } from './OrderDetailSlideOver'
 
 /**
@@ -43,8 +43,11 @@ export function DoorOrdersScreen() {
                   >
                     <div className="min-w-0 flex-1">
                       <div className="truncate text-[12.5px] font-medium text-ink">{o.projectName}</div>
+                      {/* M-4: a createdAt-ot NEM írjuk ki — a joinery lista-route
+                          üres dátumot ad (nem perzisztált mező); a magyarázat a
+                          részlet-panelen és a lista alatti lábjegyzetben van. */}
                       <div className="truncate font-mono text-[10.5px] text-ink-muted">
-                        {o.projectId} · {o.itemCount} tétel · {formatDate(o.createdAt)}
+                        {o.projectId} · {o.itemCount} tétel
                       </div>
                     </div>
                     <StatusPill size="sm" tone={DOOR_ORDER_STATUS_META[o.status].tone} label={DOOR_ORDER_STATUS_META[o.status].label} />
@@ -52,6 +55,8 @@ export function DoorOrdersScreen() {
                 </li>
               ))}
             </ul>
+
+            <p className="mt-2 text-[10.5px] text-ink-muted">{DOOR_ORDER_CREATED_AT_HINT}</p>
 
             {totalPages > 1 && (
               <div className="mt-3 flex items-center justify-between text-[11.5px] text-ink-muted">

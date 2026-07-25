@@ -45,6 +45,20 @@ export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
    * tooltip referenced by aria-describedby.
    */
   disabledReason?: string
+  /**
+   * A `disabledReason` tooltip vízszintes igazítása. Alapértelmezés: `center`
+   * (a gomb közepére, változatlan viselkedés minden meglévő hívási helyen).
+   *
+   * `end` = a tooltip a gomb JOBB széléhez igazodik, tördelve és a viewportra
+   * korlátozott szélességgel. Sor végén álló gomboknál a középre igazított,
+   * `whitespace-nowrap` tooltip a konténeren túlnyúlik, és DOKUMENTUM-SZINTŰ
+   * vízszintes görgetést okoz (a house-spec 8. pontja tiltja) — mért eset:
+   * production/quotes, 98px h-scroll minden szélességen
+   * (WORLDS_PRODUCTION_DESIGN_REVIEW_2026-07-24 M-8). A puszta jobbra igazítás
+   * viszont keskeny kijelzőn BALRA lógna ki — ott nincs görgetés, tehát némán
+   * levágódna a szöveg —, ezért a tördelés/`max-w` ehhez a változathoz tartozik.
+   */
+  tooltipAlign?: 'center' | 'end'
   children?: ReactNode
 }
 
@@ -53,6 +67,7 @@ export function Button({
   size = 'md',
   icon,
   disabledReason,
+  tooltipAlign = 'center',
   children,
   type = 'button',
   onClick,
@@ -113,7 +128,15 @@ export function Button({
       <span
         id={tooltipId}
         role="tooltip"
-        className="pointer-events-none absolute bottom-full left-1/2 z-20 mb-1.5 -translate-x-1/2 whitespace-nowrap rounded-md bg-stone-900 px-2 py-1 text-[11px] text-white opacity-0 shadow-md transition-opacity group-hover:opacity-100 group-focus-within:opacity-100 motion-reduce:transition-none dark:bg-stone-100 dark:text-stone-900"
+        className={[
+          'pointer-events-none absolute bottom-full z-20 mb-1.5 rounded-md bg-stone-900 px-2 py-1 text-[11px] text-white opacity-0 shadow-md transition-opacity group-hover:opacity-100 group-focus-within:opacity-100 motion-reduce:transition-none dark:bg-stone-100 dark:text-stone-900',
+          // `end`: a jobb szélhez tapad, ÉS a viewportba fér — a `nowrap` itt
+          // balra lógna ki némán (keskeny kijelzőn olvashatatlanná vágva), ezért
+          // ebben a változatban tördelünk és korlátozzuk a szélességet.
+          tooltipAlign === 'end'
+            ? 'right-0 max-w-[min(20rem,calc(100vw-2rem))] whitespace-normal text-pretty'
+            : 'left-1/2 -translate-x-1/2 whitespace-nowrap',
+        ].join(' ')}
       >
         {disabledReason}
       </span>

@@ -1,7 +1,8 @@
 import { useState } from 'react'
 import { Card, QueryGate, StatusPill } from '../../../components/ui'
 import {
-  DASH_LIST_LIMIT, isDoorOrderActive, isExecutionOpen, isPlanActive, isQuotePending,
+  DASH_LIST_LIMIT, DASH_ORDERS_SCAN_PAGE_SIZE,
+  isDoorOrderActive, isExecutionOpen, isPlanActive, isQuotePending,
   useExecutions, useOrders, usePlans, useQuotes, useWasteReport,
 } from '../services'
 import {
@@ -10,6 +11,15 @@ import {
 } from './labels'
 import { PlanDetailSlideOver } from './PlanDetailSlideOver'
 import { OrderDetailSlideOver } from './OrderDetailSlideOver'
+
+/**
+ * Szekció-link („… →") osztályai. A `before:-inset-y-3.5` a modulban MÁR
+ * használt chip-minta (CuttingExecutionScreen szűrő-chipjei): a 17px-es
+ * szöveg-sor köré 44px effektív találati zónát húz, láthatóan változatlan
+ * elrendezés mellett (M-10 fix, house-spec touch-target).
+ */
+const SECTION_LINK_CLASS =
+  "relative rounded text-[11.5px] font-medium text-world-soft-fg hover:underline before:absolute before:inset-x-0 before:-inset-y-3.5 before:content-[''] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-world-ring"
 
 /**
  * Production áttekintés — minden érték a VALÓS kontraktus-alakú válaszokból
@@ -21,7 +31,9 @@ import { OrderDetailSlideOver } from './OrderDetailSlideOver'
 export function ProductionDashboard({ onScreen }: { onScreen: (s: string) => void }) {
   const plans = usePlans()
   const executions = useExecutions()
-  const orders = useOrders()
+  // M-6: a rendelés-KPI a kontraktus-maximumig (100) vizsgál, mert count-végpont
+  // nincs; a maradék csonkítást az alcím vallja be (ld. lentebb).
+  const orders = useOrders({ page: 1, pageSize: DASH_ORDERS_SCAN_PAGE_SIZE })
   const quotes = useQuotes()
   const waste = useWasteReport()
   const [selectedPlanId, setSelectedPlanId] = useState<string | null>(null)
@@ -37,7 +49,13 @@ export function ProductionDashboard({ onScreen }: { onScreen: (s: string) => voi
   const activeOrders = orderRows.filter((o) => isDoorOrderActive(o.status))
   const pendingQuotes = quoteRows.filter((q) => isQuotePending(q.status))
 
-  const kpis = [
+  // M-6: a KPI CSAK a lekért lapból számol — ha a totalCount nagyobb, ezt ki kell
+  // mondani, különben a „N összesen" alcím teljességet sugallna egy alulszámolt
+  // érték mellett.
+  const orderTotalCount = orders.data?.totalCount ?? 0
+  const ordersTruncated = orderTotalCount > orderRows.length
+
+  const kpis: Array<{ label: string; value: string; sub: string; alert?: boolean; hint?: string }> = [
     {
       label: 'Aktív vágóterv',
       value: String(activePlans.length),
@@ -51,7 +69,12 @@ export function ProductionDashboard({ onScreen }: { onScreen: (s: string) => voi
     {
       label: 'Rendelés kalkulációban',
       value: String(activeOrders.length),
-      sub: `${orders.data?.totalCount ?? 0} ajtórendelés összesen`,
+      sub: ordersTruncated
+        ? `${orderRows.length} vizsgált rendelésből (${orderTotalCount} összesen)`
+        : `${orderTotalCount} ajtórendelés összesen`,
+      hint: ordersTruncated
+        ? 'A joinery kontraktusban nincs count-végpont, ezért a KPI csak a lekért első lapot vizsgálja.'
+        : undefined,
     },
     {
       label: 'Döntésre váró ajánlat',
@@ -86,7 +109,11 @@ export function ProductionDashboard({ onScreen }: { onScreen: (s: string) => voi
               <div className={`mt-1 text-[26px] font-semibold tabular-nums tracking-tight ${k.alert ? 'text-amber-600 dark:text-amber-400' : 'text-ink'}`}>
                 {k.value}
               </div>
-              <div className="mt-1 text-[10.5px] text-ink-muted">{k.sub}</div>
+              <div className="mt-1 text-[10.5px] text-ink-muted" title={k.hint}>
+                {k.sub}
+                {k.hint && <span className="ml-1 cursor-help" aria-hidden="true">ⓘ</span>}
+              </div>
+              {k.hint && <span className="sr-only">{k.hint}</span>}
             </Card>
           ))}
         </div>
@@ -96,10 +123,9 @@ export function ProductionDashboard({ onScreen }: { onScreen: (s: string) => voi
           <Card className="overflow-hidden p-0">
             <div className="flex items-center justify-between border-b border-line px-4 py-2.5">
               <h2 className="text-[13px] font-semibold text-ink">Vágótervek</h2>
-              <button
-                onClick={() => onScreen('plans')}
-                className="rounded text-[11.5px] font-medium text-world-soft-fg hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-world-ring"
-              >
+              {/* M-1: a diszpécser képernyő-kulcsa `cutting` (NEM `plans`) — a régi
+                  kulcs nem létező képernyőre navigált, és a dashboardot töltötte vissza. */}
+              <button onClick={() => onScreen('cutting')} className={SECTION_LINK_CLASS}>
                 Vágástervezés →
               </button>
             </div>
@@ -131,10 +157,7 @@ export function ProductionDashboard({ onScreen }: { onScreen: (s: string) => voi
           <Card className="overflow-hidden p-0">
             <div className="flex items-center justify-between border-b border-line px-4 py-2.5">
               <h2 className="text-[13px] font-semibold text-ink">Ajtórendelések</h2>
-              <button
-                onClick={() => onScreen('orders')}
-                className="rounded text-[11.5px] font-medium text-world-soft-fg hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-world-ring"
-              >
+              <button onClick={() => onScreen('orders')} className={SECTION_LINK_CLASS}>
                 Rendelések →
               </button>
             </div>
@@ -170,10 +193,8 @@ export function ProductionDashboard({ onScreen }: { onScreen: (s: string) => voi
               <h2 className="text-[13px] font-semibold text-ink">
                 Futó végrehajtások{openExecutions.length ? ` (${openExecutions.length})` : ''}
               </h2>
-              <button
-                onClick={() => onScreen('executions')}
-                className="rounded text-[11.5px] font-medium text-world-soft-fg hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-world-ring"
-              >
+              {/* M-1: a diszpécser képernyő-kulcsa `machining` (NEM `executions`). */}
+              <button onClick={() => onScreen('machining')} className={SECTION_LINK_CLASS}>
                 Végrehajtás →
               </button>
             </div>
@@ -201,10 +222,7 @@ export function ProductionDashboard({ onScreen }: { onScreen: (s: string) => voi
           <Card className="p-5">
             <div className="mb-3 flex items-center justify-between">
               <h2 className="text-[13px] font-semibold text-ink">Hulladék-összesítő</h2>
-              <button
-                onClick={() => onScreen('analytics')}
-                className="rounded text-[11.5px] font-medium text-world-soft-fg hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-world-ring"
-              >
+              <button onClick={() => onScreen('analytics')} className={SECTION_LINK_CLASS}>
                 Elemzések →
               </button>
             </div>

@@ -46,6 +46,19 @@ export const PLAN_STRATEGY_DEFAULT = 'maxcut-v1'
 /** Joinery rendelés-lista lapméret (GET /api/orders ?pageSize, 1..100). */
 export const ORDERS_PAGE_SIZE = 20
 
+/**
+ * A dashboard rendelés-KPI-jának vizsgálati ablaka (M-6 fix,
+ * WORLDS_PRODUCTION_DESIGN_REVIEW_2026-07-24).
+ *
+ * A joinery kontraktusban NINCS count/filter végpont (doksi 2.1), ezért a
+ * „Rendelés kalkulációban" KPI-t csak a lekért lapból lehet számolni. A
+ * lapméret ezért a kontraktus MAXIMUMA (pageSize 1..100), és ha a totalCount
+ * ennél is nagyobb, a KPI alcíme ŐSZINTÉN jelzi, hogy csak az első N rendelést
+ * vizsgáltuk — nem sugall teljességet. A valódi megoldás backend count-végpont
+ * (follow-up).
+ */
+export const DASH_ORDERS_SCAN_PAGE_SIZE = 100
+
 /** Waste-riport ablaka napokban (GET /api/cutting/waste default: utolsó hónap). */
 export const WASTE_WINDOW_DAYS = 30
 

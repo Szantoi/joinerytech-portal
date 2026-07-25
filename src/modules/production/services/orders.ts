@@ -190,7 +190,14 @@ export function useCalculateOrder() {
   return useMutation({
     mutationFn: (id: string) => calculateOrder(id),
     onSuccess: (list) => {
-      addToast(`Kalkuláció kész — ${list.totalItemCount} szabásjegyzék-tétel`, 'success')
+      // M-5 (WORLDS_PRODUCTION_DESIGN_REVIEW_2026-07-24): a `totalItemCount` a
+      // backendben `order.Items.Count` — az AJTÓTÉTELEK száma, NEM a szabásjegyzék
+      // sorainak száma. A kettő rendszerint eltér (egy ajtótételből több
+      // alkatrész-sor lesz), ezért mindkettőt a saját nevén mondjuk ki.
+      addToast(
+        `Kalkuláció kész — ${list.items.length} szabásjegyzék-sor (${list.totalItemCount} ajtótétel)`,
+        'success',
+      )
     },
     onError: (error) => {
       addToast(error instanceof Error ? error.message : 'A kalkuláció nem indítható', 'error')

@@ -20,7 +20,7 @@ import { fetchQuotes, approveQuote, rejectQuote, fetchWasteReport, quoteListItem
 /**
  * Production MSW kontraktus-tükör tesztek — állapottartó store + FSM guardok
  * a VÉGPONTONKÉNT dokumentált hibakóddal (400 planning/quotes/joinery,
- * 409/422 executions), zod-séma konformitás (a mock a doksi alakját adja),
+ * 422-tömb executions), zod-séma konformitás (a mock a doksi alakját adja),
  * és rule-6 kereszt-entitás (freeze → assign-batch-forrás; calculate →
  * cutting-list cache).
  */
@@ -134,7 +134,7 @@ describe('vágótervek — lista, séma, FSM', () => {
   })
 })
 
-describe('végrehajtás — lista, séma, FSM (409 állapot / 422 payload)', () => {
+describe('végrehajtás — lista, séma, FSM (minden elutasítás 422 + ValidationErrors-tömb)', () => {
   it('lista: 6 seed-végrehajtás, summary-séma', async () => {
     const rows = await fetchExecutions()
     expect(rows).toHaveLength(6)
@@ -152,15 +152,25 @@ describe('végrehajtás — lista, séma, FSM (409 állapot / 422 payload)', () 
     const invalid = await startExecution(IDS.execScheduled, { workerId: '', badgeHmacBase64: '', hmacKeyVersion: '' })
       .catch((e: unknown) => e)
     expect((invalid as ApiError).status).toBe(422)
+    // payload-hiba is CSUPASZ ValidationErrors-tomb (M-2)
+    expect(Array.isArray((invalid as ApiError).details)).toBe(true)
 
     await startExecution(IDS.execScheduled, { workerId: 'W1', badgeHmacBase64: 'hmac', hmacKeyVersion: 'v1' })
     expect((await fetchExecution(IDS.execScheduled)).status).toBe('Started')
   })
 
-  it('start rossz állapotból → 409 (állapot-sértés)', async () => {
+  it('start rossz állapotból → 422 ValidationErrors-tömbbel (NEM 409 — M-2)', async () => {
     const error = await startExecution(IDS.execInProgress, { workerId: 'W1', badgeHmacBase64: 'h', hmacKeyVersion: 'v1' })
       .catch((e: unknown) => e)
-    expect((error as ApiError).status).toBe(409)
+    // A valós host az Execution szeletben csak Result.Invalid-ot ad (0 db
+    // Result.Conflict producer) -> MapResult 422 + csupasz ValidationErrors-tomb.
+    expect((error as ApiError).status).toBe(422)
+    expect((error as ApiError).details).toEqual([
+      { identifier: 'status', errorMessage: expect.stringContaining('start') },
+    ])
+    // Az uzenet a tombbol jon (nem ures, nem "HTTP 422") -- a guard-uzenet
+    // tenylegesen eljut a felhasznaloig (M-S3 parse-fix ellenprobaja).
+    expect((error as ApiError).message).toContain('Érvénytelen FSM-átmenet')
   })
 
   it('progress: PanelCompleted növeli a számlálót, eventId-idempotens', async () => {
@@ -201,9 +211,10 @@ describe('végrehajtás — lista, séma, FSM (409 állapot / 422 payload)', () 
     expect((await fetchExecution(IDS.execScheduled)).status).toBe('Cancelled')
   })
 
-  it('cancel terminális állapotból → 409', async () => {
+  it('cancel terminális állapotból → 422 (M-2)', async () => {
     const error = await cancelExecution(IDS.execCompleted, 'OperatorCancelled').catch((e: unknown) => e)
-    expect((error as ApiError).status).toBe(409)
+    expect((error as ApiError).status).toBe(422)
+    expect((error as ApiError).message).toContain('Érvénytelen FSM-átmenet')
   })
 })
 
@@ -245,6 +256,37 @@ describe('ajtórendelések (joinery) — lapozott lista, FSM, kalkuláció', () 
 
     const error = await revertOrder(IDS.ordSubmitted).catch((e: unknown) => e)
     expect((error as ApiError).status).toBe(400)
+  })
+
+  it('seed-invariáns (M-5): totalItemCount = a rendelés AJTÓTÉTEL-száma, nem a szabásjegyzék sorszáma', async () => {
+    const order = await fetchOrder(IDS.ordCalculated)
+    const list = await fetchOrderCuttingList(IDS.ordCalculated)
+    // A backendben totalItemCount = order.Items.Count — a két szám tudatosan
+    // ELTÉR (egy ajtótételből több alkatrész-sor lesz), ezért a UI sem
+    // keverheti össze őket.
+    expect(list.totalItemCount).toBe(order.itemCount)
+    expect(list.items.length).not.toBe(list.totalItemCount)
+  })
+
+  it('M-5: a GENERÁLT szabásjegyzék is több sort ad ajtótételenként (nem 1:1)', async () => {
+    // ordSubmitted-hez nincs seedelt lista -> a mock generátora fut. Ez az az
+    // elérhető út, ahol a régi 1 tétel = 1 sor arány a toastban azt sugallta
+    // volna, hogy a két szám ugyanaz.
+    const order = await fetchOrder(IDS.ordSubmitted)
+    const list = await calculateOrder(IDS.ordSubmitted)
+    expect(list.totalItemCount).toBe(order.itemCount)
+    expect(list.items.length).toBeGreaterThan(list.totalItemCount)
+  })
+
+  it('M-4: a lista-route nem perzisztált createdAt-ot ad, a detail a lekérés idejét', async () => {
+    const page = await fetchOrders({ page: 1, pageSize: 20 })
+    const listed = page.items.find((o) => o.id === IDS.ordDraft)
+    expect(listed?.createdAt).toBe('0001-01-01T00:00')
+
+    // A detail-route a backend „vándorló UtcNow" viselkedését tükrözi — épp
+    // ezért nem szabad rá üzleti logikát/megjelenítést építeni.
+    const detail = await fetchOrder(IDS.ordDraft)
+    expect(detail.createdAt).not.toBe(listed?.createdAt)
   })
 
   it('calculate: szabásjegyzék a séma szerint; üres rendelésre 400', async () => {

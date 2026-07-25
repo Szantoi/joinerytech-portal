@@ -60,7 +60,8 @@ export function publishSnapshotBlockReason(profileSnapshotId: string): string | 
 // Cancel: nem-terminál→Cancelled.
 // ⚠ `Failed`: enum-tag, de NINCS átmenet hozzá a kódban — a UI nem kínál rá
 // akciót, csak megjeleníteni tudja (mellékállapot).
-// Backend-hibakódok: állapot-sértés → 409, payload-sértés → 422.
+// Backend-hibakódok: MINDEN elutasítás → 422 + csupasz ValidationErrors-tömb
+// (M-2, review 2026-07-24 — nincs Result.Conflict producer az Execution szeletben).
 
 export const EXECUTION_FSM = {
   start: { from: ['Scheduled'], to: 'Started' },
@@ -97,13 +98,33 @@ export function completePanelsBlockReason(
   return `Csak teljes panel-számmal zárható le (${panelsCompleted}/${totalPanels} kész).`
 }
 
+/**
+ * G9 gap-guard (M-3 fix, WORLDS_PRODUCTION_DESIGN_REVIEW_2026-07-24).
+ *
+ * A start/progress/complete végpontok badge-HMAC-ot, esemény-HMAC-ot és
+ * bizonyíték-hasht várnak, aminek a valós forrása a gyártásidő eszköz-integráció
+ * (kártyaolvasó) — az NINCS bekötve a portálban. Élesben a `start` a Guid-típusú
+ * `workerId`-n 400-at, a `progress` a nem-Base64 HMAC-on 422-t adna, a
+ * `complete` viszont ÁTMENNE (Null proof-policy), és a konstans hash HAMIS
+ * bizonyítékként rögzülne. Ezért `api` módban a három akció letiltott.
+ * Mock módban a demó-folyamat változatlanul járható.
+ */
+export function deviceSignatureBlockReason(isApiMode: boolean): string | undefined {
+  if (!isApiMode) return undefined
+  return (
+    'Az eszköz-integráció (kártyaolvasó / esemény-aláírás) nincs bekötve, ezért ' +
+    'valós badge-HMAC és bizonyíték-hash nélkül ez az akció nem indítható — G9 gap.'
+  )
+}
+
 // ── DoorOrder (joinery, doksi 2.5) ──────────────────────────────────────────
 //
 // Portálról hívható átmenetek: Submit (POST /submit, Draft→Submitted, üres
 // tétellista → 400) és RevertToDraft (PUT /revert, CalculationFailed VAGY
 // Calculated → Draft). A Calculating/Calculated/CalculationFailed átmeneteket
 // az Orchestrator vezérli (MarkCalculating/MarkCalculated/MarkCalculationFailed
-// — a portál csak megjeleníti). Tiltott átmenet → 400 (validációs tömb).
+// — a portál csak megjeleníti). Tiltott átmenet → 400 + csupasz `string[]`
+// (`Results.BadRequest(result.Errors)`), ismeretlen id → 404 ÜRES törzzsel.
 
 export const DOOR_ORDER_FSM = {
   submit: { from: ['Draft'], to: 'Submitted' },

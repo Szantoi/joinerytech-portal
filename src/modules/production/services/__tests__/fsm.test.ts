@@ -2,8 +2,9 @@ import { describe, it, expect } from 'vitest'
 import { canTransition, transitionBlockReason } from '../../../../services/fsmGuards'
 import {
   CUTTING_PLAN_FSM, DOOR_ORDER_FSM, EXECUTION_FSM, QUOTE_FSM,
-  completePanelsBlockReason, isDoorOrderStatusUnreachable, isExecutionOpen,
-  isPlanActive, isQuotePending, publishSnapshotBlockReason, submitItemsBlockReason,
+  completePanelsBlockReason, deviceSignatureBlockReason, isDoorOrderStatusUnreachable,
+  isExecutionOpen, isPlanActive, isQuotePending, publishSnapshotBlockReason,
+  submitItemsBlockReason,
 } from '../fsm'
 
 /**
@@ -132,5 +133,18 @@ describe('CuttingQuoteRequest FSM (mag-csoport)', () => {
   it('isQuotePending: csak PendingReview', () => {
     expect(isQuotePending('PendingReview')).toBe(true)
     expect(isQuotePending('Quoted')).toBe(false)
+  })
+})
+
+describe('G9 eszköz-aláírás gap-guard (M-3)', () => {
+  it('api módban minden aláírás-függő akció tiltott, magyarázattal', () => {
+    const reason = deviceSignatureBlockReason(true)
+    expect(reason).toBeDefined()
+    expect(reason).toMatch(/eszköz-integráció/)
+    expect(reason).toMatch(/G9/)
+  })
+
+  it('mock módban nincs tiltás — a demó-folyamat változatlan', () => {
+    expect(deviceSignatureBlockReason(false)).toBeUndefined()
   })
 })

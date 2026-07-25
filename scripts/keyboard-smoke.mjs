@@ -7,6 +7,9 @@
  *       Escape után a fókusz a triggerre tér vissza (mobilon is).
  *  M-S1: 768px-en nincs dokumentum-szintű vízszintes túlcsordulás.
  *  M-S2: nyitott SlideOver mellett a toast live-region NEM inert.
+ *  M-7/M-8/M-10 (WORLDS-PRODUCTION-FIX): quotes h-scroll a tooltipektől,
+ *       mobil oszlop-összenyomás, dash-linkek 44px érintési zónája —
+ *       mindhárom CSAK valós layouttal mérhető.
  *
  * Futtatás: `npm run test:smoke:keyboard` — a script maga indít vite dev
  * szervert (MSW mock mód) és le is állítja. Konfiguráció env-ből:
@@ -158,9 +161,7 @@ try {
   {
     const ctx = await browser.newContext({ viewport: { width: 768, height: 1024 } })
     const page = await ctx.newPage()
-    // A quotes route-ot szándékosan nem mérjük itt: a tooltip-túllógás
-    // (review M-8) a WORLDS-PRODUCTION-FIX scope-ja — ez a check a SHELL-t méri.
-    for (const path of ['/w/production', '/w/maintenance']) {
+    for (const path of ['/w/production', '/w/maintenance', '/w/production/quotes']) {
       await page.goto(`${BASE}${path}`, { waitUntil: 'networkidle' })
       await page.waitForTimeout(500)
       const overflow = await page.evaluate(
@@ -168,6 +169,83 @@ try {
       )
       check(`M-S1: ${path} 768px overflow = 0px`, overflow === 0, `mért: ${overflow}px`)
     }
+    await ctx.close()
+  }
+
+  // ── M-8: quotes — a disabled-gomb tooltipek nem okoznak h-scrollt ─────────
+  // (Ez a hibaosztály jsdom-ban nem mérhető: a tooltip `absolute
+  // whitespace-nowrap`, a túllógás csak valós layouttal derül ki.)
+  {
+    for (const width of [1440, 360]) {
+      const ctx = await browser.newContext({ viewport: { width, height: 900 } })
+      const page = await ctx.newPage()
+      await page.goto(`${BASE}/w/production/quotes`, { waitUntil: 'networkidle' })
+      await page.waitForTimeout(500)
+      const overflow = await page.evaluate(
+        () => document.documentElement.scrollWidth - document.documentElement.clientWidth,
+      )
+      check(`M-8: quotes ${width}px overflow = 0px`, overflow === 0, `mért: ${overflow}px`)
+
+      // A h-scroll megszüntetése NEM mehet a magyarázat néma levágása árán:
+      // minden tooltip-doboznak a viewporton BELÜL kell lennie (balra kilógás
+      // nem okoz görgetést, de olvashatatlanná vágná a szöveget).
+      const tooltips = await page.evaluate(() => {
+        const w = window.innerWidth
+        return [...document.querySelectorAll('[role="tooltip"]')].map((el) => {
+          const r = el.getBoundingClientRect()
+          return { left: Math.round(r.left), right: Math.round(r.right), inside: r.left >= 0 && r.right <= w }
+        })
+      })
+      const outside = tooltips.filter((t) => !t.inside)
+      check(
+        `M-8: quotes ${width}px — mind a ${tooltips.length} tooltip a viewporton belül`,
+        tooltips.length > 0 && outside.length === 0,
+        outside.length > 0 ? `kilógó: ${JSON.stringify(outside[0])}` : `${tooltips.length} db`,
+      )
+      await ctx.close()
+    }
+  }
+
+  // ── M-7: quotes 360px — az ügyfél/meta oszlop nem préselődik össze ────────
+  {
+    const ctx = await browser.newContext({ viewport: { width: 360, height: 740 } })
+    const page = await ctx.newPage()
+    await page.goto(`${BASE}/w/production/quotes`, { waitUntil: 'networkidle' })
+    await page.getByText('Kiss Ágnes').first().waitFor({ timeout: 15_000 })
+    const metaWidth = await page.evaluate(() => {
+      const name = [...document.querySelectorAll('li div')].find((el) => el.textContent === 'Kiss Ágnes')
+      return name?.parentElement ? Math.round(name.parentElement.getBoundingClientRect().width) : -1
+    })
+    // A review-ben ~40px volt (olvashatatlan). Két soros kártyán a teljes
+    // sorszélességet kapja: 360px viewporton ez 250px felett van.
+    check('M-7: quotes 360px — ügyfél/meta oszlop ≥ 250px', metaWidth >= 250, `mért: ${metaWidth}px`)
+    await ctx.close()
+  }
+
+  // ── M-10: dashboard szekció-linkek 44px-es érintési zónája ────────────────
+  {
+    const ctx = await browser.newContext({ viewport: { width: 1440, height: 900 } })
+    const page = await ctx.newPage()
+    await page.goto(`${BASE}/w/production`, { waitUntil: 'networkidle' })
+    const link = page.getByRole('button', { name: 'Vágástervezés →' })
+    await link.waitFor({ timeout: 15_000 })
+    const hit = await page.evaluate(() => {
+      const el = [...document.querySelectorAll('button')].find((b) => b.textContent?.includes('Vágástervezés'))
+      if (!el) return { ok: false, reason: 'nincs link' }
+      const r = el.getBoundingClientRect()
+      // A ::before kiterjesztett zóna a szöveg-doboz FELETT 12px-re is találjon.
+      const above = document.elementFromPoint(r.left + r.width / 2, r.top - 10)
+      const below = document.elementFromPoint(r.left + r.width / 2, r.bottom + 10)
+      return {
+        ok: (above === el || el.contains(above)) && (below === el || el.contains(below)),
+        textHeight: Math.round(r.height),
+      }
+    })
+    check(
+      'M-10: dash-link érintési zónája a szövegdobozon túl is aktív (≈44px)',
+      hit.ok,
+      `szöveg-magasság: ${hit.textHeight}px`,
+    )
     await ctx.close()
   }
 } catch (err) {

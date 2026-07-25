@@ -181,17 +181,21 @@ describe('WORLDS-PRODUCTION-API-GATE — élő cutting/joinery kontraktus-kapu',
     })
   })
 
-  describe('409 tiltott FSM-átmenet — MUTÁCIÓ, disposable dev tenant nélkül BLOKKOLT', () => {
+  describe('tiltott FSM-átmenet (executions 422 / plans 409) — MUTÁCIÓ, disposable dev tenant nélkül BLOKKOLT', () => {
+    // ⚠ M-2 pontosítás (2026-07-25): az EXECUTIONS végpontokon a tiltott átmenet
+    // NEM 409, hanem 422 + csupasz ValidationErrors-tömb (az Execution szeletben
+    // 0 db Result.Conflict producer van). 409 csak a duplikált plan-dátumra és az
+    // assign-batch ütközésre él — az élő mutációs fázis ezt várja.
     // A duplikált plan-dátum (POST /api/cutting/plans) vagy a gyartasilap
     // finalize-409 csak valódi mutációval (POST) bizonyítható, ami disposable
     // dev/seed tenantot igényel (task Stop-klauzula). Ez a környezet nem
     // biztosít ilyet (nincs dokumentált dev-tenant token-kiadás — lásd
     // task-doksi Végrehajtási napló). `it.fails`: EXPLICIT dokumentált
     // blokkolás, nem néma `.skip`.
-    it.fails('nincs safe disposable dev tenant — 409-mutáció nem futtatható', () => {
+    it.fails('nincs safe disposable dev tenant — FSM-mutáció nem futtatható', () => {
       throw new Error(
-        'BLOCKED: a 409 (tiltott FSM-átmenet) bizonyítása mutációt igényelne ' +
-          '(pl. duplikált plan-dátum POST-ja) egy disposable dev/seed tenanton. ' +
+        'BLOCKED: a tiltott FSM-átmenet bizonyítása (executions → 422, plans → 409) ' +
+          'mutációt igényelne (pl. duplikált plan-dátum POST-ja) egy disposable dev/seed tenanton. ' +
           'Ilyen tenant/token nem áll rendelkezésre ebben a környezetben — ' +
           'lásd WORLDS-PRODUCTION-API-GATE.md Stop-klauzula és Végrehajtási napló. ' +
           'A 400/422 hibakontraktus (fentebb) az elfogadási kritérium ' +

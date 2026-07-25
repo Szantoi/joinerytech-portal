@@ -186,6 +186,17 @@ export function seedExecutions(): ExecutionSeed[] {
 
 // ── Ajtórendelések (joinery) ────────────────────────────────────────────────
 
+/**
+ * A DoorOrder `createdAt` NEM perzisztált a joinery-ben (M-4 fix,
+ * WORLDS_PRODUCTION_DESIGN_REVIEW_2026-07-24): a lista-route a
+ * `default(DateTime)` értéket adja vissza (`DoorOrderRepository.cs:65`), a
+ * detail-route pedig a lekérés idejét (`GetDoorOrderQueryHandler.cs:32`).
+ * A seed ezért NEM tölt hihető dátumot nem-létező adatba — ez a mock
+ * őszinteségi elve (a tükör nem szépíthet). A detail-handler külön mutatja a
+ * „vándorló UtcNow" viselkedést.
+ */
+export const UNPERSISTED_CREATED_AT = '0001-01-01T00:00'
+
 export function seedOrders(): DoorOrder[] {
   const ids = PRODUCTION_SEED_IDS
   const base = { tenantId: MOCK_TENANT, deliveryDate: null }
@@ -193,37 +204,37 @@ export function seedOrders(): DoorOrder[] {
     {
       ...base, id: ids.ordDraft, flowEpicId: 'FE-9001', projectId: 'PRJ-2026-041',
       projectName: 'Bognár családi ház — beltéri ajtók', status: 'Draft',
-      itemCount: 3, createdAt: `${seedDay(-1)}T09:12`,
+      itemCount: 3, createdAt: UNPERSISTED_CREATED_AT,
     },
     {
       ...base, id: ids.ordDraftEmpty, flowEpicId: 'FE-9002', projectId: 'PRJ-2026-042',
       projectName: 'Irodaház 2. emelet — tokba szerelt ajtók', status: 'Draft',
-      itemCount: 0, createdAt: `${seedDay(0)}T08:00`,
+      itemCount: 0, createdAt: UNPERSISTED_CREATED_AT,
     },
     {
       ...base, id: ids.ordSubmitted, flowEpicId: 'FE-9003', projectId: 'PRJ-2026-038',
       projectName: 'Panzió földszint — falcos ajtók', status: 'Submitted',
-      itemCount: 8, createdAt: `${seedDay(-2)}T14:30`,
+      itemCount: 8, createdAt: UNPERSISTED_CREATED_AT,
     },
     {
       ...base, id: ids.ordCalculating, flowEpicId: 'FE-9004', projectId: 'PRJ-2026-036',
       projectName: 'Társasház A lépcsőház', status: 'Calculating',
-      itemCount: 12, createdAt: `${seedDay(-3)}T10:05`,
+      itemCount: 12, createdAt: UNPERSISTED_CREATED_AT,
     },
     {
       ...base, id: ids.ordCalculated, flowEpicId: 'FE-9005', projectId: 'PRJ-2026-031',
       projectName: 'Óvoda-felújítás — kétszárnyú ajtók', status: 'Calculated',
-      itemCount: 6, createdAt: `${seedDay(-5)}T11:40`,
+      itemCount: 6, createdAt: UNPERSISTED_CREATED_AT,
     },
     {
       ...base, id: ids.ordFailed, flowEpicId: 'FE-9006', projectId: 'PRJ-2026-029',
       projectName: 'Pivot bemutatóterem', status: 'CalculationFailed',
-      itemCount: 2, createdAt: `${seedDay(-6)}T16:20`,
+      itemCount: 2, createdAt: UNPERSISTED_CREATED_AT,
     },
     {
       ...base, id: ids.ordConfirmed, flowEpicId: 'FE-9007', projectId: 'PRJ-2026-044',
       projectName: 'Sales-konverzió — hotel szárny', status: 'ConfirmedFromSales',
-      itemCount: 24, createdAt: `${seedDay(0)}T07:55`,
+      itemCount: 24, createdAt: UNPERSISTED_CREATED_AT,
     },
   ]
 }
@@ -240,14 +251,16 @@ export function seedCuttingLists(): Record<string, CuttingList> {
         { itemSorszam: '2', componentName: 'Keretléc vízszintes', material: 'Fenyő 32mm', componentType: 'Léc', thickness: 32, width: 60, length: 740, quantity: 36 },
         { itemSorszam: '3', componentName: 'Tok-szár', material: 'Tölgy 40mm', componentType: 'Tok', thickness: 40, width: 90, length: 2100, quantity: 12 },
       ],
-      totalItemCount: 4,
+      // M-5 seed-invariáns: totalItemCount = a RENDELÉS ajtótétel-száma
+      // (backend: order.Items.Count) — NEM a szabásjegyzék sorainak száma.
+      totalItemCount: 6,
     },
     [ids.ordDraft]: {
       orderId: ids.ordDraft,
       items: [
         { itemSorszam: '1', componentName: 'Ajtólap külső kéreg', material: 'MDF 6mm', componentType: 'Lap', thickness: 6, width: 760, length: 1980, quantity: 6 },
       ],
-      totalItemCount: 1,
+      totalItemCount: 3,
     },
   }
 }

@@ -7,6 +7,7 @@ import {
 import { transitionBlockReason } from '../../../services/fsmGuards'
 import { UTILIZATION_WARN_THRESHOLD } from '../services/config'
 import { SelectField } from './fields'
+import { DetailState } from './DetailState'
 import { PLAN_ACTION_LABELS, PLAN_STATUS_META, formatDate, formatNumber } from './labels'
 
 /**
@@ -37,7 +38,7 @@ export function PlanDetailSlideOver({ planId, onClose }: { planId: string | null
   return (
     <SlideOver open onClose={onClose} title={data?.id ?? planId} subtitle="Vágóterv" width={560}>
       {!data ? (
-        <p className="text-[12.5px] text-ink-muted">Betöltés…</p>
+        <DetailState isError={plan.isError} onRetry={() => void plan.refetch()} resource="vágóterv" />
       ) : (
         <div className="space-y-5">
           <FsmStepper
@@ -100,6 +101,27 @@ export function PlanDetailSlideOver({ planId, onClose }: { planId: string | null
               {selectedProfile && (
                 <p className="mt-1 text-[10.5px] text-ink-muted">
                   Kapacitás-modell: {selectedProfile.capacityModelId} · Rework: {selectedProfile.reworkPolicyId}
+                </p>
+              )}
+              {/* M-11: a profil-lekérés MINDHÁROM „nincs választható elem" oka
+                  némán ugyanúgy nézett ki (üres select), és a publish emiatt
+                  magyarázat nélkül maradt blokkolt. A gomb a közös Button
+                  primitív — a saját 44px-es érintési zónájával (M-10). */}
+              {profiles.isPending && (
+                <p className="mt-1 text-[10.5px] text-ink-muted" aria-busy="true">Profilok betöltése…</p>
+              )}
+              {profiles.isError && (
+                <div role="alert" className="mt-1.5 flex flex-wrap items-center gap-2">
+                  <p className="text-[10.5px] text-amber-700 dark:text-amber-400">
+                    A prioritás-profilok nem tölthetők be, ezért a publikálás blokkolt.
+                  </p>
+                  <Button variant="secondary" size="sm" onClick={() => void profiles.refetch()}>Újra</Button>
+                </div>
+              )}
+              {profiles.isSuccess && (profiles.data ?? []).length === 0 && (
+                <p className="mt-1 text-[10.5px] text-amber-700 dark:text-amber-400">
+                  Ehhez a bérlőhöz nincs prioritás-profil, ezért a publikálás blokkolt.
+                  Profil létrehozása a portálról ma nem lehetséges (G7 gap).
                 </p>
               )}
             </div>

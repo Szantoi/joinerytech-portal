@@ -1,16 +1,18 @@
 import { useState } from 'react'
 import { Button, FsmStepper, SlideOver, StatusPill } from '../../../components/ui'
 import {
-  EXECUTION_FSM, EXECUTION_MAIN_PATH, completePanelsBlockReason,
+  EXECUTION_FSM, EXECUTION_MAIN_PATH, completePanelsBlockReason, deviceSignatureBlockReason,
   useExecution, useExecutionMilestones, useExecutionMutation, useExecutionProgress,
 } from '../services'
 import { CANCEL_REASON_WIRE, PROOF_LEVEL_WIRE } from '../services/wire'
 import type { CancelReason, ExecutionStatus, ProofLevel } from '../services/wire'
+import { IS_PRODUCTION_API_MODE } from '../services/config'
 import { transitionBlockReason } from '../../../services/fsmGuards'
 import { SelectField } from './fields'
+import { DetailState } from './DetailState'
 import {
-  CANCEL_REASON_LABELS, EXECUTION_STATUS_META, MILESTONE_STATUS_META, PROGRESS_KIND_LABELS,
-  PROOF_LEVEL_LABELS, formatDate,
+  CANCEL_REASON_LABELS, EXECUTION_STATUS_META, MILESTONE_KIND_LABELS, MILESTONE_STATUS_META,
+  PROGRESS_KIND_LABELS, PROOF_LEVEL_LABELS, formatDate,
 } from './labels'
 
 /**
@@ -18,12 +20,35 @@ import {
  * Cancelled/Failed mellékállapotok), esemény-idővonal és mérföldkövek, a
  * start/progress/complete/cancel akciók a KÖZÖS fsm.ts guardjaival. A
  * complete-hez panel-guard (completePanelsBlockReason) + bizonyíték-szint
- * választó; a HMAC-mezőket a portál egyelőre placeholder-payloaddal küldi
- * (a badge/eseményaláírás forrása — kártyaolvasó/eszköz-integráció — nincs
- * bekötve a portálban; ez a jelenlegi gyártásidő-eszköz-integráció hiánya,
- * NEM a kontraktus hiánya — a mezők a doksi szerinti alakot hordozzák).
+ * választó.
+ *
+ * ⚠ G9 gap (M-3 fix, WORLDS_PRODUCTION_DESIGN_REVIEW_2026-07-24): a badge-,
+ * esemény- és bizonyíték-aláírás valós forrása (kártyaolvasó / gyártásidő
+ * eszköz-integráció) NINCS bekötve a portálban — a mezők ma placeholder
+ * értéket hordoznának. Ez NEM a kontraktus hiánya, de élesben a `complete`
+ * ÁTMENNE, és a konstans hash HAMIS bizonyítékként rögzülne, ezért `api`
+ * módban a három aláírás-függő akció letiltott, magyarázó tooltippel. Mock
+ * módban (MSW-tükör) az akciók demózhatók maradnak.
  */
-export function ExecutionDetailSlideOver({ executionId, onClose }: { executionId: string | null; onClose: () => void }) {
+
+export function ExecutionDetailSlideOver({
+  executionId,
+  onClose,
+  /**
+   * Adat-mód. Alapértelmezésben a build-idejű kapcsoló (`VITE_DATA_MODE`), de
+   * INJEKTÁLHATÓ — így a G9 tiltás (M-3) tesztelhető, nem csak a mögötte lévő
+   * tiszta guard-függvény. Semmilyen hívási hely nem adja meg élesben.
+   */
+  apiMode = IS_PRODUCTION_API_MODE,
+}: {
+  executionId: string | null
+  onClose: () => void
+  apiMode?: boolean
+}) {
+  // Az aláírás-függő akciók (start/progress/complete) tiltó oka `api` módban.
+  // A szabály a services/fsm.ts-ben él (a többi guard mellett), itt csak a
+  // mód-kapcsoló dől el. Mock módban `undefined` → a demó-folyamat változatlan.
+  const deviceBlockReason = deviceSignatureBlockReason(apiMode)
   const execution = useExecution(executionId)
   const progress = useExecutionProgress(executionId)
   const milestones = useExecutionMilestones(executionId)
@@ -41,7 +66,7 @@ export function ExecutionDetailSlideOver({ executionId, onClose }: { executionId
   return (
     <SlideOver open onClose={onClose} title={data?.id ?? executionId} subtitle="Vágás-végrehajtás" width={560}>
       {!data ? (
-        <p className="text-[12.5px] text-ink-muted">Betöltés…</p>
+        <DetailState isError={execution.isError} onRetry={() => void execution.refetch()} resource="végrehajtás" />
       ) : (
         <div className="space-y-5">
           <FsmStepper
@@ -73,7 +98,10 @@ export function ExecutionDetailSlideOver({ executionId, onClose }: { executionId
           <div className="flex flex-wrap items-end gap-2">
             <Button
               size="sm"
-              disabledReason={transitionBlockReason(EXECUTION_FSM, 'start', data.status, statusLabels)}
+              disabledReason={
+                deviceBlockReason
+                ?? transitionBlockReason(EXECUTION_FSM, 'start', data.status, statusLabels)
+              }
               onClick={() => mutation.mutate({
                 id: data.id, action: 'start',
                 payload: { workerId: 'WORKER-DEMO', badgeHmacBase64: 'demo-hmac', hmacKeyVersion: 'v1' },
@@ -83,7 +111,10 @@ export function ExecutionDetailSlideOver({ executionId, onClose }: { executionId
             </Button>
             <Button
               size="sm"
-              disabledReason={transitionBlockReason(EXECUTION_FSM, 'progress', data.status, statusLabels)}
+              disabledReason={
+                deviceBlockReason
+                ?? transitionBlockReason(EXECUTION_FSM, 'progress', data.status, statusLabels)
+              }
               onClick={() => mutation.mutate({
                 id: data.id, action: 'progress',
                 payload: {
@@ -109,7 +140,8 @@ export function ExecutionDetailSlideOver({ executionId, onClose }: { executionId
               <Button
                 size="sm"
                 disabledReason={
-                  transitionBlockReason(EXECUTION_FSM, 'complete', data.status, statusLabels)
+                  deviceBlockReason
+                  ?? transitionBlockReason(EXECUTION_FSM, 'complete', data.status, statusLabels)
                   ?? completePanelsBlockReason(data.panelsCompleted, data.totalPanels)
                 }
                 onClick={() => mutation.mutate({
@@ -143,7 +175,15 @@ export function ExecutionDetailSlideOver({ executionId, onClose }: { executionId
 
           <div>
             <h3 className="mb-2 text-[12.5px] font-semibold text-ink">Esemény-idővonal</h3>
-            {(progress.data ?? []).length === 0 ? (
+            {/* M-12: üres ≠ hiba ≠ betöltés. Egy OPERATÍV képernyőn a tranziens
+                hiba „Nincs rögzített esemény."-ként a gépkezelőt téveszti meg. */}
+            {progress.isPending || progress.isError ? (
+              <DetailState
+                isError={progress.isError}
+                onRetry={() => void progress.refetch()}
+                resource="esemény-idővonal"
+              />
+            ) : (progress.data ?? []).length === 0 ? (
               <p className="text-[12px] text-ink-muted">Nincs rögzített esemény.</p>
             ) : (
               <ul className="space-y-1">
@@ -160,13 +200,20 @@ export function ExecutionDetailSlideOver({ executionId, onClose }: { executionId
 
           <div>
             <h3 className="mb-2 text-[12.5px] font-semibold text-ink">Mérföldkövek</h3>
-            {(milestones.data ?? []).length === 0 ? (
+            {milestones.isPending || milestones.isError ? (
+              <DetailState
+                isError={milestones.isError}
+                onRetry={() => void milestones.refetch()}
+                resource="mérföldkövek"
+              />
+            ) : (milestones.data ?? []).length === 0 ? (
               <p className="text-[12px] text-ink-muted">Nincs mérföldkő.</p>
             ) : (
               <ul className="space-y-1.5">
                 {(milestones.data ?? []).map((m) => (
                   <li key={m.milestoneId} className="flex items-center justify-between text-[11.5px]">
-                    <span className="text-ink">{m.kind}</span>
+                    {/* M-9: magyar címke a nyers wire-tagnév helyett. */}
+                    <span className="text-ink">{MILESTONE_KIND_LABELS[m.kind]}</span>
                     <StatusPill size="sm" tone={MILESTONE_STATUS_META[m.status].tone} label={MILESTONE_STATUS_META[m.status].label} />
                   </li>
                 ))}

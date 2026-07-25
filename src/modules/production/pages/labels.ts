@@ -104,6 +104,21 @@ export const DOOR_ORDER_ACTION_LABELS: Record<DoorOrderAction, string> = {
   markCalculationFailed: 'Kalkuláció hibás',
 }
 
+/**
+ * A DoorOrder `createdAt` gap-tooltipje (M-4 fix,
+ * WORLDS_PRODUCTION_DESIGN_REVIEW_2026-07-24).
+ *
+ * A joinery ma NEM perzisztálja a létrehozás időpontját: a lista-route
+ * `default`-ot ad (`DoorOrderRepository.cs:65` → 0001-01-01), a detail-route
+ * pedig minden lekérésnél `UtcNow`-t (`GetDoorOrderQueryHandler.cs:32`) — vagyis
+ * egyik érték sem valós adat. Amíg a backend nem perzisztál, a UI „—"-t mutat
+ * ezzel a magyarázattal: kitalált vagy vándorló dátumot nem írunk ki.
+ */
+export const DOOR_ORDER_CREATED_AT_HINT =
+  'A joinery ma nem perzisztálja a rendelés létrehozási idejét (a lista üres ' +
+  'dátumot, a részlet a lekérés idejét adná vissza) — ezért nem jelenítjük meg. ' +
+  'Backend follow-up.'
+
 /** A backendben elérhetetlen lánc-szakasz tooltipje (P6 gap-jelölés). */
 export const DOOR_ORDER_UNREACHABLE_HINT =
   'A backendben ehhez az állapothoz ma nincs átmenet (DoorOrder FSM-hiány, ' +

@@ -6,9 +6,10 @@ import {
 } from '../services'
 import { transitionBlockReason } from '../../../services/fsmGuards'
 import type { DoorOrderStatus } from '../services/wire'
+import { DetailState } from './DetailState'
 import {
-  DOOR_ORDER_ACTION_LABELS, DOOR_ORDER_STATUS_META, DOOR_ORDER_UNREACHABLE_HINT,
-  formatDate,
+  DOOR_ORDER_ACTION_LABELS, DOOR_ORDER_CREATED_AT_HINT, DOOR_ORDER_STATUS_META,
+  DOOR_ORDER_UNREACHABLE_HINT,
 } from './labels'
 
 /**
@@ -40,7 +41,7 @@ export function OrderDetailSlideOver({ orderId, onClose }: { orderId: string | n
   return (
     <SlideOver open onClose={onClose} title={data?.projectName ?? orderId} subtitle="Ajtórendelés" width={560}>
       {!data ? (
-        <p className="text-[12.5px] text-ink-muted">Betöltés…</p>
+        <DetailState isError={order.isError} onRetry={() => void order.refetch()} resource="ajtórendelés" />
       ) : (
         <div className="space-y-5">
           <FsmStepper
@@ -71,9 +72,14 @@ export function OrderDetailSlideOver({ orderId, onClose }: { orderId: string | n
               <dt className="text-ink-muted">Tételszám</dt>
               <dd className="text-ink">{data.itemCount}</dd>
             </div>
+            {/* M-4: a createdAt nem perzisztált a joinery-ben — a detail-route
+                minden lekérésnél a MOSTANI időt adná vissza. Vándorló dátum
+                helyett gap-affordancia. */}
             <div>
               <dt className="text-ink-muted">Létrehozva</dt>
-              <dd className="text-ink">{formatDate(data.createdAt)}</dd>
+              <dd className="cursor-help text-ink-muted" title={DOOR_ORDER_CREATED_AT_HINT}>
+                — <span className="sr-only">{DOOR_ORDER_CREATED_AT_HINT}</span>
+              </dd>
             </div>
             <div>
               <dt className="text-ink-muted">Állapot</dt>

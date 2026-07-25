@@ -83,9 +83,16 @@ export function QuotesScreen() {
             {rows.map((q) => {
               const approveReason = transitionBlockReason(QUOTE_FSM, 'approve', q.status, statusLabels)
               const rejectReason = transitionBlockReason(QUOTE_FSM, 'reject', q.status, statusLabels)
+              // M-7: mobilon a sor TÖRIK — a fix szélességű StatusPill + két
+              // akciógomb mellett az ügyfél/meta oszlop ~40px-re préselődött
+              // (azonosító, dátum, összeg olvashatatlan). sm-től a régi,
+              // egysoros elrendezés változatlan.
+              // M-8: a jobb szélső gombok tooltipje a gomb JOBB széléhez igazodik,
+              // különben a `whitespace-nowrap` tooltip túlnyúlik és a dokumentum
+              // vízszintesen görgethetővé válik (mért: 98px).
               return (
-                <li key={q.id} className="flex items-center gap-3 px-4 py-3">
-                  <div className="min-w-0 flex-1">
+                <li key={q.id} className="flex flex-wrap items-center gap-x-3 gap-y-2 px-4 py-3">
+                  <div className="min-w-0 basis-full sm:flex-1">
                     <div className="text-[12.5px] font-medium text-ink">{q.customerName}</div>
                     <div className="truncate text-[10.5px] text-ink-muted">
                       {q.quoteNumber} · {q.itemCount} tétel · {formatDate(q.createdAt)}
@@ -93,11 +100,11 @@ export function QuotesScreen() {
                     </div>
                   </div>
                   <StatusPill size="sm" tone={QUOTE_STATUS_META[q.status].tone} label={QUOTE_STATUS_META[q.status].label} />
-                  <div className="flex gap-1.5">
-                    <Button size="sm" disabledReason={approveReason} onClick={() => setApprovingId(q.id)}>
+                  <div className="ml-auto flex gap-1.5">
+                    <Button size="sm" tooltipAlign="end" disabledReason={approveReason} onClick={() => setApprovingId(q.id)}>
                       Jóváhagyás
                     </Button>
-                    <Button size="sm" variant="destructive" disabledReason={rejectReason} onClick={() => setRejectingId(q.id)}>
+                    <Button size="sm" variant="destructive" tooltipAlign="end" disabledReason={rejectReason} onClick={() => setRejectingId(q.id)}>
                       Elutasítás
                     </Button>
                   </div>

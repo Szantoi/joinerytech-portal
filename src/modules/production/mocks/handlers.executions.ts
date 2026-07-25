@@ -3,13 +3,15 @@ import { CUTTING_API } from '../services/config'
 import { EXECUTION_FSM, completePanelsBlockReason } from '../services/fsm'
 import { PROGRESS_EVENT_KIND_WIRE, PROOF_LEVEL_WIRE, CANCEL_REASON_WIRE } from '../services/wire'
 import type { ProgressEventKind } from '../services/wire'
-import { cuttingError, getProductionDb, guardFsm, isoTimestamp, notFound } from './db'
+import { cuttingValidationError, getProductionDb, guardFsm, isoTimestamp, notFound } from './db'
 import type { ExecutionSeed } from './db'
 
 /**
  * Végrehajtás (executions) handlerek — a doksi 1.1 executions-csoport tükre.
- * Hiba-szemantika: állapot-sértés → **409** (Conflict), payload-sértés →
- * **422** (Invalid). A request-oldali enumok SZÁMKÉNT érkeznek (wire-szabály)
+ * Hiba-szemantika: MINDEN elutasítás **422** (Invalid) CSUPASZ
+ * ValidationErrors-tömbbel — a valós host az Execution szeletben kizárólag
+ * `Result.Invalid`-ot ad (0 db `Result.Conflict` producer), amit a `MapResult`
+ * 422-re képez (M-2 fix, WORLDS_PRODUCTION_DESIGN_REVIEW_2026-07-24). A request-oldali enumok SZÁMKÉNT érkeznek (wire-szabály)
  * — a mock a wire.ts szótárral validál és fordít vissza tagnévre.
  * A progress `eventId`-ra idempotens (backend-tükör).
  */
@@ -65,7 +67,7 @@ export const executionHandlers = [
     return execution ? HttpResponse.json(execution.milestones) : notFound('Végrehajtás')
   }),
 
-  // Start: Scheduled→Started — badge-HMAC kötelező (422), állapot-sértés 409
+  // Start: Scheduled→Started — badge-HMAC kötelező (422), állapot-sértés 422
   http.post(`${BASE}/:id/start`, async ({ params, request }) => {
     const execution = findExecution(params.id as string)
     if (!execution) return notFound('Végrehajtás')
@@ -74,9 +76,9 @@ export const executionHandlers = [
       | { workerId?: string; badgeHmacBase64?: string; hmacKeyVersion?: string }
       | null
     if (!body?.workerId || !body.badgeHmacBase64 || !body.hmacKeyVersion) {
-      return cuttingError(422, 'Invalid', 'workerId, badgeHmacBase64 és hmacKeyVersion kötelező.')
+      return cuttingValidationError('badgeHmacBase64', 'workerId, badgeHmacBase64 és hmacKeyVersion kötelező.')
     }
-    const guard = guardFsm(EXECUTION_FSM, 'start', execution.status, 409)
+    const guard = guardFsm(EXECUTION_FSM, 'start', execution.status, 422)
     if (guard) return guard
 
     execution.status = EXECUTION_FSM.start.to
@@ -94,9 +96,9 @@ export const executionHandlers = [
       | null
     const kind = kindFromWire(body?.kind)
     if (!body?.eventId || kind === undefined || !body.occurredAt || !body.eventHmacBase64 || !body.hmacKeyVersion) {
-      return cuttingError(422, 'Invalid', 'eventId, kind (szám), occurredAt és esemény-HMAC kötelező.')
+      return cuttingValidationError('eventId', 'eventId, kind (szám), occurredAt és esemény-HMAC kötelező.')
     }
-    const guard = guardFsm(EXECUTION_FSM, 'progress', execution.status, 409)
+    const guard = guardFsm(EXECUTION_FSM, 'progress', execution.status, 422)
     if (guard) return guard
 
     // idempotencia: ismert eventId → no-op 200 (backend-tükör)
@@ -124,13 +126,13 @@ export const executionHandlers = [
     const body = (await request.json()) as { proofLevel?: number; proofHash?: string } | null
     const validProof = Object.values(PROOF_LEVEL_WIRE).includes(body?.proofLevel as never)
     if (!validProof || !body?.proofHash) {
-      return cuttingError(422, 'Invalid', 'proofLevel (szám) és proofHash kötelező.')
+      return cuttingValidationError('proofLevel', 'proofLevel (szám) és proofHash kötelező.')
     }
-    const guard = guardFsm(EXECUTION_FSM, 'complete', execution.status, 409)
+    const guard = guardFsm(EXECUTION_FSM, 'complete', execution.status, 422)
     if (guard) return guard
 
     const panelsBlock = completePanelsBlockReason(execution.panelsCompleted, execution.totalPanels)
-    if (panelsBlock) return cuttingError(422, 'Invalid', panelsBlock)
+    if (panelsBlock) return cuttingValidationError('panelsCompleted', panelsBlock)
 
     execution.status = EXECUTION_FSM.complete.to
     execution.completedAt = isoTimestamp()
@@ -144,9 +146,9 @@ export const executionHandlers = [
 
     const body = (await request.json()) as { reason?: number } | null
     if (!Object.values(CANCEL_REASON_WIRE).includes(body?.reason as never)) {
-      return cuttingError(422, 'Invalid', 'reason (CancelReason szám) kötelező.')
+      return cuttingValidationError('reason', 'reason (CancelReason szám) kötelező.')
     }
-    const guard = guardFsm(EXECUTION_FSM, 'cancel', execution.status, 409)
+    const guard = guardFsm(EXECUTION_FSM, 'cancel', execution.status, 422)
     if (guard) return guard
 
     execution.status = EXECUTION_FSM.cancel.to

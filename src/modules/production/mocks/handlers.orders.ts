@@ -2,13 +2,15 @@ import { http, HttpResponse } from 'msw'
 import { JOINERY_ORDERS_API } from '../services/config'
 import { DOOR_ORDER_FSM, submitItemsBlockReason } from '../services/fsm'
 import type { CuttingList, DoorOrder } from '../services/orders'
-import { getProductionDb, guardJoineryFsm, joineryValidationError } from './db'
+import { getProductionDb, guardJoineryFsm, isoTimestamp, joineryValidationError } from './db'
 
 /**
  * Ajtórendelés (joinery /api/orders) handlerek — a doksi 2.1 tükre.
- * Hiba-szemantika: sértés → **400 validációs tömb** ([{identifier,
- * errorMessage}] — joinery-konvenció), ismeretlen id → 404. A submit
- * tétellista-guardja a services/production/fsm.ts KÖZÖS függvénye.
+ * Hiba-szemantika a `DoorOrderEndpoints.cs` szerint: sértés → **400 + csupasz
+ * `string[]`** (`Results.BadRequest(result.Errors)`), ismeretlen id → **404
+ * ÜRES törzzsel** (`Results.NotFound()` — a UI ilyenkor a saját hibaágát mutatja,
+ * nem a szerver üzenetét). A submit tétellista-guardja a
+ * services/production/fsm.ts KÖZÖS függvénye.
  */
 
 function findOrder(id: string | readonly string[]): DoorOrder | undefined {
@@ -16,20 +18,30 @@ function findOrder(id: string | readonly string[]): DoorOrder | undefined {
 }
 
 function orderNotFound() {
-  return HttpResponse.json([{ identifier: 'id', errorMessage: 'A rendelés nem található' }], { status: 404 })
+  // A valós joinery 404-nek NINCS törzse — a mock sem találhat ki üzenetet.
+  return new HttpResponse(null, { status: 404 })
 }
+
+/**
+ * Egy AJTÓTÉTELBŐL keletkező alkatrész-sorok (a joinery `CalculateCuttingList`
+ * tétel-bontásának tükre): egy ajtó lapból + keretlécekből + tokból áll.
+ * Ezért a szabásjegyzék SORAINAK száma tudatosan több, mint az ajtótételek
+ * száma (M-5: a `totalItemCount` = `order.Items.Count`, nem a sorszám).
+ */
+const COMPONENTS_PER_DOOR_ITEM = [
+  { componentName: 'Ajtólap külső kéreg', material: 'MDF 6mm', componentType: 'Lap', thickness: 6, width: 860, length: 2080, quantity: 2 },
+  { componentName: 'Keretléc függőleges', material: 'Fenyő 32mm', componentType: 'Léc', thickness: 32, width: 60, length: 2080, quantity: 2 },
+  { componentName: 'Tok-szár', material: 'Tölgy 40mm', componentType: 'Tok', thickness: 40, width: 90, length: 2100, quantity: 2 },
+] as const
 
 /** Generált szabásjegyzék, ha a seedben nincs tárolt (kalkuláció-tükör). */
 function buildCuttingList(order: DoorOrder): CuttingList {
   return {
     orderId: order.id,
-    items: Array.from({ length: order.itemCount }, (_, i) => ({
-      itemSorszam: String(i + 1),
-      componentName: 'Ajtólap külső kéreg',
-      material: 'MDF 6mm',
-      componentType: 'Lap',
-      thickness: 6, width: 860, length: 2080, quantity: 2,
-    })),
+    items: Array.from({ length: order.itemCount }, (_, i) =>
+      COMPONENTS_PER_DOOR_ITEM.map((component) => ({ ...component, itemSorszam: String(i + 1) })),
+    ).flat(),
+    // A backend ezt `order.Items.Count`-ból adja — NEM az items.length-ből.
     totalItemCount: order.itemCount,
   }
 }
@@ -44,14 +56,21 @@ export const orderHandlers = [
       return joineryValidationError('paging', 'page ≥ 1 és pageSize 1..100 kötelező.')
     }
 
-    const all = [...getProductionDb().orders].sort((a, b) => b.createdAt.localeCompare(a.createdAt))
+    // M-4: a valós lista-lekérdezésben NINCS OrderBy — a korábbi createdAt
+    // szerinti rendezés olyan sorrendet mutatott, amit az éles API nem tud
+    // reprodukálni (ráadásul a createdAt ott üres). A tükör a repository
+    // sorrendjét adja vissza.
+    const all = getProductionDb().orders
     const items = all.slice((page - 1) * pageSize, page * pageSize)
     return HttpResponse.json({ items, totalCount: all.length, page, pageSize })
   }),
 
   http.get(`${JOINERY_ORDERS_API}/:id`, ({ params }) => {
     const order = findOrder(params.id as string)
-    return order ? HttpResponse.json(order) : orderNotFound()
+    // M-4: a detail-route a backendben NEM a tárolt értéket adja vissza, hanem
+    // a lekérés idejét (nem perzisztált mező) — a tükör ezt a „vándorló"
+    // viselkedést mutatja, hogy a UI ne épülhessen rá.
+    return order ? HttpResponse.json({ ...order, createdAt: isoTimestamp() }) : orderNotFound()
   }),
 
   http.get(`${JOINERY_ORDERS_API}/:id/cutting-list`, ({ params }) => {

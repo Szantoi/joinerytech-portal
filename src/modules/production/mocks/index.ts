@@ -8,7 +8,11 @@ import { quoteHandlers } from './handlers.quotes'
  * séma/útvonal/FSM/hibakód forrása a WORLDS_API_CONTRACTS_2026-07-18.md,
  * NEM előkép). Állapottartó store (db.ts) + a services/production/fsm.ts
  * közös guardjai, a végpontonként DOKUMENTÁLT hibakódokkal:
- * planning 400 · executions 409/422 · joinery 400-tömb · quotes 400.
+ * planning 400 · executions 422 + ValidationErrors-tömb · joinery DoorOrder
+ * 400 + csupasz `string[]` (404 üres törzs) · quotes 400.
+ * (Az executions 409 → 422 javítás: M-2,
+ * WORLDS_PRODUCTION_DESIGN_REVIEW_2026-07-24 — a doksi 1.1 sorának 409-es ága
+ * a belső ellentmondás ROSSZ ága volt.)
  */
 export const productionApiHandlers = [
   ...planHandlers,
