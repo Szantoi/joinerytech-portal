@@ -99,11 +99,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   return <OidcAuthProvider>{children}</OidcAuthProvider>
 }
 
+// A facility a betöltéskori userhez kötve tárolódik — a kulcs-egyezés garantálja,
+// hogy user-váltásnál/kijelentkezésnél nem szivárog át az előző bérlő üzeme.
+interface FacilityState { userKey: string; id: string; name: string }
+
 function OidcAuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null)
   const [isLoading, setIsLoading] = useState(true)
-  const [facilityId, setFacilityId] = useState<string | null>(null)
-  const [facilityName, setFacilityName] = useState<string | null>(null)
+  const [facility, setFacility] = useState<FacilityState | null>(null)
 
   useEffect(() => {
     userManager.getUser().then((u) => {
@@ -123,43 +126,57 @@ function OidcAuthProvider({ children }: { children: React.ReactNode }) {
     }
   }, [])
 
-  // Bootstrap facilityId after user loads
+  // Bootstrap facility after user loads — csak aszinkron setState (fetch után),
+  // a "reset" a lenti kulcs-egyezéses származtatásból adódik, nem effekt-beli
+  // setState-ből.
   useEffect(() => {
-    if (!user || user.expired) {
-      setFacilityId(null)
-      setFacilityName(null)
-      return
-    }
+    if (!user || user.expired) return
     const { tenantId } = parseUserClaims(user)
-    if (!tenantId) return
+    if (!tenantId || !user.profile.sub) return
+    const userKey = `${user.profile.sub}:${tenantId}`
 
     fetch(`/api/tenants/${tenantId}/facilities?pageSize=100`, {
       headers: { Authorization: `Bearer ${user.access_token}` },
     })
       .then(r => (r.ok ? r.json() : null))
       .then((res: FacilitiesResponse | null) => {
-        const facility = pickFacility(res?.items ?? [])
-        if (facility) {
-          setFacilityId(facility.id)
-          setFacilityName(facility.name)
+        const picked = pickFacility(res?.items ?? [])
+        if (picked) {
+          setFacility({ userKey, id: picked.id, name: picked.name })
         }
       })
-      .catch(() => { /* silent — facilityId remains null */ })
+      .catch(() => { /* silent — facility remains null */ })
   }, [user])
 
+  // Nincs prompt:'login' — élő Keycloak SSO-munkamenettel jelszó újbóli
+  // bekérése nélkül enged vissza (a kényszerített re-auth volt a "mindig
+  // kétszer kell belépni" érzés egyik forrása).
   const login = useCallback(() => userManager.signinRedirect({
     redirect_uri: window.location.origin + '/callback',
-    prompt: 'login',
   }), [])
 
+  // Valódi kijelentkezés: a Keycloak SSO-munkamenetet is lezárjuk
+  // (signoutRedirect) — enélkül a prompt:'login' kivétele után bárki
+  // jelszó nélkül visszaléphetne az előző fiókba egy közös gépen.
   const logout = useCallback(async () => {
-    await userManager.removeUser()
-    setFacilityId(null)
-    setFacilityName(null)
-    window.location.href = window.location.origin + '/'
+    try {
+      await userManager.signoutRedirect()
+    } catch {
+      // Keycloak nem elérhető — legalább a lokális munkamenetet dobjuk el
+      await userManager.removeUser()
+      window.location.href = window.location.origin + '/'
+    }
   }, [])
 
   const { tenantId, roles, enabledModules } = parseUserClaims(user)
+
+  // A facility csak akkor érvényes, ha a MOSTANI user+bérlő pároshoz töltöttük
+  // be (a kulcsban a tid is benne van — tenant-váltásnál sem szivárog át).
+  const activeFacility =
+    user && !user.expired && user.profile.sub && facility &&
+    facility.userKey === `${user.profile.sub}:${tenantId}`
+      ? facility
+      : null
 
   return (
     <AuthContext.Provider value={{
@@ -172,8 +189,8 @@ function OidcAuthProvider({ children }: { children: React.ReactNode }) {
       tenantId,
       roles,
       enabledModules,
-      facilityId,
-      facilityName,
+      facilityId: activeFacility?.id ?? null,
+      facilityName: activeFacility?.name ?? null,
     }}>
       {children}
     </AuthContext.Provider>
