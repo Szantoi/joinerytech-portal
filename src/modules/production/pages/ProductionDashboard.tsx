@@ -87,7 +87,7 @@ export function ProductionDashboard({ onScreen }: { onScreen: (s: string) => voi
   return (
     <div className="mx-auto max-w-[1200px] space-y-6 px-4 py-5 md:px-7 md:py-6">
       <div>
-        <h1 className="text-[20px] font-semibold tracking-tight text-ink md:text-[24px]">Áttekintés</h1>
+        <h2 className="text-[20px] font-semibold tracking-tight text-ink md:text-[24px]">Áttekintés</h2>
         <p className="mt-0.5 text-[12.5px] text-ink-muted">
           Vágótervek, végrehajtás, ajtórendelések és ajánlatok — élő kontraktus-adatból
         </p>
@@ -126,7 +126,7 @@ export function ProductionDashboard({ onScreen }: { onScreen: (s: string) => voi
               {/* M-1: a diszpécser képernyő-kulcsa `cutting` (NEM `plans`) — a régi
                   kulcs nem létező képernyőre navigált, és a dashboardot töltötte vissza. */}
               <button onClick={() => onScreen('cutting')} className={SECTION_LINK_CLASS}>
-                Vágótervezés →
+                Szabászat →
               </button>
             </div>
             {planRows.length === 0 ? (

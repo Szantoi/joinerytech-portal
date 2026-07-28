@@ -102,7 +102,7 @@ export function WalksScreen({ initialTab = 'walks' }: { initialTab?: 'walks' | '
     <div className="mx-auto max-w-[1200px] px-4 py-5 md:px-7 md:py-6">
       <div className="mb-4 flex items-start justify-between gap-3">
         <div>
-          <h1 className="text-[20px] font-semibold tracking-tight text-ink md:text-[24px]">Bejárások</h1>
+          <h2 className="text-[20px] font-semibold tracking-tight text-ink md:text-[24px]">Bejárások</h2>
           <p className="mt-0.5 text-[12.5px] text-ink-muted">
             Munkavédelmi bejárások és az egységes CAPA-tábla — megállapításból egy lépésben intézkedés
           </p>

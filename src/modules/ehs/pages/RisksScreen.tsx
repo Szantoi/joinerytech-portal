@@ -71,7 +71,7 @@ export function RisksScreen() {
     <div className="mx-auto max-w-[1280px] overflow-x-hidden px-4 py-5 md:px-7 md:py-6">
       <div className="mb-4 flex flex-wrap items-start justify-between gap-3">
         <div>
-          <h1 className="text-[20px] font-semibold tracking-tight text-ink md:text-[24px]">Kockázatok</h1>
+          <h2 className="text-[20px] font-semibold tracking-tight text-ink md:text-[24px]">Kockázatok</h2>
           <p className="mt-0.5 text-[12.5px] text-ink-muted">
             5×5 kockázati mátrix · valószínűség × súlyosság · jóváhagyási folyamattal
           </p>

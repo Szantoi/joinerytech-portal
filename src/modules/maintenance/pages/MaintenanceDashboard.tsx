@@ -77,7 +77,7 @@ export function MaintenanceDashboard({ onScreen }: { onScreen: (s: string) => vo
   return (
     <div className="mx-auto max-w-[1200px] space-y-6 px-4 py-5 md:px-7 md:py-6">
       <div>
-        <h1 className="text-[20px] font-semibold tracking-tight text-ink md:text-[24px]">Áttekintés</h1>
+        <h2 className="text-[20px] font-semibold tracking-tight text-ink md:text-[24px]">Áttekintés</h2>
         <p className="mt-0.5 text-[12.5px] text-ink-muted">
           Eszköz-állapot, megelőző karbantartás és munkalapok
         </p>

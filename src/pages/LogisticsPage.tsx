@@ -249,7 +249,7 @@ function LogisticsDashboard() {
     <div className="px-4 md:px-7 py-5 md:py-6 max-w-[1200px] mx-auto">
       <div className="flex items-center justify-between gap-3 mb-4">
         <div>
-          <h1 className="text-[20px] md:text-[24px] font-semibold tracking-tight text-stone-900">Logisztika</h1>
+          <h2 className="text-[20px] md:text-[24px] font-semibold tracking-tight text-stone-900">Logisztika</h2>
           <p className="text-[12.5px] text-stone-500 mt-0.5">Kiszállítás, telepítés, felmérés · {LOG_TODAY}</p>
         </div>
       </div>
@@ -313,7 +313,7 @@ function ShipmentListPage({ dir }: { dir: 'out' | 'in' }) {
   return (
     <div className="px-4 md:px-7 py-5 md:py-6 max-w-[1100px] mx-auto">
       <div className="mb-4">
-        <h1 className="text-[20px] md:text-[24px] font-semibold tracking-tight text-stone-900">{title}</h1>
+        <h2 className="text-[20px] md:text-[24px] font-semibold tracking-tight text-stone-900">{title}</h2>
       </div>
 
       <div className="flex items-center gap-2 mb-3 flex-wrap">

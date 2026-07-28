@@ -67,7 +67,7 @@ function AgentsList() {
   return (
     <div className="px-4 md:px-7 py-5 md:py-6 max-w-[1200px] mx-auto">
       <div className="mb-4">
-        <h1 className="text-[20px] md:text-[24px] font-semibold tracking-tight text-stone-900">Ágensek</h1>
+        <h2 className="text-[20px] md:text-[24px] font-semibold tracking-tight text-stone-900">Ágensek</h2>
         <p className="text-[12.5px] text-stone-500 mt-0.5">AI munkatársak és konfigurációjuk</p>
       </div>
       <div className="space-y-2">
@@ -100,7 +100,7 @@ function SkillsList() {
   return (
     <div className="px-4 md:px-7 py-5 md:py-6 max-w-[1200px] mx-auto">
       <div className="mb-4">
-        <h1 className="text-[20px] md:text-[24px] font-semibold tracking-tight text-stone-900">Receptek</h1>
+        <h2 className="text-[20px] md:text-[24px] font-semibold tracking-tight text-stone-900">Receptek</h2>
         <p className="text-[12.5px] text-stone-500 mt-0.5">Újrahasznosítható prompt-sablonok</p>
       </div>
       <div className="space-y-2">
@@ -203,7 +203,7 @@ function AiChatPanel() {
   return (
     <div className="px-4 md:px-7 py-5 md:py-6 max-w-[900px] mx-auto">
       <div className="mb-4">
-        <h1 className="text-[20px] md:text-[24px] font-semibold tracking-tight text-stone-900">AI Chat</h1>
+        <h2 className="text-[20px] md:text-[24px] font-semibold tracking-tight text-stone-900">AI Chat</h2>
         <p className="text-[12.5px] text-stone-500 mt-0.5">Közvetlen kommunikáció az AI ágensekkel</p>
       </div>
       <div className="bg-white rounded-2xl border border-stone-200 overflow-hidden">
@@ -262,7 +262,7 @@ function AiDashboard() {
   return (
     <div className="px-4 md:px-7 py-5 md:py-6 max-w-[1200px] mx-auto">
       <div className="mb-4">
-        <h1 className="text-[20px] md:text-[24px] font-semibold tracking-tight text-stone-900">AI munkaterület</h1>
+        <h2 className="text-[20px] md:text-[24px] font-semibold tracking-tight text-stone-900">AI munkaterület</h2>
         <p className="text-[12.5px] text-stone-500 mt-0.5">Ágensek, receptek, memória</p>
       </div>
 

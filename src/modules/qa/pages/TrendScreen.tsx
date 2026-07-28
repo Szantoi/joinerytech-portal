@@ -64,7 +64,7 @@ export function TrendScreen() {
   return (
     <div className="mx-auto max-w-[1200px] space-y-6 px-4 py-5 md:px-7 md:py-6">
       <div>
-        <h1 className="text-[20px] font-semibold tracking-tight text-ink md:text-[24px]">Trend</h1>
+        <h2 className="text-[20px] font-semibold tracking-tight text-ink md:text-[24px]">Trend</h2>
         <p className="mt-0.5 text-[12.5px] text-ink-muted">
           Heti megfelelési trend (utolsó {TREND_WINDOW_WEEKS} hét) és hibatípus-eloszlás
         </p>

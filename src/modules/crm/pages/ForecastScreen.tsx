@@ -39,7 +39,7 @@ export function ForecastScreen() {
   return (
     <div className="mx-auto max-w-[1200px] space-y-5 px-4 py-5 md:px-7 md:py-6">
       <div>
-        <h1 className="text-[20px] font-semibold tracking-tight text-ink md:text-[24px]">Forecast</h1>
+        <h2 className="text-[20px] font-semibold tracking-tight text-ink md:text-[24px]">Forecast</h2>
         <p className="mt-0.5 text-[12.5px] text-ink-muted">
           Súlyozott pipeline a fázis-valószínűségekkel (10/25/40/55/80%)
         </p>

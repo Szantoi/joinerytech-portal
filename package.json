@@ -13,6 +13,7 @@
     "test:full": "vitest run",
     "test:nightly": "vitest run src/pages src/components src/__tests__ src/auth src/mocks",
     "test:contract:production": "vitest run --config vitest.contract.config.ts",
+    "test:contract:warehouse": "vitest run --config vitest.contract.warehouse.config.ts",
     "test:smoke:keyboard": "node scripts/keyboard-smoke.mjs"
   },
   "dependencies": {

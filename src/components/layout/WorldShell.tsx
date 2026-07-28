@@ -241,15 +241,9 @@ function WorldTopBar({ world, screen, onHome, lang, onMenu }: WorldTopBarProps) 
           <UserMenu lang={lang} />
         </div>
       </div>
-      {/* Oldalcím a fejlécben — ez az EGYETLEN cím, ami MINDEN világban létezik.
-          (A `WORLDS-SHELL-H1` első nekifutása leszemantizálta `<p>`-vé, hogy a
-          képernyők saját `<h1>`-e maradjon az egyetlen — a fresh review viszont
-          bizonyította, hogy 8 legacy világ 38 route-ján a tartalom NEM ad saját
-          címet, tehát azok az oldalak cím NÉLKÜL maradtak volna. A duplikáció
-          feloldása ezért a task következő körére marad: ott a modul-képernyők
-          duplikált címét kell elvenni, és ezt a `<h1>`-et mobilon is elérhetővé
-          tenni — nem fordítva.) */}
-      <div className="hidden md:block px-7 pb-4">
+      {/* A shell az egyetlen dokumentum-főcím. Mobilon vizuálisan rejtett, de az
+          accessibility tree-ben megmarad; a modern képernyők saját címe h2. */}
+      <div className="sr-only md:not-sr-only md:px-7 md:pb-4">
         <h1 className="text-[22px] font-semibold tracking-tight text-ink">{screenLabel}</h1>
       </div>
     </header>

@@ -52,12 +52,12 @@ function renderWorldRoute(path: string) {
 }
 
 describe('M-1 — a dashboard szekció-linkjei LÉTEZŐ képernyő-kulcsra navigálnak', () => {
-  it('a Vágótervezés/Megmunkálás link a diszpécser kulcsait adja (cutting/machining)', async () => {
+  it('a Szabászat/Megmunkálás link a diszpécser kulcsait adja (cutting/machining)', async () => {
     const onScreen = vi.fn()
     render(<ProductionDashboard onScreen={onScreen} />, { wrapper: createProductionWrapper() })
     await screen.findByText('Aktív vágóterv')
 
-    fireEvent.click(screen.getByRole('button', { name: 'Vágótervezés →' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Szabászat →' }))
     fireEvent.click(screen.getByRole('button', { name: 'Megmunkálás →' }))
     fireEvent.click(screen.getByRole('button', { name: 'Rendelések →' }))
     fireEvent.click(screen.getByRole('button', { name: 'Elemzések →' }))
@@ -66,14 +66,12 @@ describe('M-1 — a dashboard szekció-linkjei LÉTEZŐ képernyő-kulcsra navig
   }, TIMEOUT)
 
   it('a célképernyők tényleg renderelnek ezekre a kulcsokra (a másik vég)', async () => {
-    // ⚠ findAll: a cím ma két helyen szerepel (shell fejléc + képernyő) —
-    // WORLDS-SHELL-H1 nyitott lelete.
     const cutting = renderWorldRoute('/w/production/cutting')
-    expect((await screen.findAllByRole('heading', { name: 'Vágótervezés' })).length).toBeGreaterThan(0)
+    expect(await screen.findByRole('heading', { name: 'Szabászat', level: 2 })).toBeTruthy()
     cutting.unmount()
 
     renderWorldRoute('/w/production/machining')
-    expect((await screen.findAllByRole('heading', { name: 'Megmunkálás' })).length).toBeGreaterThan(0)
+    expect(await screen.findByRole('heading', { name: 'Megmunkálás', level: 2 })).toBeTruthy()
   }, TIMEOUT)
 })
 

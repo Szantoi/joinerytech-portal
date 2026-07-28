@@ -69,7 +69,7 @@ export function TimeLogsScreen() {
     <div className="mx-auto max-w-[1200px] px-4 py-5 md:px-7 md:py-6">
       <div className="mb-4 flex flex-wrap items-end justify-between gap-3">
         <div>
-          <h1 className="text-[20px] font-semibold tracking-tight text-ink md:text-[24px]">Munkaidő-napló</h1>
+          <h2 className="text-[20px] font-semibold tracking-tight text-ink md:text-[24px]">Munkaidő-napló</h2>
           <p className="mt-0.5 text-[12.5px] text-ink-muted">
             Rögzített munkaórák — átadás a Kontrolling tényköltség felé (stub-integráció)
           </p>

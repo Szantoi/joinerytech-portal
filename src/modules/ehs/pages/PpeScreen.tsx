@@ -116,7 +116,7 @@ export function PpeScreen() {
     <div className="mx-auto max-w-[1200px] px-4 py-5 md:px-7 md:py-6">
       <div className="mb-4 flex items-start justify-between gap-3">
         <div>
-          <h1 className="text-[20px] font-semibold tracking-tight text-ink md:text-[24px]">EVE kiadások</h1>
+          <h2 className="text-[20px] font-semibold tracking-tight text-ink md:text-[24px]">EVE kiadások</h2>
           <p className="mt-0.5 text-[12.5px] text-ink-muted">
             Egyéni védőeszközök dolgozónként — FSM: kiadva → átvett → visszavett | cserélve
           </p>

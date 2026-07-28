@@ -75,7 +75,7 @@ function TodayShift() {
   return (
     <div className="px-4 md:px-7 py-5 md:py-6 max-w-[1200px] mx-auto">
       <div className="mb-4">
-        <h1 className="text-[20px] md:text-[24px] font-semibold tracking-tight text-stone-900">Mai műszak</h1>
+        <h2 className="text-[20px] md:text-[24px] font-semibold tracking-tight text-stone-900">Mai műszak</h2>
         <p className="text-[12.5px] text-stone-500 mt-0.5">2026-04-28 · Reggeli műszak</p>
       </div>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
@@ -122,7 +122,7 @@ function AttendanceTable() {
   return (
     <div className="px-4 md:px-7 py-5 md:py-6 max-w-[1200px] mx-auto">
       <div className="mb-4">
-        <h1 className="text-[20px] md:text-[24px] font-semibold tracking-tight text-stone-900">Előzmények</h1>
+        <h2 className="text-[20px] md:text-[24px] font-semibold tracking-tight text-stone-900">Előzmények</h2>
         <p className="text-[12.5px] text-stone-500 mt-0.5">5 napos jelenlét táblázat</p>
       </div>
       <div className="bg-white rounded-xl border border-stone-200 overflow-x-auto">
@@ -168,7 +168,7 @@ function ExceptionsPanel() {
   return (
     <div className="px-4 md:px-7 py-5 md:py-6 max-w-[1200px] mx-auto">
       <div className="mb-4">
-        <h1 className="text-[20px] md:text-[24px] font-semibold tracking-tight text-stone-900">Kivételek</h1>
+        <h2 className="text-[20px] md:text-[24px] font-semibold tracking-tight text-stone-900">Kivételek</h2>
         <p className="text-[12.5px] text-stone-500 mt-0.5">Késések és hiányzások az elmúlt 5 napban</p>
       </div>
       <div className="space-y-2">
@@ -225,7 +225,7 @@ function AttendanceDashboard({ onScreen }: { onScreen: (s: string) => void }) {
     <div className="px-4 md:px-7 py-5 md:py-6 max-w-[1200px] mx-auto">
       <div className="flex items-center justify-between gap-3 mb-4">
         <div>
-          <h1 className="text-[20px] md:text-[24px] font-semibold tracking-tight text-stone-900">Jelenlét</h1>
+          <h2 className="text-[20px] md:text-[24px] font-semibold tracking-tight text-stone-900">Jelenlét</h2>
           <p className="text-[12.5px] text-stone-500 mt-0.5">Be/kilépések, műszakok, kivételek</p>
         </div>
         <button onClick={() => onScreen('today')}

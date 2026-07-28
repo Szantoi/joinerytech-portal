@@ -57,12 +57,9 @@ describe('ProductionWorldPage (route-diszpécser)', () => {
     expect(await screen.findByText('Aktív vágóterv', {}, { timeout: ROUTE_TIMEOUT })).toBeTruthy()
   }, ROUTE_TIMEOUT)
 
-  it('cutting: vágótervezés-képernyő (a route-kulcs a legacy Design-integráció miatt változatlan)', async () => {
+  it('cutting: szabászat-képernyő (a route-kulcs a legacy Design-integráció miatt változatlan)', async () => {
     renderProduction('cutting')
-    // ⚠ A cím MA két helyen szerepel (WorldShell fejléc + képernyő) — ez a
-    // WORLDS-SHELL-H1 nyitott lelete, ezért findAllByRole kell. Ha a
-    // duplikáció megszűnik, ez a teszt továbbra is helyes marad.
-    expect((await screen.findAllByRole('heading', { name: 'Vágótervezés' }, { timeout: ROUTE_TIMEOUT })).length).toBeGreaterThan(0)
+    expect(await screen.findByRole('heading', { name: 'Szabászat', level: 2 }, { timeout: ROUTE_TIMEOUT })).toBeTruthy()
   }, ROUTE_TIMEOUT)
 
   it('cutting + highlightPlanId state: kiválasztja és kiemeli a tervet (legacy DesignPage-integráció tükre)', async () => {
@@ -77,13 +74,10 @@ describe('ProductionWorldPage (route-diszpécser)', () => {
 
   it('machining: megmunkálás-képernyő', async () => {
     renderProduction('machining')
-    // ⚠ A cím MA két helyen szerepel (WorldShell fejléc + képernyő) — ez a
-    // WORLDS-SHELL-H1 nyitott lelete, ezért findAllByRole kell. Ha a
-    // duplikáció megszűnik, ez a teszt továbbra is helyes marad.
-    expect((await screen.findAllByRole('heading', { name: 'Megmunkálás' }, { timeout: ROUTE_TIMEOUT })).length).toBeGreaterThan(0)
+    expect(await screen.findByRole('heading', { name: 'Megmunkálás', level: 2 }, { timeout: ROUTE_TIMEOUT })).toBeTruthy()
   }, ROUTE_TIMEOUT)
 
-  // ⚠ A screen-tartalom h1-je szándékosan ugyanazt a magyar szót használja,
+  // A screen-tartalom h2-je szándékosan ugyanazt a magyar szót használja,
   // mint a WorldShell nav-címkéje (sidebar/breadcrumb/mobil fejléc/alsó nav) —
   // ezért az "Ajtórendelések"/"Árajánlatok"/"Elemzések"/"Munkafolyamat"
   // findByText TÖBBSZÖRÖS találatra futna. Egyedi, csak a képernyő-tartalomban

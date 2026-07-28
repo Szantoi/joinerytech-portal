@@ -56,11 +56,11 @@ describe('App Router', () => {
 
   it('renders warehouse procurement screen', async () => {
     renderApp('/w/warehouse/procurement')
-    expect(await screen.findByText('Aktív megrendelések')).toBeTruthy()
+    expect(await screen.findByRole('heading', { name: 'Beszerzés', level: 1 })).toBeTruthy()
   })
 
   it('renders warehouse movements screen', async () => {
     renderApp('/w/warehouse/movements')
-    expect(await screen.findByText('Backend endpoint nem elérhető')).toBeTruthy()
+    expect(await screen.findByRole('heading', { name: 'Mozgások', level: 1 })).toBeTruthy()
   })
 })

@@ -196,7 +196,7 @@ function ExecBiDashboard() {
   return (
     <div className="px-4 md:px-7 py-5 md:py-6 max-w-[1200px] mx-auto">
       <div className="mb-4">
-        <h1 className="text-[20px] md:text-[24px] font-semibold tracking-tight text-stone-900">Vezetői BI</h1>
+        <h2 className="text-[20px] md:text-[24px] font-semibold tracking-tight text-stone-900">Vezetői BI</h2>
         <p className="text-[12.5px] text-stone-500 mt-0.5">Kereszt-világ KPI cockpit</p>
       </div>
 

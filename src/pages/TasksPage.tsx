@@ -84,7 +84,7 @@ function MyTasksList() {
   return (
     <div className="px-4 md:px-7 py-5 md:py-6 max-w-[1200px] mx-auto">
       <div className="mb-4">
-        <h1 className="text-[20px] md:text-[24px] font-semibold tracking-tight text-stone-900">Saját feladatok</h1>
+        <h2 className="text-[20px] md:text-[24px] font-semibold tracking-tight text-stone-900">Saját feladatok</h2>
         <p className="text-[12.5px] text-stone-500 mt-0.5">Nyitott feladatok, határidő szerint</p>
       </div>
       <div className="space-y-2">
@@ -122,7 +122,7 @@ function KanbanBoard() {
   return (
     <div className="px-4 md:px-7 py-5 md:py-6 max-w-[1400px] mx-auto">
       <div className="mb-4">
-        <h1 className="text-[20px] md:text-[24px] font-semibold tracking-tight text-stone-900">Kanban tábla</h1>
+        <h2 className="text-[20px] md:text-[24px] font-semibold tracking-tight text-stone-900">Kanban tábla</h2>
       </div>
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
         {columns.map((col) => {
@@ -180,7 +180,7 @@ function TasksDashboard() {
   return (
     <div className="px-4 md:px-7 py-5 md:py-6 max-w-[1200px] mx-auto">
       <div className="mb-4">
-        <h1 className="text-[20px] md:text-[24px] font-semibold tracking-tight text-stone-900">Feladataim</h1>
+        <h2 className="text-[20px] md:text-[24px] font-semibold tracking-tight text-stone-900">Feladataim</h2>
         <p className="text-[12.5px] text-stone-500 mt-0.5">Személyes feladatok áttekintése</p>
       </div>
 

@@ -87,7 +87,7 @@ function ProductCatalog() {
   return (
     <div className="px-4 md:px-7 py-5 md:py-6 max-w-[1200px] mx-auto">
       <div className="mb-4">
-        <h1 className="text-[20px] md:text-[24px] font-semibold tracking-tight text-stone-900">Termék katalógus</h1>
+        <h2 className="text-[20px] md:text-[24px] font-semibold tracking-tight text-stone-900">Termék katalógus</h2>
         <p className="text-[12.5px] text-stone-500 mt-0.5">B2B bútor- és vasalatrendszer</p>
       </div>
       <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
@@ -122,9 +122,9 @@ function CartPanel() {
   return (
     <div className="px-4 md:px-7 py-5 md:py-6 max-w-[1200px] mx-auto">
       <div className="mb-4">
-        <h1 className="text-[20px] md:text-[24px] font-semibold tracking-tight text-stone-900">
+        <h2 className="text-[20px] md:text-[24px] font-semibold tracking-tight text-stone-900">
           Kosárban <span className="text-stone-400 font-normal text-[16px]">({SHOP_CART.length} tétel)</span>
-        </h1>
+        </h2>
       </div>
       <div className="space-y-2 mb-4">
         {cartWithProducts.map((item) => (
@@ -154,7 +154,7 @@ function OrdersList() {
   return (
     <div className="px-4 md:px-7 py-5 md:py-6 max-w-[1200px] mx-auto">
       <div className="mb-4">
-        <h1 className="text-[20px] md:text-[24px] font-semibold tracking-tight text-stone-900">Rendelések</h1>
+        <h2 className="text-[20px] md:text-[24px] font-semibold tracking-tight text-stone-900">Rendelések</h2>
       </div>
       <div className="space-y-2">
         {SHOP_ORDERS.map((order) => (
@@ -199,7 +199,7 @@ function ShopDashboard({ onScreen }: { onScreen: (s: string) => void }) {
     <div className="px-4 md:px-7 py-5 md:py-6 max-w-[1200px] mx-auto">
       <div className="flex items-center justify-between gap-3 mb-4">
         <div>
-          <h1 className="text-[20px] md:text-[24px] font-semibold tracking-tight text-stone-900">Bolt</h1>
+          <h2 className="text-[20px] md:text-[24px] font-semibold tracking-tight text-stone-900">Bolt</h2>
           <p className="text-[12.5px] text-stone-500 mt-0.5">B2B termékrendelés és kosárkezelés</p>
         </div>
         <button onClick={() => onScreen('catalog')}

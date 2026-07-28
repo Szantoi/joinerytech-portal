@@ -168,7 +168,7 @@ function ReleaseQueue() {
   return (
     <div className="px-4 md:px-7 py-5 md:py-6 max-w-[1200px] mx-auto">
       <div className="mb-4">
-        <h1 className="text-[20px] md:text-[24px] font-semibold tracking-tight text-stone-900">Release queue</h1>
+        <h2 className="text-[20px] md:text-[24px] font-semibold tracking-tight text-stone-900">Release queue</h2>
       </div>
 
       <div className="flex items-center gap-1.5 mb-4 flex-wrap">
@@ -190,7 +190,7 @@ function DatasheetList() {
   return (
     <div className="px-4 md:px-7 py-5 md:py-6 max-w-[1200px] mx-auto">
       <div className="mb-4">
-        <h1 className="text-[20px] md:text-[24px] font-semibold tracking-tight text-stone-900">Munkalapok</h1>
+        <h2 className="text-[20px] md:text-[24px] font-semibold tracking-tight text-stone-900">Munkalapok</h2>
       </div>
       <EndpointPending endpoint="GET /joinery/api/manufacturing-sheets [?]" />
     </div>
@@ -221,7 +221,7 @@ function MfgPrepDashboard({ onScreen }: { onScreen: (s: string) => void }) {
     <div className="px-4 md:px-7 py-5 md:py-6 max-w-[1200px] mx-auto">
       <div className="flex items-center justify-between gap-3 mb-4">
         <div>
-          <h1 className="text-[20px] md:text-[24px] font-semibold tracking-tight text-stone-900">Gyártás-előkészítés</h1>
+          <h2 className="text-[20px] md:text-[24px] font-semibold tracking-tight text-stone-900">Gyártás-előkészítés</h2>
           <p className="text-[12.5px] text-stone-500 mt-0.5">Release queue és munkalapok áttekintése</p>
         </div>
         <button onClick={() => onScreen('queue')} className="inline-flex items-center gap-1.5 h-9 px-3.5 rounded-lg bg-orange-600 hover:bg-orange-700 text-white text-[12.5px] font-medium shrink-0">

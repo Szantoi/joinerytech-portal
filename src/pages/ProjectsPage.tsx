@@ -203,7 +203,7 @@ function ProjectDashboard({ onScreen }: { onScreen: (s: string) => void }) {
     <div className="px-4 md:px-7 py-5 md:py-6 max-w-[1200px] mx-auto">
       <div className="flex items-center justify-between gap-3 mb-4">
         <div>
-          <h1 className="text-[20px] md:text-[24px] font-semibold tracking-tight text-stone-900">Projektek</h1>
+          <h2 className="text-[20px] md:text-[24px] font-semibold tracking-tight text-stone-900">Projektek</h2>
           <p className="text-[12.5px] text-stone-500 mt-0.5">Bútor-tételek és szakág-koordináció</p>
         </div>
         <button onClick={() => onScreen('list')} className="inline-flex items-center gap-1.5 h-9 px-3.5 rounded-lg bg-violet-600 hover:bg-violet-700 text-white text-[12.5px] font-medium shrink-0">
@@ -247,7 +247,7 @@ function ProjectList() {
   return (
     <div className="px-4 md:px-7 py-5 md:py-6 max-w-[1200px] mx-auto">
       <div className="mb-4">
-        <h1 className="text-[20px] md:text-[24px] font-semibold tracking-tight text-stone-900">Projektlista</h1>
+        <h2 className="text-[20px] md:text-[24px] font-semibold tracking-tight text-stone-900">Projektlista</h2>
       </div>
 
       <div className="flex items-center gap-1.5 mb-4 flex-wrap">
@@ -287,7 +287,7 @@ function ProjectKanban() {
   return (
     <div className="px-4 md:px-7 py-5 md:py-6">
       <div className="mb-4">
-        <h1 className="text-[20px] md:text-[24px] font-semibold tracking-tight text-stone-900">Kanban</h1>
+        <h2 className="text-[20px] md:text-[24px] font-semibold tracking-tight text-stone-900">Kanban</h2>
       </div>
 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3 items-start">

@@ -29,11 +29,8 @@ const LoginPage = lazyPage(() => import('./pages/LoginPage'), (m) => m.LoginPage
 // Production world — MODULE-FOLDERS diszpécser-precedens (mint CrmPage/EhsPage):
 // a képernyők ./modules/production alatt élnek, egyetlen lazy chunk mögött.
 const ProductionWorldPage = lazyPage(() => import('./pages/ProductionPage'), (m) => m.ProductionWorldPage)
-const MovementsPage = lazyPage(() => import('./pages/warehouse/MovementsPage'), (m) => m.MovementsPage)
 const SalesWorldPage = lazyPage(() => import('./pages/SalesPage'), (m) => m.SalesWorldPage)
 const DesignWorldPage = lazyPage(() => import('./pages/DesignPage'), (m) => m.DesignWorldPage)
-const InventoryPage = lazyPage(() => import('./pages/InventoryPage'), (m) => m.InventoryPage)
-const ProcurementPage = lazyPage(() => import('./pages/ProcurementPage'), (m) => m.ProcurementPage)
 const SettingsPage = lazyPage(() => import('./pages/SettingsPage'), (m) => m.SettingsPage)
 const ShopFloorPage = lazyPage(() => import('./pages/ShopFloorPage'), (m) => m.ShopFloorPage)
 const ShopFloorKioskPage = lazyPage(() => import('./pages/ShopFloorKioskPage'), (m) => m.ShopFloorKioskPage)
@@ -58,9 +55,10 @@ const ShopWorldPage = lazyPage(() => import('./pages/ShopPage'), (m) => m.ShopWo
 const HrWorldPage = lazyPage(() => import('./pages/HrPage'), (m) => m.HrWorldPage)
 const ControllingWorldPage = lazyPage(() => import('./pages/ControllingPage'), (m) => m.ControllingWorldPage)
 const ServiceWorldPage = lazyPage(() => import('./pages/ServicePage'), (m) => m.ServiceWorldPage)
-const LotsPage = lazyPage(() => import('./pages/warehouse/LotsPage'), (m) => m.LotsPage)
-const ZoneMapPage = lazyPage(() => import('./pages/warehouse/LotsPage'), (m) => m.ZoneMapPage)
-const MovementLogPage = lazyPage(() => import('./pages/warehouse/LotsPage'), (m) => m.MovementLogPage)
+// A legacy warehouse-oldalak (MovementsPage/InventoryPage/ProcurementPage/
+// LotsPage-csomag) lazy importjai innen kivezetve (WORLDS-WAREHOUSE-FIX P1-6):
+// nem voltak route-olva, csak halott chunk-ként terhelték a buildet — a
+// warehouse világot a modules/warehouse diszpécser (WarehousePage) szolgálja ki.
 const ProductConfiguratorWizard = lazyPage(() => import('./pages/ProductConfiguratorWizard'), (m) => m.ProductConfiguratorWizard)
 const BOMPreviewPage = lazyPage(() => import('./pages/BOMPreviewPage'), (m) => m.BOMPreviewPage)
 const WorkOrderSummary = lazyPage(() => import('./pages/WorkOrderSummary'), (m) => m.WorkOrderSummary)
@@ -116,35 +114,7 @@ function SettingsWorldPage() {
   )
 }
 
-function WarehouseWorldPage() {
-  const navigate = useNavigate()
-  const { screen } = useParams<{ screen?: string }>()
-  const currentScreen = screen ?? 'dash'
-
-  function renderContent() {
-    if (currentScreen === 'dash')        return <InventoryPage />
-    if (currentScreen === 'inventory')   return <InventoryPage />
-    if (currentScreen === 'procurement') return <ProcurementPage />
-    if (currentScreen === 'movements')   return <MovementsPage />
-    if (currentScreen === 'lots')        return <LotsPage />
-    if (currentScreen === 'zones')       return <ZoneMapPage />
-    if (currentScreen === 'movementlog') return <MovementLogPage />
-    return <InventoryPage />
-  }
-
-  return (
-    <WorldShell
-      worldKey="warehouse"
-      screen={currentScreen}
-      onScreen={(key) => navigate(`/w/warehouse/${key}`)}
-      onHome={() => navigate('/')}
-    >
-      <Suspense fallback={<RouteFallback fullscreen={false} />}>
-        <div key={currentScreen} className="contents">{renderContent()}</div>
-      </Suspense>
-    </WorldShell>
-  )
-}
+const WarehouseWorldPage = lazyPage(() => import('./pages/WarehousePage'), (m) => m.WarehouseWorldPage)
 
 export function App() {
   return (

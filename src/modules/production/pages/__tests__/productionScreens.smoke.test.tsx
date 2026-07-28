@@ -33,7 +33,7 @@ describe('Production képernyők — smoke render', () => {
     expect(screen.getByText('Hulladék-összesítő')).toBeInTheDocument()
   }, SMOKE_TIMEOUT)
 
-  it('Vágótervezés: lista + részlet-SlideOver FSM-akciókkal (disabledReason a tiltott átmenetre)', async () => {
+  it('Szabászat: lista + részlet-SlideOver FSM-akciókkal (disabledReason a tiltott átmenetre)', async () => {
     render(<CuttingPlansScreen />, { wrapper: createProductionWrapper() })
     const draftRow = await screen.findByText(IDS.planDraft)
     fireEvent.click(draftRow)

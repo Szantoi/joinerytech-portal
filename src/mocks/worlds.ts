@@ -7,7 +7,7 @@ export const WORLDS: Record<string, World> = {
     icon: "factory", accent: "teal",
     screens: [
       { key: "dash", hu: "Áttekintés", en: "Overview" },
-      { key: "cutting", hu: "Vágótervezés", en: "Cut planning" },
+      { key: "cutting", hu: "Szabászat", en: "Cut planning" },
       { key: "machining", hu: "Megmunkálás", en: "Machining" },
       { key: "orders", hu: "Ajtórendelések", en: "Door orders" },
       { key: "quotes", hu: "Árajánlatok", en: "Quotes" },
@@ -47,6 +47,7 @@ export const WORLDS: Record<string, World> = {
     screens: [
       { key: "dash", hu: "Áttekintés", en: "Overview" },
       { key: "inventory", hu: "Készlet", en: "Inventory" },
+      { key: "offcuts", hu: "Offcut készlet", en: "Offcuts" },
       { key: "procurement", hu: "Beszerzés", en: "Procurement" },
       { key: "movements", hu: "Mozgások", en: "Movements" },
     ],

@@ -222,14 +222,9 @@ try {
     await ctx.close()
   }
 
-  // ── WORLDS-SHELL-H1 (részleges): MINDEN világ-route-nak legyen CÍME, és a
-  //    nav aktív eleme ugyanazt mondja, mint az oldalcím.
-  //
-  //    A „pontosan egy <h1>" cél NEM teljesíthető a shell-cím elvételével: a
-  //    fresh review bizonyította, hogy 8 legacy világ 38 route-ján a tartalom
-  //    nem ad saját címet. Ez az őr azt a REGRESSZIÓT fogja meg, amit az első
-  //    nekifutás majdnem beszállított (cím nélküli oldalak), a duplikáció
-  //    feloldása a WORLDS-SHELL-H1 következő körére marad.
+  // ── WORLDS-SHELL-H1: minden route-on pontosan egy, a navval egyező h1 van.
+  //    A shell-cím mobilon sr-only (nem display:none), ezért a legacy világok
+  //    is címhez jutnak anélkül, hogy a modern képernyők h2-jét duplikálnánk.
   {
     const ctx = await browser.newContext({ viewport: { width: 1440, height: 900 } })
     const page = await ctx.newPage()
@@ -239,11 +234,20 @@ try {
       '/w/production/analytics',
       '/w/crm', '/w/kontrolling', '/w/hr', '/w/maintenance', '/w/quality',
       '/w/ehs', '/w/docs',
-      // Legacy világak — ezeken a shell címe az EGYETLEN cím:
+      // Modul-alképernyők — a review mutációs próbája bizonyította, hogy a
+      // csak-dash lefedés lyukas (LeadsScreen h1-mutáció minden őrön átment):
+      '/w/crm/leads', '/w/hr/people', '/w/kontrolling/portfolio',
+      '/w/maintenance/assets', '/w/quality/tickets', '/w/ehs/incidents',
+      '/w/docs/library',
+      // Legacy világok — ezeken a shell címe az EGYETLEN cím:
       '/w/sales', '/w/design', '/w/warehouse', '/w/finance', '/w/masterdata',
       '/w/interior', '/w/service', '/w/settings',
+      // Saját-címes legacy világok — a SHELL-H1 review P1-1 osztálya
+      // (sr-only shell-cím + saját h1 = mobil dupla-h1 volt; h2-söprés után őr):
+      '/w/tasks', '/w/attendance', '/w/ai', '/w/execbi', '/w/logistics',
+      '/w/mfgprep', '/w/projects', '/w/supervisor', '/w/shop',
     ]
-    const titleless = []
+    const wrongH1Count = []
     const mismatches = []
     const noActiveNav = []
     for (const path of ROUTES) {
@@ -254,16 +258,16 @@ try {
         const active = document.querySelector('[aria-current="page"]')
         return { h1s, active: active?.textContent?.trim() ?? null }
       })
-      if (info.h1s.length === 0) titleless.push(path)
+      if (info.h1s.length !== 1) wrongH1Count.push({ path, h1s: info.h1s })
       if (!info.active) noActiveNav.push(path)
       else if (info.h1s.length > 0 && !info.h1s.includes(info.active)) {
         mismatches.push({ path, nav: info.active, h1s: info.h1s })
       }
     }
     check(
-      `SHELL-H1: minden világ-route-nak van címe (${ROUTES.length} route)`,
-      titleless.length === 0,
-      titleless.length ? `cím nélkül: ${titleless.join(', ')}` : 'mind kapott címet',
+      `SHELL-H1: minden világ-route-nak pontosan egy h1-e van (${ROUTES.length} route)`,
+      wrongH1Count.length === 0,
+      wrongH1Count.length ? JSON.stringify(wrongH1Count.slice(0, 3)) : 'mind pontosan egyet kapott',
     )
     check(
       'SHELL-H1: a nav aktív eleme (aria-current) minden route-on jelen van',
@@ -278,17 +282,39 @@ try {
     await ctx.close()
   }
 
+  // A mobil h1 vizuálisan lehet rejtett, de az accessibility tree-ből nem tűnhet el.
+  {
+    const ctx = await browser.newContext({ viewport: { width: 360, height: 740 } })
+    const page = await ctx.newPage()
+    await page.goto(`${BASE}/w/production/cutting`, { waitUntil: 'networkidle' })
+    const mobileTitle = await page.evaluate(() => {
+      const h1s = document.querySelectorAll('h1')
+      const h1 = h1s[0]
+      return {
+        count: h1s.length,
+        text: h1?.textContent?.trim(),
+        display: h1 ? getComputedStyle(h1).display : null,
+      }
+    })
+    check(
+      'SHELL-H1 mobil: pontosan egy elérhető Szabászat főcím',
+      mobileTitle.count === 1 && mobileTitle.text === 'Szabászat' && mobileTitle.display !== 'none',
+      JSON.stringify(mobileTitle),
+    )
+    await ctx.close()
+  }
+
   // ── M-10: dashboard szekció-linkek 44px-es érintési zónája ────────────────
   {
     const ctx = await browser.newContext({ viewport: { width: 1440, height: 900 } })
     const page = await ctx.newPage()
     await page.goto(`${BASE}/w/production`, { waitUntil: 'networkidle' })
-    const link = page.getByRole('button', { name: 'Vágótervezés →', exact: true })
+    const link = page.getByRole('button', { name: 'Szabászat →', exact: true })
     await link.waitFor({ timeout: 15_000 })
     const hit = await page.evaluate(() => {
       // A dash-szekció-linkek jellemzője a nyíl-utótag — a sidebar azonos
       // szövegű nav-gombja NEM ilyen (a nav-címke és az oldalcím egyezik).
-      const el = [...document.querySelectorAll('button')].find((b) => /Vágótervezés\s*→\s*$/.test(b.textContent ?? ''))
+      const el = [...document.querySelectorAll('button')].find((b) => /Szabászat\s*→\s*$/.test(b.textContent ?? ''))
       if (!el) return { ok: false, reason: 'nincs link' }
       const r = el.getBoundingClientRect()
       // A ::before kiterjesztett zóna a szöveg-doboz FELETT 12px-re is találjon.

@@ -108,3 +108,13 @@ describe('WorldShell — TopBar labels (M1) and world accent token (S2)', () => 
     expect(header.querySelector('[class*="text-red-700"]')).toBeNull()
   })
 })
+
+describe('WorldShell — document title (WORLDS-SHELL-H1)', () => {
+  it('provides exactly one h1, including on mobile where it is visually hidden only', () => {
+    const { container } = renderShell()
+    const headings = container.querySelectorAll('h1')
+    expect(headings).toHaveLength(1)
+    expect(headings[0]).toHaveTextContent('Áttekintés')
+    expect(headings[0].parentElement).toHaveClass('sr-only', 'md:not-sr-only')
+  })
+})

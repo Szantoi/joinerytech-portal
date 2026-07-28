@@ -11,6 +11,7 @@ import { maintenanceApiHandlers } from '../modules/maintenance/mocks'
 import { qaApiHandlers } from '../modules/qa/mocks'
 import { dmsApiHandlers } from '../modules/dms/mocks'
 import { productionApiHandlers } from '../modules/production/mocks'
+import { warehouseHandlers } from '../modules/warehouse/mocks'
 
 export const handlers = [
   // EHS modul-API (openapi-tükör, állapottartó store + FSM guardok) — ld. ./ehsApi
@@ -38,6 +39,10 @@ export const handlers = [
   // WORLDS_API_CONTRACTS_2026-07-18.md szerint) — ld. ./productionApi. VITE_DATA_MODE=api
   // esetén ez irreleváns: a worker maga sem indul (src/main.tsx).
   ...productionApiHandlers,
+
+  // Warehouse modul-API (inventory/procurement contract mirror). This must be
+  // registered in the global worker as well as the module-local node test server.
+  ...warehouseHandlers,
 
   // POST /api/products/configure
   http.post('/api/products/configure', async ({ request }) => {

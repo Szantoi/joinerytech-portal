@@ -80,9 +80,9 @@ export function ExpiringScreen() {
   return (
     <div className="mx-auto max-w-[1200px] px-4 py-5 md:px-7 md:py-6">
       <div className="mb-4">
-        <h1 className="text-[20px] font-semibold tracking-tight text-ink md:text-[24px]">
+        <h2 className="text-[20px] font-semibold tracking-tight text-ink md:text-[24px]">
           Lejáró / felülvizsgálat
-        </h1>
+        </h2>
         <p className="mt-0.5 text-[12.5px] text-ink-muted">
           {/* a küszöb a configból (EXPIRY_WARN_DAYS) — sosem literál */}
           Lejárt és a következő {EXPIRY_WARN_DAYS} napban lejáró dokumentumok (archivált nélkül) — tanúsítványok, szerződések felülvizsgálata

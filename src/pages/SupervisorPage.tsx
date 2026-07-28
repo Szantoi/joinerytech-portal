@@ -120,7 +120,7 @@ function FloorView() {
   return (
     <div className="px-4 md:px-7 py-5 md:py-6 max-w-[1200px] mx-auto">
       <div className="mb-4">
-        <h1 className="text-[20px] md:text-[24px] font-semibold tracking-tight text-stone-900">Műhely-floor</h1>
+        <h2 className="text-[20px] md:text-[24px] font-semibold tracking-tight text-stone-900">Műhely-floor</h2>
         <p className="text-[12.5px] text-stone-500 mt-0.5">Munkaállomások élő státusza · {SUP_TODAY}</p>
       </div>
 
@@ -183,7 +183,7 @@ function DayPlanPage() {
   return (
     <div className="px-4 md:px-7 py-5 md:py-6 max-w-[1100px] mx-auto">
       <div className="mb-4">
-        <h1 className="text-[20px] md:text-[24px] font-semibold tracking-tight text-stone-900">Napi terv</h1>
+        <h2 className="text-[20px] md:text-[24px] font-semibold tracking-tight text-stone-900">Napi terv</h2>
         <p className="text-[12.5px] text-stone-500 mt-0.5">{SUP_TODAY} · {done}/{total} teljesítve · {inProg} folyamatban · {blocked} blokkolt · {late} késő</p>
       </div>
 
@@ -243,7 +243,7 @@ function SupervisorDashboard() {
     <div className="px-4 md:px-7 py-5 md:py-6 max-w-[1200px] mx-auto">
       <div className="flex items-center justify-between gap-3 mb-4">
         <div>
-          <h1 className="text-[20px] md:text-[24px] font-semibold tracking-tight text-stone-900">Műszakvezető</h1>
+          <h2 className="text-[20px] md:text-[24px] font-semibold tracking-tight text-stone-900">Műszakvezető</h2>
           <p className="text-[12.5px] text-stone-500 mt-0.5">Élő műhely monitor · {SUP_TODAY}</p>
         </div>
         <button onClick={() => setDayPlanOpen(true)} className="inline-flex items-center gap-1.5 h-9 px-3.5 rounded-lg bg-rose-600 hover:bg-rose-700 text-white text-[12.5px] font-medium shrink-0">
