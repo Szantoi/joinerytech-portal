@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
-import { Card } from '@spaceos/portal-ui'
+import { Card, useConfirm } from '@spaceos/portal-ui'
 import { EditableCell } from './EditableCell'
 import { ConflictWarning } from './ConflictWarning'
 import { RowActionsMenu } from './RowActionsMenu'
@@ -61,6 +61,7 @@ const INITIAL_PRODUCTS: Product[] = [
  * - localStorage persistence
  */
 export function CatalogPanel() {
+  const { ask } = useConfirm()
   const [products, setProducts] = useState<Product[]>(INITIAL_PRODUCTS)
   const [editingRowId, setEditingRowId] = useState<string | null>(null)
   const [selectedRowId, setSelectedRowId] = useState<string | null>(null)
@@ -123,12 +124,19 @@ export function CatalogPanel() {
   }
 
   /**
-   * Delete a product
+   * Delete a product — a portál megerősítő dialógusával (PLAN-05 F3+).
+   * A `window.confirm` blokkolta a fő szálat, nem volt fókuszcsapdázott és a
+   * szövege sem volt stílusozható/lokalizálható.
    */
-  const handleDelete = (productId: string) => {
-    if (window.confirm('Biztosan törölni szeretnéd ezt a terméket?')) {
-      deleteProduct(productId)
-    }
+  const handleDelete = async (productId: string) => {
+    const confirmed = await ask({
+      title: 'Biztosan törlöd a terméket?',
+      description: 'A termék eltűnik a katalógusból. A művelet nem vonható vissza.',
+      confirmLabel: 'Törlés',
+      cancelLabel: 'Mégse',
+      tone: 'danger',
+    })
+    if (confirmed) deleteProduct(productId)
   }
 
   /**

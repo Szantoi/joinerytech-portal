@@ -75,14 +75,17 @@ describe('CapacityConflictPanel', () => {
   })
 
   it('steps the days over a DST change without skipping one', () => {
-    // 2026-10-25 az óraátállítás vasárnapja (CET): az a nap 25 órás.
-    render(<CapacityConflictPanel report={{ ...report, weekStart: '2026-10-19' }} />)
+    // Az óraátállítás 2026-10-25 (a 10-19-i hét vasárnapja), ezért a hetet
+    // 10-20-ról indítjuk: így az ablak ÁTLÉPI a váltást, és a hetedik nap
+    // (10-26) ms-összeadással 10-25-re csúszna vissza. A 10-19-i héttel ez a
+    // teszt a régi, hibás kóddal is zöld lenne.
+    render(<CapacityConflictPanel report={{ ...report, weekStart: '2026-10-20' }} />)
     // A nap-nevet az Intl adja (a nagybetűs megjelenítés CSS), a dátumot a
-    // naptári léptetés — 19-től 25-ig, kihagyás és ismétlés nélkül.
+    // naptári léptetés — 20-tól 26-ig, kihagyás és ismétlés nélkül.
     const dates = screen
       .getAllByRole('columnheader')
       .slice(1, 8)
       .map((th) => th.textContent?.replace(/^\D+/, ''))
-    expect(dates).toEqual(['10.19.', '10.20.', '10.21.', '10.22.', '10.23.', '10.24.', '10.25.'])
+    expect(dates).toEqual(['10.20.', '10.21.', '10.22.', '10.23.', '10.24.', '10.25.', '10.26.'])
   })
 })

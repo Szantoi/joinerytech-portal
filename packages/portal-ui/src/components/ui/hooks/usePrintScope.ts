@@ -20,6 +20,12 @@ import { useCallback, useRef } from 'react'
  * (defenzíven): a nyomtatás megszakítása egyes böngészőkben nem küld
  * `afterprint`-et, és a jelölés bennragadna a DOM-ban.
  *
+ * FELTÉTELEZÉS: a `window.print()` **blokkol**, amíg a nyomtatási párbeszéd
+ * nyitva van — ezért biztonságos közvetlenül a visszatérése után takarítani.
+ * Ez az evergreen böngészőkben így van; ha egy környezetben mégis azonnal
+ * visszatérne, a jelölést az `afterprint` szedné le, a nyomtatási kép pedig
+ * addig is helyes marad (a takarítás csak korábban futna le a kelleténél).
+ *
  * A vágást a `src/index.css` `@media print` blokkja végzi a
  * `data-print-scope` / `data-print-region` attribútum-párral.
  */
