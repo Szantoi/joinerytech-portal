@@ -1,4 +1,5 @@
 export * from './fsmTones'
 export * from './statusTones'
+export * from './svgTones'
 export * from './useTheme'
 export * from './worldAccents'

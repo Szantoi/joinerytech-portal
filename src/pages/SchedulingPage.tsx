@@ -3,7 +3,7 @@ import { Card } from '@spaceos/portal-ui'
 import { OperatorAutocomplete } from '../components/scheduling/OperatorAutocomplete'
 import { BatchList } from '../components/scheduling/BatchList'
 import { MachineDropZone } from '../components/scheduling/MachineDropZone'
-import { ExecutionTimeline } from '../components/scheduling/ExecutionTimeline'
+import { ExecutionGantt } from '../components/scheduling/ExecutionGantt'
 import { AssignmentConfirmModal } from '../components/scheduling/AssignmentConfirmModal'
 import { useApi, API_BASE, useMutation } from '../hooks/useApi'
 import { useSchedulePermissions } from '../hooks/useSchedulePermissions'
@@ -190,7 +190,7 @@ export function SchedulingPage() {
             </Card>
 
             {/* Execution Timeline */}
-            <ExecutionTimeline
+            <ExecutionGantt
               machines={machines ?? []}
               executions={executions ?? []}
               planDate={selectedDate}

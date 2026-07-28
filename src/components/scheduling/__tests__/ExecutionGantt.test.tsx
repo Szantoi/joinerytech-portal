@@ -1,6 +1,11 @@
+/**
+ * A korábbi `ExecutionTimeline.test.tsx` utódja (PLAN-05 F1): ugyanazok az
+ * elvárások, de a beolvasztott `GanttChart` primitíven keresztül.
+ */
+
 import { describe, it, expect } from 'vitest'
 import { render, screen } from '@testing-library/react'
-import { ExecutionTimeline } from '../ExecutionTimeline'
+import { ExecutionGantt } from '../ExecutionGantt'
 import type { Execution, Machine } from '../../../types/scheduling.types'
 
 const mockMachines: Machine[] = [
@@ -33,15 +38,9 @@ const mockExecutions: Execution[] = [
   },
 ]
 
-describe('ExecutionTimeline', () => {
+describe('ExecutionGantt', () => {
   it('renders timeline with title and legend', () => {
-    render(
-      <ExecutionTimeline
-        machines={mockMachines}
-        executions={mockExecutions}
-        planDate="2026-06-17"
-      />
-    )
+    render(<ExecutionGantt machines={mockMachines} executions={mockExecutions} planDate="2026-06-17" />)
 
     expect(screen.getByText('Execution Timeline')).toBeTruthy()
     expect(screen.getByText('Plan date: 2026-06-17')).toBeTruthy()
@@ -51,68 +50,41 @@ describe('ExecutionTimeline', () => {
   })
 
   it('renders all machine rows', () => {
-    render(
-      <ExecutionTimeline
-        machines={mockMachines}
-        executions={mockExecutions}
-        planDate="2026-06-17"
-      />
-    )
+    render(<ExecutionGantt machines={mockMachines} executions={mockExecutions} planDate="2026-06-17" />)
 
     expect(screen.getByText('Saw Station')).toBeTruthy()
     expect(screen.getByText('Router')).toBeTruthy()
   })
 
   it('renders execution blocks with correct names', () => {
-    render(
-      <ExecutionTimeline
-        machines={mockMachines}
-        executions={mockExecutions}
-        planDate="2026-06-17"
-      />
-    )
+    render(<ExecutionGantt machines={mockMachines} executions={mockExecutions} planDate="2026-06-17" />)
 
     expect(screen.getByText('Frame Assembly')).toBeTruthy()
     expect(screen.getByText('Door Cutting')).toBeTruthy()
   })
 
-  it('shows 24-hour time header', () => {
-    render(
-      <ExecutionTimeline
-        machines={mockMachines}
-        executions={mockExecutions}
-        planDate="2026-06-17"
-      />
+  it('shows the 24-hour time axis header (hourly grid, 3-hourly labels)', () => {
+    const { container } = render(
+      <ExecutionGantt machines={mockMachines} executions={mockExecutions} planDate="2026-06-17" />,
     )
 
     expect(screen.getByText('0:00')).toBeTruthy()
     expect(screen.getByText('12:00')).toBeTruthy()
-    expect(screen.getByText('23:00')).toBeTruthy()
+    expect(screen.getByText('21:00')).toBeTruthy()
+    // A felirat nélküli órák is kapnak rácsvonalat (24 óra + a sávok vonalai).
+    expect(container.querySelectorAll('line[stroke-dasharray="3 4"]')).toHaveLength(24)
   })
 
   it('handles empty machines list', () => {
-    render(
-      <ExecutionTimeline
-        machines={[]}
-        executions={[]}
-        planDate="2026-06-17"
-      />
-    )
+    render(<ExecutionGantt machines={[]} executions={[]} planDate="2026-06-17" />)
 
     expect(screen.getByText('No machines available')).toBeTruthy()
   })
 
   it('handles empty executions list', () => {
-    render(
-      <ExecutionTimeline
-        machines={mockMachines}
-        executions={[]}
-        planDate="2026-06-17"
-      />
-    )
+    render(<ExecutionGantt machines={mockMachines} executions={[]} planDate="2026-06-17" />)
 
     expect(screen.getByText('Saw Station')).toBeTruthy()
-    // No execution blocks should be visible
     expect(screen.queryByText('Frame Assembly')).toBeFalsy()
   })
 
@@ -142,15 +114,20 @@ describe('ExecutionTimeline', () => {
       },
     ]
 
-    render(
-      <ExecutionTimeline
-        machines={mockMachines}
-        executions={multiMachineExecutions}
-        planDate="2026-06-17"
-      />
-    )
+    render(<ExecutionGantt machines={mockMachines} executions={multiMachineExecutions} planDate="2026-06-17" />)
 
     expect(screen.getByText('Batch for Machine 1')).toBeTruthy()
     expect(screen.getByText('Batch for Machine 2')).toBeTruthy()
+  })
+
+  it('maps priority onto design-system tones instead of hardcoded colors', () => {
+    const { container } = render(
+      <ExecutionGantt machines={mockMachines} executions={mockExecutions} planDate="2026-06-17" />,
+    )
+
+    const bars = [...container.querySelectorAll('rect[rx="3"]')]
+    expect(bars[0]?.getAttribute('class')).toContain('fill-emerald-100') // priority 3 → success
+    expect(bars[1]?.getAttribute('class')).toContain('fill-rose-100') // priority 7 → danger
+    expect(container.querySelector('[style]')).toBeNull()
   })
 })
