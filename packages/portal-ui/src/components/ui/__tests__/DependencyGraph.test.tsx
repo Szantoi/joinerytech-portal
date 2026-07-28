@@ -33,6 +33,21 @@ describe('DependencyGraph', () => {
     expect(screen.queryByText('FF')).toBeNull()
   })
 
+  it('keeps duplicate (from, to, label) edges distinct', () => {
+    const { container } = render(
+      <DependencyGraph
+        nodes={nodes}
+        edges={[
+          { fromId: 'cut', toId: 'cnc', label: 'FS' },
+          { fromId: 'cut', toId: 'cnc', label: 'FS' },
+        ]}
+        ariaLabel="Függőségi háló"
+        emptyLabel="Nincs adat"
+      />,
+    )
+    expect(container.querySelectorAll('path[marker-end]')).toHaveLength(2)
+  })
+
   it('marks a non-default edge with a dashed line', () => {
     const { container } = render(
       <DependencyGraph

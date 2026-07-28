@@ -96,10 +96,12 @@ export function DependencyGraph({
   })
 
   const nodeById = new Map(placed.map((entry) => [entry.node.id, entry]))
-  const placedEdges = edges.flatMap((edge) => {
+  // Az index is a kulcs része: ugyanaz a (from, to, label) hármas többször is
+  // előfordulhat (pl. két különböző lag-értékű él azonos felirattal).
+  const placedEdges = edges.flatMap((edge, index) => {
     const from = nodeById.get(edge.fromId)
     const to = nodeById.get(edge.toId)
-    return from && to ? [{ edge, from, to }] : []
+    return from && to ? [{ edge, from, to, index }] : []
   })
 
   const width = Math.max(...placed.map((entry) => entry.x)) + nodeWidth + 40
@@ -120,13 +122,13 @@ export function DependencyGraph({
           </marker>
         </defs>
 
-        {placedEdges.map(({ edge, from, to }) => {
+        {placedEdges.map(({ edge, from, to, index }) => {
           const fromX = from.x + nodeWidth / 2
           const toX = to.x - nodeWidth / 2
           const middleX = (fromX + toX) / 2
           const middleY = (from.y + to.y) / 2
           return (
-            <g key={`${edge.fromId}-${edge.toId}-${edge.label ?? ''}`}>
+            <g key={`${index}-${edge.fromId}-${edge.toId}`}>
               <path
                 d={`M ${fromX} ${from.y} C ${middleX} ${from.y}, ${middleX} ${to.y}, ${toX} ${to.y}`}
                 fill="none"

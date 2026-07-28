@@ -62,7 +62,12 @@ export interface GanttChartProps {
   domain?: { start: GanttTimeValue; end: GanttTimeValue }
   /** Osztásjelek: darabszám (egyenletes) vagy explicit lista saját feliratokkal. */
   ticks?: number | readonly GanttTick[]
-  /** Felirat a darabszámos formához. Alapértelmezés: UTC `óó:pp`. */
+  /**
+   * Felirat a darabszámos formához. Alapértelmezés: **UTC** `óó:pp`.
+   * Helyi idejű `domain` mellett (pl. egy naptári nap éjfele) adj saját,
+   * lokalizált formattert vagy explicit `ticks` listát — különben a felirat
+   * a zóna-eltolással csúszik.
+   */
   formatTick?: (value: number) => string
   /** Az ábra hozzáférhető neve (kötelező — lokalizált szöveg). */
   ariaLabel: string
