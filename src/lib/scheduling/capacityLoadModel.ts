@@ -10,7 +10,7 @@
  * adja (nem kézzel írt DAY_NAMES tömb), minden szöveg formatter-propból jön.
  */
 
-import type { CapacityBucket, CapacityRow } from '@spaceos/portal-ui'
+import { addDays, isSameDay, parseIsoDate, type CapacityBucket, type CapacityRow } from '@spaceos/portal-ui'
 
 export interface CapacityDayLoad {
   /** Nap-index a hét kezdetétől (0 = a hét első napja). */
@@ -53,8 +53,6 @@ export const DEFAULT_CAPACITY_LABELS: CapacityLoadLabels = {
   formatUtilization: (percent) => `${Math.round(percent)}%`,
 }
 
-const DAY_MS = 24 * 60 * 60 * 1000
-
 export interface CapacityBucketOptions {
   dayCount?: number
   labels?: CapacityLoadLabels
@@ -62,24 +60,25 @@ export interface CapacityBucketOptions {
   today?: Date
 }
 
-function startOfDay(value: Date): number {
-  return new Date(value.getFullYear(), value.getMonth(), value.getDate()).getTime()
-}
-
-/** Nap-vödrök a hét kezdetétől. Érvénytelen dátumra üres lista — nincs félrevezető rács. */
+/**
+ * Nap-vödrök a hét kezdetétől. Érvénytelen dátumra üres lista — nincs félrevezető rács.
+ *
+ * A léptetés **naptári** (`addDays`), nem ezredmásodperc-összeadás: a nyári
+ * időszámítás váltásának hetén egy nap 23 vagy 25 óra, és az ms-aritmetika
+ * ilyenkor átcsúszik a szomszédos napra.
+ */
 export function buildCapacityBuckets(weekStart: string, options: CapacityBucketOptions = {}): CapacityBucket[] {
   const { dayCount = 7, labels = DEFAULT_CAPACITY_LABELS, today } = options
-  const start = new Date(`${weekStart}T00:00:00`)
-  if (!Number.isFinite(start.getTime())) return []
+  const start = parseIsoDate(weekStart)
+  if (!start) return []
 
-  const todayMs = today ? startOfDay(today) : undefined
   return Array.from({ length: dayCount }, (_, index) => {
-    const date = new Date(start.getTime() + index * DAY_MS)
+    const date = addDays(start, index)
     return {
       id: String(index),
       label: labels.formatDayName(date),
       detail: labels.formatDayDetail(date),
-      highlighted: todayMs !== undefined && startOfDay(date) === todayMs,
+      highlighted: today !== undefined && isSameDay(date, today),
     }
   })
 }

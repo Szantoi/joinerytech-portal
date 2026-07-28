@@ -309,3 +309,23 @@
 .aspect-\[4\/3\] {
   aspect-ratio: 4 / 3;
 }
+
+/* ── Nyomtatási hatókör (usePrintScope, PLAN-05 F3) ──────────────────
+   A hook a <html>-re teszi a `data-print-scope`-ot, a nyomtatandó régióra a
+   `data-print-region`-t; a vágás CSAK nyomtatáskor él. `visibility` (nem
+   `display`) rejt, mert így a régió megőrzi a dokumentumbeli helyét és a
+   belső elrendezése változatlan marad. A régió a lap tetejére kerül, hogy
+   ne örökölje a képernyős görgetés-pozíciót. */
+@media print {
+  html[data-print-scope] body * {
+    visibility: hidden;
+  }
+  html[data-print-scope] [data-print-region],
+  html[data-print-scope] [data-print-region] * {
+    visibility: visible;
+  }
+  html[data-print-scope] [data-print-region] {
+    position: absolute;
+    inset: 0 0 auto 0;
+  }
+}

@@ -68,4 +68,21 @@ describe('CapacityConflictPanel', () => {
     const { container } = render(<CapacityConflictPanel report={report} />)
     expect(container.querySelector('input')).toBeNull()
   })
+
+  it('paints without a single inline style (tone system only)', () => {
+    const { container } = render(<CapacityConflictPanel report={report} />)
+    expect(container.querySelector('[style]')).toBeNull()
+  })
+
+  it('steps the days over a DST change without skipping one', () => {
+    // 2026-10-25 az óraátállítás vasárnapja (CET): az a nap 25 órás.
+    render(<CapacityConflictPanel report={{ ...report, weekStart: '2026-10-19' }} />)
+    // A nap-nevet az Intl adja (a nagybetűs megjelenítés CSS), a dátumot a
+    // naptári léptetés — 19-től 25-ig, kihagyás és ismétlés nélkül.
+    const dates = screen
+      .getAllByRole('columnheader')
+      .slice(1, 8)
+      .map((th) => th.textContent?.replace(/^\D+/, ''))
+    expect(dates).toEqual(['10.19.', '10.20.', '10.21.', '10.22.', '10.23.', '10.24.', '10.25.'])
+  })
 })

@@ -41,5 +41,16 @@ export type { DateFieldProps, SelectFieldProps, TextAreaFieldProps } from './For
 export { QueryGate } from './QueryGate'
 export { useFocusTrap } from './hooks/useFocusTrap'
 export { useInertBackground } from './hooks/useInertBackground'
+export { ConfirmDialog, ConfirmProvider } from './ConfirmDialog'
+export type { ConfirmDialogProps } from './ConfirmDialog'
+export { useConfirm } from './confirmContext'
+export type { ConfirmOptions, ConfirmContextValue } from './confirmContext'
+// usePrintScope: a vágást a `src/index.css` `@media print` blokkja végzi
+// (data-print-scope / data-print-region attribútum-pár) — a hook önmagában
+// csak megjelöl és nyomtat.
+export { usePrintScope } from './hooks/usePrintScope'
+export type { PrintScope } from './hooks/usePrintScope'
+export { useTimeCursor } from './hooks/useTimeCursor'
+export type { TimeCursor, TimeCursorOptions } from './hooks/useTimeCursor'
 export * from './dataTable.types'
 
