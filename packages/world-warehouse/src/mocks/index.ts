@@ -20,3 +20,4 @@ export {
   SEED_STOCK_ITEMS, SEED_OFFCUTS, SEED_RESERVATIONS, SEED_MOVEMENTS,
   SEED_SUPPLIERS, SEED_PURCHASE_ORDERS, SEED_REQUISITIONS, SEED_TENANT_ID,
 } from './seed';
+export { createWarehouseWrapper } from './warehouseTestUtils';

@@ -19,4 +19,51 @@ export default defineConfig([
       globals: globals.browser,
     },
   },
+  // Workspace boundary-őr (MODULE_PACKAGES_PLAN §4.5/2): csomagba csak a
+  // publikus belépési pontokon át szabad benyúlni (gyökér + /mocks + /wizard).
+  {
+    files: ['**/*.{ts,tsx}'],
+    rules: {
+      'no-restricted-imports': ['error', {
+        patterns: [
+          {
+            group: [
+              '@spaceos/*/*', '@joinerytech/*/*',
+              '!@spaceos/*/mocks', '!@spaceos/*/wizard', '!@joinerytech/*/mocks',
+            ],
+            message: 'Csomag-belsőbe tilos importálni — csak a publikus belépési pontok (gyökér, /mocks, /wizard) használhatók.',
+          },
+          {
+            group: ['**/packages/*/src/**'],
+            message: 'Relatív benyúlás a packages/ alá tilos — használd a @spaceos/* vagy @joinerytech/* csomag-importot.',
+          },
+        ],
+      }],
+    },
+  },
+  // Fordított él tiltása: csomag nem importálhat az app src/-éből.
+  {
+    files: ['packages/**/*.{ts,tsx}'],
+    rules: {
+      'no-restricted-imports': ['error', {
+        patterns: [
+          {
+            group: [
+              '@spaceos/*/*', '@joinerytech/*/*',
+              '!@spaceos/*/mocks', '!@spaceos/*/wizard', '!@joinerytech/*/mocks',
+            ],
+            message: 'Csomag-belsőbe tilos importálni — csak a publikus belépési pontok (gyökér, /mocks, /wizard) használhatók.',
+          },
+          {
+            group: ['**/packages/*/src/**'],
+            message: 'Relatív benyúlás a packages/ alá tilos — használd a csomag-importot.',
+          },
+          {
+            group: ['**/../../../../src/**', '**/../../../../../src/**'],
+            message: 'Csomag nem importálhat visszafelé az app src/-éből (fordított rétegzés).',
+          },
+        ],
+      }],
+    },
+  },
 ])

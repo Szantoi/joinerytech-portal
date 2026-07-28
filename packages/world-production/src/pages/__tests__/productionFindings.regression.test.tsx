@@ -2,9 +2,6 @@ import { describe, it, expect, vi, beforeAll, afterAll, beforeEach, afterEach } 
 import { render, screen, fireEvent, waitFor, within } from '@testing-library/react'
 import { http, HttpResponse } from 'msw'
 import { setupServer } from 'msw/node'
-import { MemoryRouter, Route, Routes } from 'react-router-dom'
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { ToastProvider } from '@spaceos/portal-ui'
 import { productionApiHandlers, resetProductionDb, PRODUCTION_SEED_IDS } from '../../mocks'
 import { CUTTING_API, JOINERY_ORDERS_API } from '../../services/config'
 import { ProductionDashboard } from '../ProductionDashboard'
@@ -12,7 +9,6 @@ import { ExecutionDetailSlideOver } from '../ExecutionDetailSlideOver'
 import { DoorOrdersScreen } from '../DoorOrdersScreen'
 import { CuttingExecutionScreen } from '../CuttingExecutionScreen'
 import { CuttingPlansScreen } from '../CuttingPlansScreen'
-import { ProductionWorldPage } from '../../../../../src/pages/ProductionPage'
 import { createProductionWrapper } from './productionTestUtils'
 
 /**
@@ -32,24 +28,6 @@ beforeEach(() => resetProductionDb())
 afterEach(() => server.resetHandlers())
 afterAll(() => server.close())
 
-/** Router-teljes wrapper a világ-diszpécser (ProductionWorldPage) teszteléséhez. */
-function renderWorldRoute(path: string) {
-  const queryClient = new QueryClient({
-    defaultOptions: { queries: { retry: false }, mutations: { retry: false } },
-  })
-  return render(
-    <QueryClientProvider client={queryClient}>
-      <ToastProvider>
-        <MemoryRouter initialEntries={[path]}>
-          <Routes>
-            <Route path="/w/production" element={<ProductionWorldPage />} />
-            <Route path="/w/production/:screen" element={<ProductionWorldPage />} />
-          </Routes>
-        </MemoryRouter>
-      </ToastProvider>
-    </QueryClientProvider>,
-  )
-}
 
 describe('M-1 — a dashboard szekció-linkjei LÉTEZŐ képernyő-kulcsra navigálnak', () => {
   it('a Szabászat/Megmunkálás link a diszpécser kulcsait adja (cutting/machining)', async () => {
@@ -65,14 +43,9 @@ describe('M-1 — a dashboard szekció-linkjei LÉTEZŐ képernyő-kulcsra navig
     expect(onScreen.mock.calls.map(([key]) => key)).toEqual(['cutting', 'machining', 'orders', 'analytics'])
   }, TIMEOUT)
 
-  it('a célképernyők tényleg renderelnek ezekre a kulcsokra (a másik vég)', async () => {
-    const cutting = renderWorldRoute('/w/production/cutting')
-    expect(await screen.findByRole('heading', { name: 'Szabászat', level: 2 })).toBeTruthy()
-    cutting.unmount()
-
-    renderWorldRoute('/w/production/machining')
-    expect(await screen.findByRole('heading', { name: 'Megmunkálás', level: 2 })).toBeTruthy()
-  }, TIMEOUT)
+  // A „másik vég" (a diszpécser tényleg a célképernyőt rendereli) app-oldali
+  // teszt: src/pages/__tests__/ProductionPage.dispatch.test.tsx — a csomag nem
+  // importálhat visszafelé az app ProductionWorldPage-éből (boundary-szabály).
 })
 
 describe('M-4 — DoorOrder createdAt: nem perzisztált mező, nem írunk ki dátumot', () => {

@@ -86,28 +86,7 @@ export const handlers = [
     return HttpResponse.json(mockWorkOrderResponse)
   }),
 
-  // EHS: POST /api/ehs/photos/presigned-url
-  http.post('/api/ehs/photos/presigned-url', async ({ request }) => {
-    const body = await request.json()
-    console.log('MSW: POST /api/ehs/photos/presigned-url', body)
-
-    await new Promise((resolve) => setTimeout(resolve, 300))
-
-    return HttpResponse.json({
-      uploadUrl: 'https://mock-s3.amazonaws.com/upload',
-      s3Key: `ehs/photos/${crypto.randomUUID()}.jpg`,
-      expiresAt: new Date(Date.now() + 15 * 60 * 1000).toISOString()
-    })
-  }),
-
-  // EHS: PUT to S3 (mock)
-  http.put('https://mock-s3.amazonaws.com/upload', async () => {
-    console.log('MSW: PUT https://mock-s3.amazonaws.com/upload')
-
-    await new Promise((resolve) => setTimeout(resolve, 500))
-
-    return new HttpResponse(null, { status: 200 })
-  }),
+  // EHS wizard fotó-handlerek: a module-ehs mocks része (handlers.wizardPhotos)
 
   // EHS: POST /api/ehs/events → az ehsApi incidens-handlere kezeli (store-ba ír)
 

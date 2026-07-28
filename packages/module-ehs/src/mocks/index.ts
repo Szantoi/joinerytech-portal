@@ -4,6 +4,7 @@ import { materialHandlers } from './handlers.materials'
 import { ppeHandlers } from './handlers.ppe'
 import { walkHandlers } from './handlers.walks'
 import { riskHandlers } from './handlers.risks'
+import { wizardPhotoHandlers } from './handlers.wizardPhotos';
 
 /**
  * mocks/ehsApi — az EHS backend-kontraktus (src/ehs/docs/openapi.yaml) MSW tükre.
@@ -20,6 +21,7 @@ export const ehsApiHandlers = [
   ...ppeHandlers,
   ...walkHandlers,
   ...riskHandlers,
+  ...wizardPhotoHandlers,
 ]
 
 export { resetEhsDb, getEhsDb } from './db'

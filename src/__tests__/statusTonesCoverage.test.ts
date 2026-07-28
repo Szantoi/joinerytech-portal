@@ -1,13 +1,15 @@
 /**
- * STATUS_TONES / FSM_TONES teljességi tesztek (F1-A / DESIGN_SYSTEM_SPEC_V1 1.4–1.5).
+ * STATUS_TONES / FSM_TONES teljességi tesztek — APP-oldali integrációs teszt (a portal-ui nem függhet modul-csomagoktól, ezért él itt) (F1-A / DESIGN_SYSTEM_SPEC_V1 1.4–1.5).
  *
  * Garancia: a 7 tónus mindegyike light+dark stílust ad, és a 7 platform-modul
  * MINDEN valós (a mock-rétegben definiált) FSM-státusza tónusra oldódik fel —
  * dev-warning nélkül.
  */
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
-import { STATUS_TONES, isTone, resolveLegacyTone, type Tone } from '../statusTones'
-import { FSM_TONES, FSM_STATUS_ALIASES, resolveFsmTone, type FsmSet } from '../fsmTones'
+import {
+  STATUS_TONES, isTone, resolveLegacyTone, type Tone,
+  FSM_TONES, FSM_STATUS_ALIASES, resolveFsmTone, type FsmSet,
+} from '@spaceos/portal-ui'
 import { LEAD_STATUS_LABELS, OPP_STATUS_LABELS } from '@spaceos/module-crm'
 import { ABSENCE_STATUS_LABELS } from '@spaceos/module-hr'
 import { WO_STATUS_LABELS } from '@spaceos/module-maintenance'

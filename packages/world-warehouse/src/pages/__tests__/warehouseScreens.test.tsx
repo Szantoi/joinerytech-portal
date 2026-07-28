@@ -8,7 +8,7 @@ import { StockScreen } from '../StockScreen';
 import { OffcutsScreen } from '../OffcutsScreen';
 import { MovementsScreen } from '../MovementsScreen';
 import { ProcurementScreen } from '../ProcurementScreen';
-import { createWarehouseWrapper } from './warehouseTestUtils';
+import { createWarehouseWrapper } from '../../mocks/warehouseTestUtils';
 
 /**
  * Warehouse képernyő-tesztek (MSW seed-adatokkal) — a sikeres ágak MELLETT a
