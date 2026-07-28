@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
-import { Card, Icon, GhostBtn, PrimaryBtn } from '../components/ui'
-import { Avatar } from '../components/ui/Avatar'
+import { Card, Icon, GhostBtn, PrimaryBtn } from '@spaceos/portal-ui'
+import { Avatar } from '@spaceos/portal-ui'
 import type { FlowEpic, FlowPriority, Stage } from '../types'
 
 const STAGES: Stage[] = [

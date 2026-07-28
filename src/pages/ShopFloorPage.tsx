@@ -1,6 +1,6 @@
 import React, { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Icon } from '../components/ui/Icon'
+import { Icon } from '@spaceos/portal-ui'
 import { SHOPFLOOR_MACHINES, SHOPFLOOR_QUEUE, SHOPFLOOR_OPERATORS } from '../mocks/worlds'
 import type { ShopFloorOperator, ShopFloorTask, Machine } from '../types'
 

@@ -1,6 +1,6 @@
 import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import type { FilterField, FilterConfig } from '../../hooks/useFilterState'
-import { Icon } from '../ui'
+import { Icon } from '@spaceos/portal-ui'
 
 export interface FilterRowProps {
   filterId: string

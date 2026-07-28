@@ -1,8 +1,8 @@
 import { useNavigate, useParams } from 'react-router-dom'
 import { useQueryClient } from '@tanstack/react-query'
 import { WorldShell } from '../components/layout/WorldShell'
-import { useToast } from '../components/ui'
-import { IncidentReportFAB } from '../components/EHS/IncidentReportFAB'
+import { useToast } from '@spaceos/portal-ui'
+import { IncidentReportFAB } from '@spaceos/module-ehs/wizard'
 import {
   ehsKeys,
   EhsDashboard,
@@ -11,7 +11,7 @@ import {
   SdsScreen,
   PpeScreen,
   WalksScreen,
-} from '../modules/ehs'
+} from '@spaceos/module-ehs'
 
 /**
  * EHS világ-oldal — vékony képernyő-diszpécser (a képernyők a ./ehs/ alatt élnek,

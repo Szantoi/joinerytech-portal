@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { Card } from '../components/ui'
+import { Card } from '@spaceos/portal-ui'
 import { OperatorAutocomplete } from '../components/scheduling/OperatorAutocomplete'
 import { BatchList } from '../components/scheduling/BatchList'
 import { MachineDropZone } from '../components/scheduling/MachineDropZone'

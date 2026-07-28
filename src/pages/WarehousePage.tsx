@@ -2,7 +2,7 @@ import { Suspense } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { WorldShell } from '../components/layout/WorldShell';
 import { RouteFallback } from '../components/layout/RouteFallback';
-import { WarehouseDashboard } from '../modules/warehouse';
+import { WarehouseDashboard } from '@joinerytech/world-warehouse';
 import { WAREHOUSE_SCREEN_COMPONENTS } from './warehouseScreenMap';
 
 /**

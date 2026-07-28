@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useAuth } from '../auth'
-import { Icon } from '../components/ui/Icon'
+import { Icon } from '@spaceos/portal-ui'
 
 export function LoginPage() {
   const { isAuthenticated, isLoading, login } = useAuth()

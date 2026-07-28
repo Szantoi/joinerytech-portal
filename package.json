@@ -3,15 +3,18 @@
   "private": true,
   "version": "1.0.0",
   "type": "module",
+  "workspaces": [
+    "packages/*"
+  ],
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
     "lint": "eslint .",
     "preview": "vite preview",
     "test": "vitest run",
-    "test:pr": "vitest run src/modules src/lib src/hooks src/theme src/components/ui",
+    "test:pr": "vitest run packages src/lib src/hooks",
     "test:full": "vitest run",
-    "test:nightly": "vitest run src/pages src/components src/__tests__ src/auth src/mocks",
+    "test:nightly": "vitest run src/pages src/components src/__tests__ src/mocks packages",
     "test:contract:production": "vitest run --config vitest.contract.config.ts",
     "test:contract:warehouse": "vitest run --config vitest.contract.warehouse.config.ts",
     "test:smoke:keyboard": "node scripts/keyboard-smoke.mjs"

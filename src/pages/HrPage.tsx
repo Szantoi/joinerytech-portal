@@ -7,7 +7,7 @@ import {
   AbsencesScreen,
   SkillsScreen,
   TimeLogsScreen,
-} from '../modules/hr'
+} from '@spaceos/module-hr'
 
 /**
  * HR világ-oldal — vékony képernyő-diszpécser (a képernyők a ./hr/ alatt

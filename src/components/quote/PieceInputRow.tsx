@@ -1,4 +1,4 @@
-import { Input } from '../ui';
+import { Input } from '@spaceos/portal-ui';
 import type { CutPieceInput, Material } from '../../types/quote';
 
 interface PieceInputRowProps {

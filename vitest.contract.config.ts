@@ -15,7 +15,7 @@ export default defineConfig({
   test: {
     environment: 'node',
     globals: true,
-    include: ['src/modules/production/services/__tests__/productionContract.gate.ts'],
+    include: ['packages/world-production/src/services/__tests__/productionContract.gate.ts'],
     // Egyetlen, valós hálózatot hívó futás — nincs értelme worker-fanoutnak,
     // és a soros futás olvashatóbb riport-sorrendet ad.
     fileParallelism: false,

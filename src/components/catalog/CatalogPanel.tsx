@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
-import { Card } from '../ui/Card'
+import { Card } from '@spaceos/portal-ui'
 import { EditableCell } from './EditableCell'
 import { ConflictWarning } from './ConflictWarning'
 import { RowActionsMenu } from './RowActionsMenu'

@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { Card, StatusPill } from '../components/ui'
+import { Card, StatusPill } from '@spaceos/portal-ui'
 import { OffcutsPanel } from '../components/orders/OffcutsPanel'
 import { MovementsPage as MovementsTab } from './warehouse/MovementsPage'
 import { I18N } from '../mocks/data'

@@ -1,4 +1,4 @@
-import { Icon } from '../../ui/Icon'
+import { Icon } from '@spaceos/portal-ui'
 import type { QueuedBatch } from '../../../types/shopfloor'
 
 interface Props {

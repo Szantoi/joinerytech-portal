@@ -3,15 +3,15 @@ import {
   mockConfigureResponse,
   mockWorkOrderResponse
 } from './configuratorMocks'
-import { ehsApiHandlers } from '../modules/ehs/mocks'
-import { crmApiHandlers } from '../modules/crm/mocks'
-import { controllingApiHandlers } from '../modules/controlling/mocks'
-import { hrApiHandlers } from '../modules/hr/mocks'
-import { maintenanceApiHandlers } from '../modules/maintenance/mocks'
-import { qaApiHandlers } from '../modules/qa/mocks'
-import { dmsApiHandlers } from '../modules/dms/mocks'
-import { productionApiHandlers } from '../modules/production/mocks'
-import { warehouseHandlers } from '../modules/warehouse/mocks'
+import { ehsApiHandlers } from '@spaceos/module-ehs/mocks'
+import { crmApiHandlers } from '@spaceos/module-crm/mocks'
+import { controllingApiHandlers } from '@spaceos/module-controlling/mocks'
+import { hrApiHandlers } from '@spaceos/module-hr/mocks'
+import { maintenanceApiHandlers } from '@spaceos/module-maintenance/mocks'
+import { qaApiHandlers } from '@spaceos/module-qa/mocks'
+import { dmsApiHandlers } from '@spaceos/module-dms/mocks'
+import { productionApiHandlers } from '@joinerytech/world-production/mocks'
+import { warehouseHandlers } from '@joinerytech/world-warehouse/mocks'
 
 export const handlers = [
   // EHS modul-API (openapi-tükör, állapottartó store + FSM guardok) — ld. ./ehsApi
@@ -43,6 +43,8 @@ export const handlers = [
   // Warehouse modul-API (inventory/procurement contract mirror). This must be
   // registered in the global worker as well as the module-local node test server.
   ...warehouseHandlers,
+
+  // Collaboration modul-API (B2B Collaboration contract mirror)
 
   // POST /api/products/configure
   http.post('/api/products/configure', async ({ request }) => {

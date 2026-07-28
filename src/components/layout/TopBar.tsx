@@ -1,4 +1,4 @@
-import { Icon } from '../ui/Icon'
+import { Icon } from '@spaceos/portal-ui'
 import { ThemeQuickToggle } from './ThemeToggle'
 import type { I18nStrings } from '../../types'
 

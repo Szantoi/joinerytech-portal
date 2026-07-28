@@ -1,7 +1,7 @@
 import { useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../auth'
-import { Icon } from '../components/ui'
+import { Icon } from '@spaceos/portal-ui'
 
 const FEATURES = [
   {

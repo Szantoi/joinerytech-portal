@@ -8,7 +8,7 @@ export default defineConfig({
   test: {
     environment: 'node',
     globals: true,
-    include: ['src/modules/warehouse/services/__tests__/warehouseContract.gate.ts'],
+    include: ['packages/world-warehouse/src/services/__tests__/warehouseContract.gate.ts'],
     fileParallelism: false,
   },
 });

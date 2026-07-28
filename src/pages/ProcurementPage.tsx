@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from 'react'
-import { Card, StatusPill, PrimaryBtn } from '../components/ui'
+import { Card, StatusPill, PrimaryBtn } from '@spaceos/portal-ui'
 import { I18N } from '../mocks/data'
 import { useApi, API_BASE } from '../hooks/useApi'
 import { PODetailSlideOver } from '../components/procurement/PODetailSlideOver'

@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { KpiCard, Card, StatusPill, Icon } from '../components/ui'
+import { KpiCard, Card, StatusPill, Icon } from '@spaceos/portal-ui'
 import { MiniKanbanStrip } from '../components/layout/MiniKanbanStrip'
 import { I18N } from '../mocks/data'
 import { useApi, API_BASE } from '../hooks/useApi'

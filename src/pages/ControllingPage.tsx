@@ -6,7 +6,7 @@ import {
   MarginScreen,
   VarianceScreen,
   AdjustmentsScreen,
-} from '../modules/controlling'
+} from '@spaceos/module-controlling'
 
 /**
  * Kontrolling világ-oldal — vékony képernyő-diszpécser (a képernyők a

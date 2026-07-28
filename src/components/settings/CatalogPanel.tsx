@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Card } from '../ui/Card'
+import { Card } from '@spaceos/portal-ui'
 import { TemplatesPanel } from './TemplatesPanel'
 import { CATALOG_MATERIALS, type CatalogMaterial } from '../../mocks/extra'
 

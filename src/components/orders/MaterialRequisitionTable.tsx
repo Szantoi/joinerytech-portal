@@ -1,4 +1,4 @@
-import { Icon } from '../ui'
+import { Icon } from '@spaceos/portal-ui'
 import { fmtHUF } from '../../lib/utils'
 import type { MaterialReqItem } from '../../types/joinery.types'
 

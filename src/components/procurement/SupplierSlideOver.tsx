@@ -1,5 +1,5 @@
 import { useEffect } from 'react'
-import { SlideOver, GhostBtn } from '../ui'
+import { SlideOver, GhostBtn } from '@spaceos/portal-ui'
 import { useApi, API_BASE } from '../../hooks/useApi'
 import { getMockSupplierDetail, PO_STATUS_STYLE, type SupplierDetailDto } from '../../data/data-procurement'
 

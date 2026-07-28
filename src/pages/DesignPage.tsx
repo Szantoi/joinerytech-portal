@@ -1,6 +1,6 @@
 import { useState, useMemo, useEffect } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
-import { Card, Icon } from '../components/ui'
+import { Card, Icon } from '@spaceos/portal-ui'
 import { PARAM_TEMPLATES, CATALOG_LOOKUP } from '../mocks/worlds'
 import { WorldShell } from '../components/layout/WorldShell'
 import { useApi, useMutation, API_BASE } from '../hooks/useApi'

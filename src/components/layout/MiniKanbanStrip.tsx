@@ -1,6 +1,6 @@
 import { useEffect } from 'react'
-import { Card } from '../ui/Card'
-import { Icon } from '../ui/Icon'
+import { Card } from '@spaceos/portal-ui'
+import { Icon } from '@spaceos/portal-ui'
 import { STAGES, FLOW_EPICS } from '../../mocks/extra'
 import { useApi, API_BASE } from '../../hooks/useApi'
 import { useAuth } from '../../auth'

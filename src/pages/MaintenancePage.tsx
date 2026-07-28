@@ -5,7 +5,7 @@ import {
   AssetsScreen,
   WorkOrdersScreen,
   ScheduleScreen,
-} from '../modules/maintenance'
+} from '@spaceos/module-maintenance'
 
 /**
  * Karbantartás világ-oldal — vékony képernyő-diszpécser (a képernyők a

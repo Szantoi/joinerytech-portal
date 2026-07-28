@@ -1,9 +1,9 @@
-import { Icon, Card } from '../ui'
+import { Icon, Card } from '@spaceos/portal-ui'
 import { ThemeQuickToggle } from './ThemeToggle'
 import { WorldIcon } from './WorldIcon'
 import { ACCENT_MAP } from './WorldShell'
 import { WORLDS, WORLD_ORDER } from '../../mocks/worlds'
-import { WORLD_DATA_ATTR } from '../../theme/worldAccents'
+import { WORLD_DATA_ATTR } from '@spaceos/portal-ui'
 import { useAuth } from '../../hooks/useAuth'
 import type { WorldKey } from '../../types'
 

@@ -3,8 +3,8 @@ import { render, screen, fireEvent } from '@testing-library/react'
 import { MemoryRouter, Route, Routes } from 'react-router-dom'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { setupServer } from 'msw/node'
-import { ToastProvider } from '../../components/ui'
-import { ehsApiHandlers, resetEhsDb } from '../../modules/ehs/mocks'
+import { ToastProvider } from '@spaceos/portal-ui'
+import { ehsApiHandlers, resetEhsDb } from '@spaceos/module-ehs/mocks'
 import { EhsWorldPage } from '../EhsPage'
 
 vi.mock('../../auth', () => ({

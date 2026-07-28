@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Icon } from '../ui'
+import { Icon } from '@spaceos/portal-ui'
 
 export interface FilterOption {
   value: string

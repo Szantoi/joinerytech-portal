@@ -1,4 +1,4 @@
-import { Icon } from '../ui'
+import { Icon } from '@spaceos/portal-ui'
 import type { HardwareSpecItem } from '../../types/joinery.types'
 
 interface HardwareSpecsCardProps {

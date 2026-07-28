@@ -7,7 +7,7 @@ import {
   DoorOrdersScreen,
   QuotesScreen,
   CuttingAnalyticsScreen,
-} from '../modules/production'
+} from '@joinerytech/world-production'
 import { WorkflowPage } from './WorkflowPage'
 
 /**

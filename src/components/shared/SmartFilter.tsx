@@ -2,7 +2,7 @@ import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react
 import { FilterRow } from './FilterRow'
 import { FilterPresets } from './FilterPresets'
 import { useFilterState, type FilterConfig } from '../../hooks/useFilterState'
-import { Icon } from '../ui'
+import { Icon } from '@spaceos/portal-ui'
 
 export interface SmartFilterProps<T = any> {
   config: FilterConfig

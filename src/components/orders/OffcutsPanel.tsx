@@ -1,7 +1,7 @@
-import { Card } from '../ui/Card'
-import { Icon } from '../ui/Icon'
-import { StatusPill } from '../ui/StatusPill'
-import { GhostBtn } from '../ui/Button'
+import { Card } from '@spaceos/portal-ui'
+import { Icon } from '@spaceos/portal-ui'
+import { StatusPill } from '@spaceos/portal-ui'
+import { GhostBtn } from '@spaceos/portal-ui'
 
 const OFFCUTS = [
   { id: 'OC-007', mat: 'Tölgy 22mm', dims: '320×280 mm', src: 'CP-182-B', date: '2026-04-24', status: 'sérült', who: 'Tóth K.' },

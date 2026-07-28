@@ -4,7 +4,7 @@ import { Route, Routes } from 'react-router-dom';
 import { WarehouseWorldPage } from '../WarehousePage';
 import { WAREHOUSE_DISPATCHER_KEYS } from '../warehouseScreenMap';
 import { WORLDS } from '../../mocks/worlds';
-import { createWarehouseWrapper } from '../../modules/warehouse/pages/__tests__/warehouseTestUtils';
+import { createWarehouseWrapper } from '../../../packages/world-warehouse/src/pages/__tests__/warehouseTestUtils';
 
 /**
  * Diszpécser-kulcs őr: a worlds.ts warehouse-regiszterének MINDEN screen-kulcsát

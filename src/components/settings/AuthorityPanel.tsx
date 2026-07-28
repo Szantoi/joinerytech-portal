@@ -1,7 +1,7 @@
 import { useState } from 'react'
-import { Card } from '../ui/Card'
-import { Icon } from '../ui/Icon'
-import { PrimaryBtn, GhostBtn } from '../ui/Button'
+import { Card } from '@spaceos/portal-ui'
+import { Icon } from '@spaceos/portal-ui'
+import { PrimaryBtn, GhostBtn } from '@spaceos/portal-ui'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 

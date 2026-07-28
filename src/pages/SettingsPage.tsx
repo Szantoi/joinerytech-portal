@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Card, PrimaryBtn } from '../components/ui'
+import { Card, PrimaryBtn } from '@spaceos/portal-ui'
 import { ThemeToggle } from '../components/layout/ThemeToggle'
 import { MachineParkPanel } from '../components/settings/MachineParkPanel'
 import { CatalogPanel } from '../components/settings/CatalogPanel'

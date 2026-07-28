@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
-import { Card } from '../components/ui'
-import { SlideOver } from '../components/ui/SlideOver'
+import { Card } from '@spaceos/portal-ui'
+import { SlideOver } from '@spaceos/portal-ui'
 import { WorldShell } from '../components/layout/WorldShell'
 import { TASKS, TASK_PRIORITY_META, TASK_STATUS_META, type Task, type TaskStatus } from '../mocks/tasks'
 

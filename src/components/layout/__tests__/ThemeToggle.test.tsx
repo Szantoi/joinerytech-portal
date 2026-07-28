@@ -9,7 +9,7 @@
 import { describe, it, expect, beforeEach } from 'vitest'
 import { render, screen, fireEvent, act } from '@testing-library/react'
 import { ThemeToggle, ThemeQuickToggle } from '../ThemeToggle'
-import { setThemePreference, THEME_STORAGE_KEY } from '../../../theme/useTheme'
+import { setThemePreference, THEME_STORAGE_KEY } from '@spaceos/portal-ui'
 
 beforeEach(() => {
   window.localStorage.clear()

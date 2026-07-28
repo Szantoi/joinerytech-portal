@@ -3,7 +3,7 @@ import { render } from '@testing-library/react'
 import type { RenderOptions } from '@testing-library/react'
 import { MemoryRouter } from 'react-router-dom'
 
-// useAuth is mocked globally in test-setup.ts via vi.mock('./auth/AuthContext')
+// useAuth is mocked globally in test-setup.ts via vi.mock('@spaceos/portal-core')
 
 function TestWrapper({ children }: { children: React.ReactNode }) {
   return <MemoryRouter>{children}</MemoryRouter>

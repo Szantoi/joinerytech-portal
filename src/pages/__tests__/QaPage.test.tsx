@@ -3,8 +3,8 @@ import { render, screen, fireEvent, within } from '@testing-library/react'
 import { MemoryRouter, Route, Routes } from 'react-router-dom'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { setupServer } from 'msw/node'
-import { ToastProvider } from '../../components/ui'
-import { qaApiHandlers, resetQaDb } from '../../modules/qa/mocks'
+import { ToastProvider } from '@spaceos/portal-ui'
+import { qaApiHandlers, resetQaDb } from '@spaceos/module-qa/mocks'
 import { QualityWorldPage } from '../QualityPage'
 
 vi.mock('../../auth', () => ({

@@ -1,4 +1,4 @@
-import { Icon } from '../ui/Icon'
+import { Icon } from '@spaceos/portal-ui'
 import { selectBottomNavItems, screenIcon } from './bottomNav'
 import type { WorldScreen } from '../../types'
 

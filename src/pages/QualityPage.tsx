@@ -5,7 +5,7 @@ import {
   InspectionsScreen,
   TicketsScreen,
   TrendScreen,
-} from '../modules/qa'
+} from '@spaceos/module-qa'
 
 /**
  * Minőség (QA) világ-oldal — vékony képernyő-diszpécser (a képernyők a ./qa/

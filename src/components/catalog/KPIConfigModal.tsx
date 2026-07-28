@@ -1,6 +1,6 @@
 import { useState } from 'react'
-import { Icon } from '../ui/Icon'
-import { Card } from '../ui/Card'
+import { Icon } from '@spaceos/portal-ui'
+import { Card } from '@spaceos/portal-ui'
 
 interface KPIConfigModalProps {
   open: boolean

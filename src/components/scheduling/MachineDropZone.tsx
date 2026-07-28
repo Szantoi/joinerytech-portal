@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Card } from '../ui'
+import { Card } from '@spaceos/portal-ui'
 import type { Batch, Machine } from '../../types/scheduling.types'
 
 interface MachineDropZoneProps {

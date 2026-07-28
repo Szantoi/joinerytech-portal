@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Card, Input } from '../components/ui';
+import { Card, Input } from '@spaceos/portal-ui';
 import { PieceInputRow } from '../components/quote/PieceInputRow';
 import { useMaterialCatalog } from '../hooks/useMaterialCatalog';
 import { checkQuotePieceLimit } from '../lib/quotePieceLimit';

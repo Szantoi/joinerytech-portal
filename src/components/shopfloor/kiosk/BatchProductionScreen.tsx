@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { Icon } from '../../ui/Icon'
+import { Icon } from '@spaceos/portal-ui'
 import type { Batch, OperatorSession } from '../../../types/shopfloor'
 
 interface Props {

@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { Card, Sparkline, GhostBtn, Icon } from '../components/ui'
+import { Card, Sparkline, GhostBtn, Icon } from '@spaceos/portal-ui'
 import { I18N } from '../mocks/data'
 import { useApi, API_BASE } from '../hooks/useApi'
 

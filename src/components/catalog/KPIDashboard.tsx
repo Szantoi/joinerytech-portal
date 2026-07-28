@@ -1,10 +1,10 @@
 import { useState } from 'react'
-import { KpiCard } from '../ui/KpiCard'
+import { KpiCard } from '@spaceos/portal-ui'
 import { KPIConfigModal } from './KPIConfigModal'
 import { useKPICalculator } from '../../hooks/useKPICalculator'
 import type { KPIData } from '../../hooks/useKPICalculator'
 import { useDashboardLayout } from '../../hooks/useDashboardLayout'
-import { Icon } from '../ui/Icon'
+import { Icon } from '@spaceos/portal-ui'
 
 interface KPIDashboardProps {
   data: KPIData

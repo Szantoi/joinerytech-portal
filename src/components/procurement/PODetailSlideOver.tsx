@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { SlideOver, GhostBtn } from '../ui'
+import { SlideOver, GhostBtn } from '@spaceos/portal-ui'
 import { useApi, useMutation, API_BASE } from '../../hooks/useApi'
 import {
   PO_FSM_STEPS, PO_STATUS_STYLE, getMockPODetail,

@@ -3,7 +3,7 @@ import {
   OffcutsScreen,
   MovementsScreen,
   ProcurementScreen,
-} from '../modules/warehouse';
+} from '@joinerytech/world-warehouse';
 
 /**
  * A warehouse-diszpécser képernyő-térképe és teljes kulcskészlete — a

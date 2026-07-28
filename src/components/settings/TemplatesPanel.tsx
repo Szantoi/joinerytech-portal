@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react'
-import { SlideOver } from '../ui/SlideOver'
-import { PrimaryBtn, GhostBtn } from '../ui/Button'
-import { Icon } from '../ui/Icon'
-import { Card } from '../ui/Card'
+import { SlideOver } from '@spaceos/portal-ui'
+import { PrimaryBtn, GhostBtn } from '@spaceos/portal-ui'
+import { Icon } from '@spaceos/portal-ui'
+import { Card } from '@spaceos/portal-ui'
 import { useApi, API_BASE } from '../../hooks/useApi'
 
 // ── Types ────────────────────────────────────────────────────────────────────

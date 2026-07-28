@@ -1,4 +1,4 @@
-import { Icon } from '../ui'
+import { Icon } from '@spaceos/portal-ui'
 
 export type WorkflowState =
   | 'design_active'

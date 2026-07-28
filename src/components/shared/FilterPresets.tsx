@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import type { FilterPreset, FilterRow } from '../../hooks/useFilterState'
-import { Icon } from '../ui'
+import { Icon } from '@spaceos/portal-ui'
 
 export interface FilterPresetsProps {
   presets: FilterPreset[]

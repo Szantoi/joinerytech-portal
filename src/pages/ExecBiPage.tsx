@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
-import { Card } from '../components/ui'
-import { SlideOver } from '../components/ui/SlideOver'
+import { Card } from '@spaceos/portal-ui'
+import { SlideOver } from '@spaceos/portal-ui'
 import { WorldShell } from '../components/layout/WorldShell'
 import {
   EXEC_TREND_DATA, EXEC_TOP5_PROJECTS, EXEC_TOP5_CUSTOMERS, EXEC_TAB_META,

@@ -1,7 +1,7 @@
 import { useEffect } from 'react'
-import { Card } from '../ui/Card'
-import { Icon } from '../ui/Icon'
-import { GhostBtn } from '../ui/Button'
+import { Card } from '@spaceos/portal-ui'
+import { Icon } from '@spaceos/portal-ui'
+import { GhostBtn } from '@spaceos/portal-ui'
 import { AUDIT_LOG } from '../../mocks/extra'
 import { useApi, API_BASE } from '../../hooks/useApi'
 

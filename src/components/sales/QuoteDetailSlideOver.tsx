@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { SlideOver, GhostBtn, Icon } from '../ui'
+import { SlideOver, GhostBtn, Icon } from '@spaceos/portal-ui'
 import { useApi, useMutation, API_BASE } from '../../hooks/useApi'
 import {
   QUOTE_STATUS_MAP, calcVat, calcGross, fmtHuf,

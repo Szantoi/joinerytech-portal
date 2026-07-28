@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from 'react'
-import { Card, StatusPill, PrimaryBtn, GhostBtn, Icon } from '../components/ui'
+import { Card, StatusPill, PrimaryBtn, GhostBtn, Icon } from '@spaceos/portal-ui'
 import { NewOrderDrawer } from '../components/orders/NewOrderDrawer'
 import { MaterialRequisitionTable } from '../components/orders/MaterialRequisitionTable'
 import { HardwareSpecsCard } from '../components/orders/HardwareSpecsCard'

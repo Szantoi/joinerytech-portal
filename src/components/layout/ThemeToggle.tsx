@@ -7,8 +7,8 @@
  * A gyors elérésű header-kapcsoló: ThemeQuickToggle (nap/hold/monitor ikon).
  */
 
-import { useTheme, type ThemePreference } from '../../theme/useTheme'
-import { Icon } from '../ui/Icon'
+import { useTheme, type ThemePreference } from '@spaceos/portal-ui'
+import { Icon } from '@spaceos/portal-ui'
 
 interface ThemeOption {
   value: ThemePreference

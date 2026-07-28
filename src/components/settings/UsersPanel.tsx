@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { Card, GhostBtn, Icon, SlideOver } from '../ui'
+import { Card, GhostBtn, Icon, SlideOver } from '@spaceos/portal-ui'
 import { useApi, useMutation, API_BASE } from '../../hooks/useApi'
 
 export interface UserDto {

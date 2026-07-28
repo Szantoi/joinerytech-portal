@@ -1,7 +1,7 @@
 import { useState } from 'react'
-import { SlideOver } from '../ui/SlideOver'
-import { PrimaryBtn, GhostBtn } from '../ui/Button'
-import { Icon } from '../ui/Icon'
+import { SlideOver } from '@spaceos/portal-ui'
+import { PrimaryBtn, GhostBtn } from '@spaceos/portal-ui'
+import { Icon } from '@spaceos/portal-ui'
 import { CATALOG_MATERIALS, type CatalogMaterial } from '../../mocks/extra'
 import { useMutation, API_BASE } from '../../hooks/useApi'
 

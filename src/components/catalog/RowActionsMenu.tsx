@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react'
-import { Icon } from '../ui'
+import { Icon } from '@spaceos/portal-ui'
 
 export interface RowActionsMenuProps {
   onDuplicate: () => void

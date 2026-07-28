@@ -1,6 +1,6 @@
 import React, { Component } from 'react'
 import type { ErrorInfo, ReactNode } from 'react'
-import { Card, Icon } from './ui'
+import { Card, Icon } from '@spaceos/portal-ui'
 
 interface Props {
   children: ReactNode

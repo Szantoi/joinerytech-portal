@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useApi, API_BASE } from '../../hooks/useApi'
-import { Icon } from '../ui'
+import { Icon } from '@spaceos/portal-ui'
 import type { Operator } from '../../types/scheduling.types'
 
 interface OperatorAutocompleteProps {

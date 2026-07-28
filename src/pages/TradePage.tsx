@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
-import { Card, Icon } from '../components/ui'
-import { SlideOver } from '../components/ui/SlideOver'
+import { Card, Icon } from '@spaceos/portal-ui'
+import { SlideOver } from '@spaceos/portal-ui'
 import { WorldShell } from '../components/layout/WorldShell'
 import {
   TRADE_QUOTES, TRADE_POS, TRADE_PARTNERS,

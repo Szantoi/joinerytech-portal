@@ -3,8 +3,8 @@ import { render, screen } from '@testing-library/react'
 import { MemoryRouter, Route, Routes } from 'react-router-dom'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { setupServer } from 'msw/node'
-import { ToastProvider } from '../../components/ui'
-import { productionApiHandlers, resetProductionDb, PRODUCTION_SEED_IDS } from '../../modules/production/mocks'
+import { ToastProvider } from '@spaceos/portal-ui'
+import { productionApiHandlers, resetProductionDb, PRODUCTION_SEED_IDS } from '@joinerytech/world-production/mocks'
 import { ProductionWorldPage } from '../ProductionPage'
 
 /**

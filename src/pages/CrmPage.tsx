@@ -7,7 +7,7 @@ import {
   OppsScreen,
   TasksScreen,
   ForecastScreen,
-} from '../modules/crm'
+} from '@spaceos/module-crm'
 
 /**
  * CRM világ-oldal — vékony képernyő-diszpécser (a képernyők a ./crm/ alatt

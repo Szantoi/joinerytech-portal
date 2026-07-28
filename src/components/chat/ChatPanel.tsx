@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
-import { Icon } from '../ui/Icon'
+import { Icon } from '@spaceos/portal-ui'
 
 const SUGGESTIONS = [
   'Hány rendelés van gyártás alatt?',

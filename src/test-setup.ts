@@ -39,7 +39,8 @@ vi.mock('oidc-client-ts', () => {
 })
 
 // Global mock for auth context — isAuthenticated: true so RequireAuth passes in router tests
-vi.mock('./auth/AuthContext', () => ({
+vi.mock('@spaceos/portal-core', async (importOriginal) => ({
+  ...(await importOriginal<object>()),
   useAuth: () => ({
     user: null,
     isAuthenticated: true,
@@ -54,6 +55,9 @@ vi.mock('./auth/AuthContext', () => ({
     facilityName: 'Vác főüzem',
   }),
   AuthProvider: ({ children }: { children: unknown }) => children,
+  // A valódi RequireAuth a modul-BELSŐ useAuth-ot hívja (a mock a csomag-exportot
+  // cseréli, a belső hivatkozást nem éri el) → itt passthrough kell.
+  RequireAuth: ({ children }: { children: unknown }) => children,
   userManager: {
     signinRedirectCallback: vi.fn().mockResolvedValue({}),
     signinRedirect: vi.fn(),

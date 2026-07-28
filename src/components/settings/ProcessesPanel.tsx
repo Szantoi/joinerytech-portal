@@ -1,8 +1,8 @@
 import { useState } from 'react'
-import { Card } from '../ui/Card'
-import { Icon } from '../ui/Icon'
-import { PrimaryBtn, GhostBtn } from '../ui/Button'
-import { SlideOver } from '../ui/SlideOver'
+import { Card } from '@spaceos/portal-ui'
+import { Icon } from '@spaceos/portal-ui'
+import { PrimaryBtn, GhostBtn } from '@spaceos/portal-ui'
+import { SlideOver } from '@spaceos/portal-ui'
 import { FACILITIES } from '../../mocks/extra2'
 
 // ─── Types ────────────────────────────────────────────────────────────────────

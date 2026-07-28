@@ -1,5 +1,5 @@
-import { Icon } from '../ui/Icon'
-import { Wordmark, GrainMark } from '../ui/Wordmark'
+import { Icon } from '@spaceos/portal-ui'
+import { Wordmark, GrainMark } from '@spaceos/portal-ui'
 import { useAuth } from '../../hooks/useAuth'
 import type { I18nStrings } from '../../types'
 

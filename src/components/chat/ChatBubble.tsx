@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Icon } from '../ui/Icon'
+import { Icon } from '@spaceos/portal-ui'
 import { ChatPanel } from './ChatPanel'
 
 interface ChatBubbleProps {

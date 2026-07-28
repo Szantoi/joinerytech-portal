@@ -1,8 +1,8 @@
 import { useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { WorldShell } from '../components/layout/WorldShell'
-import { SlideOver } from '../components/ui/SlideOver'
-import { Icon } from '../components/ui'
+import { SlideOver } from '@spaceos/portal-ui'
+import { Icon } from '@spaceos/portal-ui'
 import {
   SERVICE_TICKETS, SVC_WARRANTIES, SVC_VISITS,
   SVC_TYPE_META, SVC_STATUS_META, SVC_PRIORITY_META, SVC_STATUS_ORDER, SVC_VISIT_STATUS_META,
