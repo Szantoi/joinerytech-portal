@@ -2,7 +2,7 @@ import { lazy, Suspense, type ComponentType } from 'react'
 import { Routes, Route, Navigate, useNavigate, useParams } from 'react-router-dom'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { AuthProvider, CallbackPage, RequireAuth } from './auth'
-import { ToastProvider } from '@spaceos/portal-ui'
+import { ConfirmProvider, ToastProvider } from '@spaceos/portal-ui'
 import { HomeScreen } from './components/layout/HomeScreen'
 import { WorldShell } from './components/layout/WorldShell'
 import { RouteFallback } from './components/layout/RouteFallback'
@@ -119,6 +119,9 @@ export function App() {
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
         <ToastProvider>
+        {/* A megerősítő dialógus a Toast alatt ül: a dialógus bezárása után
+            érkező visszajelzés (toast) így nem esik inert háttérbe. */}
+        <ConfirmProvider>
         {/* Root Suspense: shows a token-styled full-page fallback while a lazy route chunk loads */}
         <Suspense fallback={<RouteFallback />}>
         <Routes>
@@ -454,6 +457,7 @@ export function App() {
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
       </Suspense>
+        </ConfirmProvider>
       </ToastProvider>
     </AuthProvider>
     </QueryClientProvider>
