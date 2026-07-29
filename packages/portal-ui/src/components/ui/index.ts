@@ -44,7 +44,7 @@ export { useInertBackground } from './hooks/useInertBackground'
 export { ConfirmDialog, ConfirmProvider } from './ConfirmDialog'
 export type { ConfirmDialogProps } from './ConfirmDialog'
 export { useConfirm } from './confirmContext'
-export type { ConfirmOptions, ConfirmContextValue } from './confirmContext'
+export type { ConfirmOptions, ConfirmContextValue, ConfirmDetail } from './confirmContext'
 // usePrintScope: a vágást a `src/index.css` `@media print` blokkja végzi
 // (data-print-scope / data-print-region attribútum-pár) — a hook önmagában
 // csak megjelöl és nyomtat.

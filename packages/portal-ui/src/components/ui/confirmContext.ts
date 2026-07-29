@@ -1,4 +1,26 @@
 import { createContext, useContext } from 'react'
+import type { Tone } from '../../theme/statusTones'
+
+/**
+ * Egy sor a megerősítés strukturált összefoglalójában (PLAN-05 F4).
+ *
+ * Miért ADAT és nem `ReactNode`: így a dialógus kinézete a design-systemé
+ * marad, nem a hívóé — különben minden fogyasztó újra feltalálná az
+ * összefoglaló-elrendezést, és a szemantika (definíciós lista) elveszne.
+ */
+export interface ConfirmDetail {
+  /** Mit ír le a sor — pl. „Célgép". */
+  label: string
+  /** A fő érték — pl. a gép neve. */
+  value: string
+  /** Másodlagos sor, ha a fő érték magában kevés — pl. „Kapacitás: 100 egység". */
+  hint?: string
+  /**
+   * Ha van, az érték tónusos pillként jelenik meg. A szám/szöveg így is
+   * olvasható marad: a szín soha nem az egyetlen jelzés (spec 1.6).
+   */
+  tone?: Tone
+}
 
 /**
  * Confirm context + típusok (PLAN-05 F3).
@@ -18,6 +40,12 @@ export interface ConfirmOptions {
   title: string
   /** Magyarázó szöveg (mit von maga után a művelet). */
   description?: string
+  /**
+   * Strukturált összefoglaló: mire mond igent a felhasználó. Definíciós
+   * listaként jelenik meg, és a `description` MELLETT él (nem helyette) —
+   * a szöveges indoklás és a tételes összefoglaló két külön dolog.
+   */
+  details?: readonly ConfirmDetail[]
   /** A megerősítő gomb felirata — lokalizált szöveg. */
   confirmLabel: string
   /** A mégse gomb felirata — lokalizált szöveg. */

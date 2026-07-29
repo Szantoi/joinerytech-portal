@@ -101,3 +101,83 @@ describe('ConfirmProvider / useConfirm', () => {
     spy.mockRestore()
   })
 })
+
+/**
+ * PLAN-05 F4 — strukturált összefoglaló.
+ *
+ * A `details` azért ADAT és nem `ReactNode`, hogy az elrendezés és a szemantika
+ * a design-systemé maradjon. Ezek a tesztek pont ezt a szerződést kötik ki.
+ */
+function DetailsHarness() {
+  const { ask } = useConfirm()
+  return (
+    <button
+      type="button"
+      onClick={() =>
+        ask({
+          title: 'Köteg kiosztásának megerősítése',
+          confirmLabel: 'Kiosztás',
+          cancelLabel: 'Mégse',
+          details: [
+            { label: 'Célgép', value: 'Holzma HPP380', hint: 'Kapacitás: 100 egység' },
+            { label: 'Prioritás', value: '8 — magas', tone: 'danger' },
+          ],
+        })
+      }
+    >
+      Kiosztás indítása
+    </button>
+  )
+}
+
+describe('ConfirmDialog — strukturált összefoglaló', () => {
+  async function openDetailsDialog() {
+    const user = userEvent.setup()
+    render(
+      <ConfirmProvider>
+        <DetailsHarness />
+      </ConfirmProvider>,
+    )
+    await user.click(screen.getByRole('button', { name: 'Kiosztás indítása' }))
+    return { user, dialog: await screen.findByRole('alertdialog') }
+  }
+
+  it('a címke→érték viszonyt a markup hordozza (dt/dd), nem a tördelés', async () => {
+    await openDetailsDialog()
+
+    expect(screen.getByText('Célgép').tagName).toBe('DT')
+    expect(screen.getByText('Holzma HPP380').closest('dd')).not.toBeNull()
+    expect(screen.getByText('Kapacitás: 100 egység').closest('dd')).not.toBeNull()
+  })
+
+  it('a tónusos érték szövegként is olvasható — a szín nem az egyetlen jelzés', async () => {
+    await openDetailsDialog()
+
+    // Ha a tónus csak háttérszín lenne, ez a szöveg nem létezne.
+    expect(screen.getByText('8 — magas')).toBeTruthy()
+  })
+
+  it('az összefoglaló bekerül az aria-describedby-ba', async () => {
+    const { dialog } = await openDetailsDialog()
+
+    const describedBy = dialog.getAttribute('aria-describedby')
+    expect(describedBy).toBeTruthy()
+    const described = describedBy!.split(' ').map((id) => document.getElementById(id))
+    expect(described.every(Boolean)).toBe(true)
+    // A leírás nélküli hívásnál is van mit felolvasni: maga az összefoglaló.
+    expect(described.some((el) => el?.tagName === 'DL')).toBe(true)
+  })
+
+  it('details nélkül nem rendel üres listát', async () => {
+    const user = userEvent.setup()
+    render(
+      <ConfirmProvider>
+        <Harness onResult={() => {}} />
+      </ConfirmProvider>,
+    )
+    await user.click(screen.getByRole('button', { name: 'Törlés indítása' }))
+    await screen.findByRole('alertdialog')
+
+    expect(document.querySelector('dl')).toBeNull()
+  })
+})

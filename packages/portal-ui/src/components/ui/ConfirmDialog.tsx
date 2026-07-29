@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useId, useMemo, useRef, useState, type ReactNode } from 'react'
 import { Button } from './Button'
+import { STATUS_TONES } from '../../theme/statusTones'
 import { useFocusTrap } from './hooks/useFocusTrap'
 import { useInertBackground } from './hooks/useInertBackground'
 import { ConfirmContext, type ConfirmOptions } from './confirmContext'
@@ -28,6 +29,7 @@ export function ConfirmDialog({
   open,
   title,
   description,
+  details,
   confirmLabel,
   cancelLabel,
   tone = 'default',
@@ -37,6 +39,13 @@ export function ConfirmDialog({
   const titleId = useId()
   const rootRef = useRef<HTMLDivElement>(null)
   const panelRef = useRef<HTMLDivElement>(null)
+
+  // A leírás ÉS az összefoglaló is a dialógus leírása — az `aria-describedby`
+  // több id-t is elfogad, tehát a képernyőolvasó mindkettőt felolvassa.
+  const describedBy = [
+    description ? `${titleId}-description` : null,
+    details?.length ? `${titleId}-details` : null,
+  ].filter(Boolean).join(' ')
 
   // Sorrend: az inert-et a fókusz-visszaadás ELŐTT kell feloldani.
   useInertBackground(rootRef, open)
@@ -65,7 +74,7 @@ export function ConfirmDialog({
         role="alertdialog"
         aria-modal="true"
         aria-labelledby={titleId}
-        aria-describedby={description ? `${titleId}-description` : undefined}
+        aria-describedby={describedBy || undefined}
         tabIndex={-1}
         className="relative w-full max-w-md rounded-xl border border-line bg-surface-card p-5 shadow-2xl"
       >
@@ -76,6 +85,31 @@ export function ConfirmDialog({
           <p id={`${titleId}-description`} className="mt-2 text-sm text-ink-muted">
             {description}
           </p>
+        )}
+        {details && details.length > 0 && (
+          // Definíciós lista: a címke→érték viszonyt a MARKUP hordozza, nem a
+          // tördelés — így a képernyőolvasó is párokként adja vissza.
+          <dl id={`${titleId}-details`} className="mt-4 space-y-3 rounded-lg border border-line bg-surface-sunken p-3">
+            {details.map((detail) => (
+              <div key={detail.label}>
+                <dt className="text-[11px] font-medium uppercase tracking-wide text-ink-soft">
+                  {detail.label}
+                </dt>
+                <dd className="mt-0.5">
+                  {detail.tone ? (
+                    <span className={`inline-block rounded-full px-2.5 py-0.5 text-xs font-semibold ${STATUS_TONES[detail.tone].bg} ${STATUS_TONES[detail.tone].fg}`}>
+                      {detail.value}
+                    </span>
+                  ) : (
+                    <span className="text-sm font-semibold text-ink">{detail.value}</span>
+                  )}
+                  {detail.hint && (
+                    <span className="mt-0.5 block text-xs text-ink-soft">{detail.hint}</span>
+                  )}
+                </dd>
+              </div>
+            ))}
+          </dl>
         )}
         <div className="mt-5 flex flex-wrap justify-end gap-2">
           {/* A Mégse áll elöl a DOM-ban: a fókusz ide érkezik. */}
