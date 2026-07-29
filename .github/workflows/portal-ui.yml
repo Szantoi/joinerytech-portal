@@ -1,0 +1,84 @@
+name: portal-ui
+
+# A `@spaceos/portal-ui` kifelé publikált csomag (Doorstar), ezért a
+# semlegessége és a fogyaszthatósága NEM figyelem kérdése, hanem kapué.
+#
+# A publikálás szándékosan `workflow_dispatch` — kifelé ható művelet, nem fut
+# magától egy push-ra.
+
+on:
+  pull_request:
+    paths:
+      - 'packages/portal-ui/**'
+      - '.github/workflows/portal-ui.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'packages/portal-ui/**'
+  workflow_dispatch:
+    inputs:
+      publish:
+        description: 'Publikálás a privát registrybe (kifelé ható művelet)'
+        type: boolean
+        default: false
+
+jobs:
+  gate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          registry-url: 'https://npm.pkg.github.com'
+          scope: '@spaceos'
+      - run: npm ci
+
+      # 1. Semlegességi kapu — iparági/márka-szókincs a publikált forrásban.
+      - name: Semlegességi kapu
+        run: npx vitest run packages/portal-ui/src/__tests__/neutrality.test.ts
+
+      # 2. A csomag buildel, és a típusok generálódnak.
+      - name: Build (dist + .d.ts)
+        run: npm run build --workspace @spaceos/portal-ui
+
+      # 3. A `dist` tényleg tartalmazza, amit ígér — üresen zöld build ellen.
+      - name: A dist nem üres és nem szivárogtat
+        run: |
+          test -s packages/portal-ui/dist/index.js
+          test -s packages/portal-ui/dist/index.d.ts
+          # A Vite lib-build konstansra cseréli az import.meta.env-et; ha mégis
+          # bennmarad, a nem-Vite fogyasztónál futásidőben szállna el.
+          ! grep -q "import\.meta\.env" packages/portal-ui/dist/index.js
+          # Márkajel nem kerülhet a bundle-be.
+          ! grep -q "Wordmark\|GrainMark" packages/portal-ui/dist/index.js
+
+      # 4. A WORKSPACE-FOGYASZTÓ nem törik — ez a szelet valódi kockázata volt.
+      - name: A portál buildje és teszt-suite-ja
+        run: |
+          npm run build
+          npx vitest run
+
+  publish:
+    needs: gate
+    if: github.event_name == 'workflow_dispatch' && inputs.publish
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          registry-url: 'https://npm.pkg.github.com'
+          scope: '@spaceos'
+      - run: npm ci
+      # A `prepack` script futtatja a buildet, tehát a publikált tarball
+      # mindig frissen buildelt `dist`-et visz.
+      - name: Publikálás
+        run: npm publish --workspace @spaceos/portal-ui
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.SPACEOS_PACKAGES_TOKEN }}
+      - name: Integritás-lenyomat a verzió-üzenethez
+        run: npm view @spaceos/portal-ui dist.integrity

@@ -1,10 +1,22 @@
 /// <reference types="vitest/config" />
+import { fileURLToPath } from 'node:url'
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
 
 export default defineConfig({
   plugins: [react(), tailwindcss()],
+  resolve: {
+    alias: {
+      // A `@spaceos/portal-ui` a KÜLSŐ fogyasztóknak (Doorstar) `dist`-et
+      // exportál — a workspace-en belül viszont forrásból dolgozunk.
+      // Enélkül a `tsconfig.app.json` paths-a (forrás) és a Vite feloldása
+      // (dist) szétválna: a típusok a forrásból, a futáskód a buildből jönne,
+      // és minden forrás-változás után rebuild kellene a teszt-suite-hoz.
+      // A `dist` frissességét a build + a fogyasztói próba őrzi, nem az app.
+      '@spaceos/portal-ui': fileURLToPath(new URL('./packages/portal-ui/src/index.ts', import.meta.url)),
+    },
+  },
   build: {
     rollupOptions: {
       output: {

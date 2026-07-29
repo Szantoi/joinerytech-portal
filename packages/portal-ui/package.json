@@ -1,10 +1,28 @@
 {
   "name": "@spaceos/portal-ui",
   "version": "1.0.0",
-  "private": true,
+  "description": "SpaceOS portál UI-primitívek (React 19 + Tailwind 4), design-system tokenekkel.",
   "type": "module",
+  "sideEffects": false,
   "exports": {
-    ".": "./src/index.ts"
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "scripts": {
+    "build": "vite build && tsc -p tsconfig.build.json",
+    "prepack": "npm run build"
+  },
+  "publishConfig": {
+    "registry": "https://npm.pkg.github.com",
+    "access": "restricted"
   },
   "peerDependencies": {
     "clsx": "^2.1.1",

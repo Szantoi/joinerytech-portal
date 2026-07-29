@@ -1,0 +1,21 @@
+{
+  "//": "Csak a .d.ts előállítása (PORTALUI-PUBLISH). A JS-t a Vite lib-build adja; itt szándékosan nincs emit a kódra, hogy egy forrás — egy kimenet maradjon. A `types: vite/client` azért kell, mert a csomag import.meta.env-et olvas (DEV-kapcsolt fejlesztői figyelmeztetések) — enélkül a .d.ts-generálás elhasal.",
+  "compilerOptions": {
+    "target": "es2023",
+    "lib": ["ES2023", "DOM", "DOM.Iterable"],
+    "module": "esnext",
+    "moduleResolution": "bundler",
+    "types": ["vite/client"],
+    "jsx": "react-jsx",
+    "strict": true,
+    "skipLibCheck": true,
+    "verbatimModuleSyntax": true,
+    "moduleDetection": "force",
+    "declaration": true,
+    "emitDeclarationOnly": true,
+    "outDir": "./dist",
+    "rootDir": "./src"
+  },
+  "include": ["src"],
+  "exclude": ["src/**/__tests__/**", "src/**/*.test.ts", "src/**/*.test.tsx"]
+}

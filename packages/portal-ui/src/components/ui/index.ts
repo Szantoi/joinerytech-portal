@@ -1,5 +1,4 @@
 export { Icon } from './Icon'
-export { Wordmark, GrainMark } from './Wordmark'
 export { StatusPill, STATUS_TONES } from './StatusPill'
 export { Sparkline } from './Sparkline'
 // GanttChart: a `formatTick` alapértelmezése UTC `óó:pp`-t ad. Ha a `domain`
