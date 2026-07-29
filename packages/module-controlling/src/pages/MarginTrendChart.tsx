@@ -45,7 +45,12 @@ export default function MarginTrendChart({ trend }: { trend: MarginTrendPoint[] 
       {/* Teljes hozzáférhető adat-alternatíva (M3, CRM ForecastScreen minta):
           a diagram aria-hidden, a trend MINDEN pontja sr-only táblázatban
           olvasható caption + th scope-pal. */}
-      <table className="sr-only">
+      {/* A `sr-only` BURKOLÓ divre kerül, nem a táblázatra: a `width: 1px` egy
+          <table>-en nem fog, mert a tábla a tartalmához nő (auto table-layout).
+          Így a rejtett táblázat 428px-re hízott, és 360px-en 104px vízszintes
+          túlcsordulást okozott — a felhasználó üres helyre görgethetett. */}
+      <div className="sr-only">
+      <table>
         <caption>Fedezet-trend havi bontásban: terv- és tény-fedezet százalék</caption>
         <thead>
           <tr>
@@ -64,6 +69,7 @@ export default function MarginTrendChart({ trend }: { trend: MarginTrendPoint[] 
           ))}
         </tbody>
       </table>
+      </div>
       <p className="mt-1 text-[10.5px] text-ink-muted">
         <span aria-hidden="true" className="mr-1 inline-block h-0.5 w-4 translate-y-[-2px] bg-chart-ref" />
         terv (szaggatott) ·{' '}

@@ -132,8 +132,12 @@ export function TrendScreen() {
             </span>
           </div>
 
-          {/* sr-only adat-alternatíva a vizuális rácshoz (M3-lecke) */}
-          <table className="sr-only">
+          {/* sr-only adat-alternatíva a vizuális rácshoz (M3-lecke).
+              A `sr-only` a BURKOLÓ divre kerül: a `width: 1px` egy <table>-en
+              nem fog (a tábla a tartalmához nő), és a rejtett táblázat így
+              vízszintes túlcsordulást okoz mobilon. */}
+          <div className="sr-only">
+          <table>
             <caption>Heti megfelelési trend adatai (utolsó {TREND_WINDOW_WEEKS} hét)</caption>
             <thead>
               <tr>
@@ -156,6 +160,7 @@ export function TrendScreen() {
               ))}
             </tbody>
           </table>
+          </div>
         </Card>
 
         {/* Hibatípus-eloszlás a hibajegyzetekből */}
