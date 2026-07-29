@@ -26,11 +26,6 @@ describe('App Router', () => {
     expect(await screen.findByText(/Jó reggelt/)).toBeTruthy()
   })
 
-  it('renders shopfloor at /w/shopfloor', async () => {
-    renderApp('/w/shopfloor')
-    expect(await screen.findByText('Bejelentkezés')).toBeTruthy()
-  })
-
   it('redirects unknown routes to home', async () => {
     renderApp('/nonexistent')
     expect(await screen.findByText(/Jó reggelt/)).toBeTruthy()

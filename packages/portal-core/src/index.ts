@@ -5,4 +5,5 @@ export * from './auth/AuthContext';
 export * from './auth/RequireAuth';
 export * from './auth/CallbackPage';
 export * from './auth/authConfig';
+export * from './auth/roles';
 export * from './utils/imageCompression';

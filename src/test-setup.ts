@@ -49,8 +49,25 @@ vi.mock('@spaceos/portal-core', async (importOriginal) => ({
     logout: vi.fn(),
     token: 'mock-token',
     tenantId: 'a1b2c3d4-e5f6-7890-abcd-ef1234567890',
-    roles: ['Admin'],
-    enabledModules: ['door', 'cutting'],
+    // Admin + üzemvezető: a router-suite minden világot bejár, és az
+    // ütemezés-képernyő kiosztási ága is működő állapotban legyen.
+    roles: ['Admin', 'production_manager'],
+    // The shared router suite exercises every product world. Keep this as the
+    // full-development tenant entitlement seed; restricted tenants are covered
+    // explicitly in RequireAuth/worldAccess tests.
+    enabledModules: [
+      'spaceos.crm',
+      'spaceos.controlling',
+      'spaceos.hr',
+      'spaceos.maintenance',
+      'spaceos.qa',
+      'spaceos.ehs',
+      'spaceos.dms',
+      'joinerytech.cutting',
+      'joinerytech.joinery',
+      'joinerytech.inventory',
+      'joinerytech.procurement',
+    ],
     facilityId: '5716546d-94d9-4b4b-ad79-2a1afc79e730',
     facilityName: 'Vác főüzem',
   }),

@@ -2,6 +2,7 @@
 import React, { createContext, useContext, useEffect, useState, useCallback } from 'react'
 import { UserManager, User } from 'oidc-client-ts'
 import { authConfig } from './authConfig'
+import { isPortalRole } from './roles'
 
 export interface AuthContextValue {
   user: User | null
@@ -26,23 +27,36 @@ function decodeJwtPayload(jwt: string): Record<string, unknown> {
   }
 }
 
-function parseUserClaims(user: User | null) {
+function parseModuleClaim(rawModules: unknown): string[] {
+  if (Array.isArray(rawModules)) return rawModules.map(String)
+  if (typeof rawModules !== 'string') return []
+
+  try {
+    const parsed: unknown = JSON.parse(rawModules)
+    if (Array.isArray(parsed)) return parsed.map(String)
+  } catch {
+    // A single module identifier is a valid Keycloak mapper output too.
+  }
+
+  return rawModules ? [rawModules] : []
+}
+
+export function parseUserClaims(user: User | null) {
   if (!user) return { tenantId: null, roles: [], enabledModules: [] }
 
   // Access token has realm_access.roles + custom claims
   const at = user.access_token ? decodeJwtPayload(user.access_token) : {}
   const realmAccess = at['realm_access'] as { roles?: string[] } | undefined
-  const roles = realmAccess?.roles?.filter(r => ['Admin', 'Designer', 'Joiner'].includes(r)) ?? []
+  // Az allowlist forrása a `roles.ts` — ne szülessen második szerep-lista.
+  const roles = realmAccess?.roles?.filter(isPortalRole) ?? []
 
   // Custom claims present in both ID token (profile) and access token
   const profile = user.profile as Record<string, unknown>
   const tidSource = (at['tid'] ?? profile['tid']) as string | undefined
   const tenantId = tidSource ?? null
 
-  const rawModules = (at['enabled_modules'] ?? profile['enabled_modules'])
-  const enabledModules: string[] = Array.isArray(rawModules)
-    ? (rawModules as unknown[]).map(String)
-    : rawModules ? [String(rawModules)] : []
+  const rawModules = at['enabled_modules'] ?? profile['enabled_modules']
+  const enabledModules = parseModuleClaim(rawModules)
 
   return { tenantId, roles, enabledModules }
 }
@@ -86,8 +100,25 @@ const mockAuthValue: AuthContextValue = {
   logout: async () => {},
   token: 'mock-token',
   tenantId: 'mock-tenant',
-  roles: ['Admin'],
-  enabledModules: ['crm', 'kontrolling', 'hr', 'maintenance', 'qa', 'ehs', 'dms'],
+  // A fejlesztői seed üzemi szerepeket is kap, különben a beroutolt
+  // ütemezés-képernyő mock módban csak-olvashatóként indulna.
+  roles: ['Admin', 'production_manager'],
+  // Full-development tenant seed. Individual entitlement combinations remain
+  // exercised by focused world-gating tests; this lets the local mock expose
+  // the production and warehouse composed products too.
+  enabledModules: [
+    'spaceos.crm',
+    'spaceos.controlling',
+    'spaceos.hr',
+    'spaceos.maintenance',
+    'spaceos.qa',
+    'spaceos.ehs',
+    'spaceos.dms',
+    'joinerytech.cutting',
+    'joinerytech.joinery',
+    'joinerytech.inventory',
+    'joinerytech.procurement',
+  ],
   facilityId: 'mock-facility',
   facilityName: 'Vác főüzem (mock)',
 }

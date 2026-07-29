@@ -1,1 +1,2 @@
-export { AuthProvider, useAuth, CallbackPage, RequireAuth } from '@spaceos/portal-core'
+export { AuthProvider, useAuth, CallbackPage } from '@spaceos/portal-core'
+export { RequireAuth } from './RequireAuth'
