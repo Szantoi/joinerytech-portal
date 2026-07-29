@@ -93,7 +93,7 @@ export function ThemeQuickToggle({ lang = 'hu', className = '' }: { lang?: strin
       onClick={() => setPreference(next)}
       aria-label={`${current} — ${lang === 'en' ? 'switch' : 'váltás'}: ${nextLabel}`}
       title={current}
-      className={`w-8 h-8 grid place-items-center rounded-lg border border-line text-ink-muted hover:bg-surface-2 hover:text-ink transition motion-reduce:transition-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-world-ring focus-visible:ring-offset-2 focus-visible:ring-offset-surface-1 ${className}`}
+      className={`w-8 h-8 pointer-coarse:w-11 pointer-coarse:h-11 grid place-items-center rounded-lg border border-line text-ink-muted hover:bg-surface-2 hover:text-ink transition motion-reduce:transition-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-world-ring focus-visible:ring-offset-2 focus-visible:ring-offset-surface-1 ${className}`}
     >
       <Icon name={QUICK_ICON[preference]} size={14} />
     </button>

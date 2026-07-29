@@ -196,7 +196,7 @@ function WorldTopBar({ world, screen, onHome, lang, onMenu }: WorldTopBarProps) 
         <button
           onClick={onMenu}
           aria-label="Menü"
-          className={`md:hidden w-9 h-9 -ml-1 grid place-items-center rounded-lg text-ink-muted hover:bg-surface-2 shrink-0 ${FOCUS_RING}`}
+          className={`md:hidden w-9 h-9 pointer-coarse:w-11 pointer-coarse:h-11 -ml-1 grid place-items-center rounded-lg text-ink-muted hover:bg-surface-2 shrink-0 ${FOCUS_RING}`}
         >
           <Icon name="menu" size={20} />
         </button>
@@ -221,7 +221,7 @@ function WorldTopBar({ world, screen, onHome, lang, onMenu }: WorldTopBarProps) 
           )}
         </div>
         <div className="flex-1" />
-        <div className="hidden md:flex items-center gap-2 shrink-0">
+        <div className="hidden md:flex items-center gap-2 pointer-coarse:gap-3 shrink-0">
           <div className="relative hidden lg:block">
             <input
               aria-label={lang === 'en' ? 'Search' : 'Keresés'}
@@ -232,7 +232,7 @@ function WorldTopBar({ world, screen, onHome, lang, onMenu }: WorldTopBarProps) 
           </div>
           <button
             aria-label={lang === 'en' ? 'Notifications' : 'Értesítések'}
-            className={`w-8 h-8 grid place-items-center rounded-lg border border-line text-ink-muted hover:bg-surface-2 relative ${FOCUS_RING}`}
+            className={`w-8 h-8 pointer-coarse:w-11 pointer-coarse:h-11 grid place-items-center rounded-lg border border-line text-ink-muted hover:bg-surface-2 relative ${FOCUS_RING}`}
           >
             <Icon name="bell" size={14} />
             <span aria-hidden="true" className="absolute top-1 right-1 w-1.5 h-1.5 rounded-full bg-rose-500" />

@@ -359,6 +359,59 @@ try {
     await ctx.close()
   }
 
+  // ── TOUCH-44: a shell fejléc-gombjai érintéssel 44px-esek ─────────────────
+  // A 44px-es szabály a BEVITELI ESZKÖZRŐL szól, nem a képernyő szélességéről,
+  // ezért `pointer: coarse` alatt nőnek a célpontok, egérrel marad a mai arány.
+  //
+  // ⚠ Ezt a kaput coarse pointerrel KELL futtatni: a többi ellenőrzés finom
+  // mutatóval megy, tehát a javítást nem is látná. És a coarse NEM egyenlő a
+  // kis képernyővel — egy érintőképernyős laptop 1440px-en is coarse, ezért
+  // ott is mérünk.
+  {
+    const HEADER_BUTTONS = ['Értesítések', 'Téma']
+    const sizes = (labels) => {
+      const out = {}
+      for (const label of labels) {
+        const el = [...document.querySelectorAll('button')].find(
+          (b) => (b.getAttribute('aria-label') ?? '').includes(label))
+        const r = el?.getBoundingClientRect()
+        out[label] = r ? { w: Math.round(r.width), h: Math.round(r.height) } : null
+      }
+      out.coarse = window.matchMedia('(pointer: coarse)').matches
+      return out
+    }
+
+    // Érintőképernyős laptop: coarse pointer ASZTALI szélességen.
+    const touchCtx = await browser.newContext({ viewport: { width: 1440, height: 900 }, hasTouch: true })
+    const touchPage = await touchCtx.newPage()
+    await touchPage.goto(`${BASE}/w/production`, { waitUntil: 'networkidle' })
+    await touchPage.waitForTimeout(400)
+    const touch = await touchPage.evaluate(sizes, HEADER_BUTTONS)
+    await touchCtx.close()
+
+    check('TOUCH-44: a böngésző coarse pointert jelent (különben a kapu vak)', touch.coarse === true)
+    check(
+      'TOUCH-44: érintéssel a fejléc-gombok ≥44px — érintőképernyős laptopon is',
+      HEADER_BUTTONS.every((l) => touch[l] && touch[l].w >= 44 && touch[l].h >= 44),
+      HEADER_BUTTONS.map((l) => `${l} ${touch[l]?.w}x${touch[l]?.h}`).join(' · '),
+    )
+
+    // Egér: a vizuális terv NEM változhat — ez őrzi meg a tervezői arányt egy
+    // jövőbeli „globális 44px" javítástól.
+    const mouseCtx = await browser.newContext({ viewport: { width: 1440, height: 900 } })
+    const mousePage = await mouseCtx.newPage()
+    await mousePage.goto(`${BASE}/w/production`, { waitUntil: 'networkidle' })
+    await mousePage.waitForTimeout(400)
+    const mouse = await mousePage.evaluate(sizes, HEADER_BUTTONS)
+    await mouseCtx.close()
+
+    check(
+      'TOUCH-44: egérrel a fejléc-gombok maradnak 32px (a terv nem borul)',
+      HEADER_BUTTONS.every((l) => mouse[l] && mouse[l].w === 32 && mouse[l].h === 32),
+      HEADER_BUTTONS.map((l) => `${l} ${mouse[l]?.w}x${mouse[l]?.h}`).join(' · '),
+    )
+  }
+
   // ── M-10: dashboard szekció-linkek 44px-es érintési zónája ────────────────
   {
     const ctx = await browser.newContext({ viewport: { width: 1440, height: 900 } })
