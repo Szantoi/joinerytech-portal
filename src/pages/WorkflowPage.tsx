@@ -97,9 +97,12 @@ export function WorkflowPage() {
 
   return (
     <div className="px-7 py-5 max-w-[1600px] mx-auto">
-      <div className="flex items-center gap-2 mb-4">
+      {/* Törhető eszköztár: egyetlen nem törhető sorban a fix 280px-es kereső +
+          a két gomb ~600px-t igényelt, ami 360px-en a DOKUMENTUMOT szélesítette
+          ki (mért túlcsordulás: 375px mobilon, 191px 768px-en). */}
+      <div className="flex flex-wrap items-center gap-2 mb-4">
         <span className="text-[13px] font-semibold text-ink mr-1">Munkafolyamat</span>
-        <div className="flex items-center gap-2 px-3 h-9 w-[280px] rounded-lg bg-surface-card border border-line text-ink-muted">
+        <div className="flex items-center gap-2 px-3 h-9 w-full sm:w-[280px] rounded-lg bg-surface-card border border-line text-ink-muted">
           <Icon name="search" size={14} />
           <input
             value={search}
