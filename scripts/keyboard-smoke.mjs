@@ -230,6 +230,7 @@ try {
     const page = await ctx.newPage()
     const ROUTES = [
       '/w/production', '/w/production/cutting', '/w/production/machining',
+      '/w/production/scheduling',
       '/w/production/orders', '/w/production/quotes', '/w/production/workflow',
       '/w/production/analytics',
       '/w/crm', '/w/kontrolling', '/w/hr', '/w/maintenance', '/w/quality',
@@ -330,6 +331,69 @@ try {
       hit.ok,
       `szöveg-magasság: ${hit.textHeight}px`,
     )
+    await ctx.close()
+  }
+
+  // ── F4: a kiosztás-megerősítés valódi dialógus (PLAN-05 F4) ───────────────
+  // A korábbi kézzel írt overlay-nek nem volt fókuszcsapdája és az Escape sem
+  // zárta — pont az a két dolog, amit jsdom-ban elvileg sem lehet bizonyítani.
+  {
+    const ctx = await browser.newContext({ viewport: { width: 1440, height: 900 } })
+    const page = await ctx.newPage()
+    await page.goto(`${BASE}/w/production/scheduling`, { waitUntil: 'networkidle' })
+
+    // Operátor kiválasztása a valódi úton, majd köteg ejtése a gépre.
+    await page.locator('input[placeholder="Operátor keresése…"]').click()
+    await page.locator('button:has-text("Kovács Péter")').first().click()
+
+    const dropZone = page.locator('h3:text("Holzma HPP380")').locator('..')
+    const dataTransfer = await page.evaluateHandle(() => {
+      const dt = new DataTransfer()
+      dt.setData('application/json', JSON.stringify({ batchId: 'batch-1' }))
+      return dt
+    })
+    await dropZone.dispatchEvent('drop', { dataTransfer })
+
+    const dialog = page.locator('[role="alertdialog"]')
+    await dialog.waitFor({ state: 'visible', timeout: 5000 })
+
+    const opened = await page.evaluate(() => {
+      const d = document.querySelector('[role="alertdialog"]')
+      return {
+        modal: d?.getAttribute('aria-modal'),
+        detailCount: d?.querySelectorAll('dl dt').length ?? 0,
+        focusInside: !!d && d.contains(document.activeElement),
+        focusLabel: document.activeElement?.textContent?.trim() ?? '(nincs)',
+      }
+    })
+    check('F4: a megerősítés valódi alertdialog, strukturált összefoglalóval',
+      opened.modal === 'true' && opened.detailCount === 4,
+      `aria-modal=${opened.modal}, dt=${opened.detailCount}`)
+    check('F4: a fókusz a dialóguson BELÜL, a Mégsén landol',
+      opened.focusInside && opened.focusLabel === 'Mégse', opened.focusLabel)
+
+    // Fókuszcsapda: körbe-Tabbolva sem eshetünk ki a body-ra.
+    let escaped = false
+    for (let i = 0; i < 8; i += 1) {
+      await page.keyboard.press('Tab')
+      const inside = await page.evaluate(() =>
+        !!document.querySelector('[role="alertdialog"]')?.contains(document.activeElement))
+      if (!inside) { escaped = true; break }
+    }
+    check('F4: a Tab a dialógusban marad (nincs body-holtpont)', !escaped)
+
+    await page.keyboard.press('Escape')
+    await dialog.waitFor({ state: 'detached', timeout: 5000 }).catch(() => {})
+    const afterEscape = await page.evaluate(() => ({
+      dialogGone: !document.querySelector('[role="alertdialog"]'),
+      // Escape = mégse: a köteg NEM oszthatott ki, tehát ott marad a listában.
+      batchStillListed: !!Array.from(document.querySelectorAll('h4'))
+        .find((el) => el.textContent?.includes('Konyhai frontok')),
+    }))
+    check('F4: az Escape zárja a dialógust', afterEscape.dialogGone)
+    check('F4: Escape után NEM történt kiosztás (a köteg a listában maradt)',
+      afterEscape.batchStillListed)
+
     await ctx.close()
   }
 } catch (err) {

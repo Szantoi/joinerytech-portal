@@ -12,6 +12,7 @@ import { qaApiHandlers } from '@spaceos/module-qa/mocks'
 import { dmsApiHandlers } from '@spaceos/module-dms/mocks'
 import { productionApiHandlers } from '@joinerytech/world-production/mocks'
 import { warehouseHandlers } from '@joinerytech/world-warehouse/mocks'
+import { schedulingHandlers } from './scheduling'
 
 export const handlers = [
   // EHS modul-API (openapi-tükör, állapottartó store + FSM guardok) — ld. ./ehsApi
@@ -43,6 +44,10 @@ export const handlers = [
   // Warehouse modul-API (inventory/procurement contract mirror). This must be
   // registered in the global worker as well as the module-local node test server.
   ...warehouseHandlers,
+
+  // Gép/operátor-ütemezés (/w/production/scheduling) — a képernyő beroutolásáig
+  // ezek hiányoztak, ezért mock módban hibadobozt mutatott. Ld. ./scheduling
+  ...schedulingHandlers,
 
   // Collaboration modul-API (B2B Collaboration contract mirror)
 
