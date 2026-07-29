@@ -17,9 +17,33 @@
  */
 import { chromium } from 'playwright-core'
 import { spawn } from 'node:child_process'
-import { existsSync } from 'node:fs'
+import { existsSync, readFileSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
 import process from 'node:process'
+
+/**
+ * A rejtett legacy világok listája a FORRÁSBÓL jön, nem kézi felsorolásból.
+ *
+ * Miért: a `ROUTES` kézi karbantartása már okozott vak foltot (az új
+ * `/w/production/scheduling` route-ot a kapu magától nem kapta meg). Ha valaki
+ * bővíti a `HIDDEN_LEGACY_WORLDS`-öt, a kapu ezzel automatikusan követi — és ha
+ * a fájl alakja megváltozik, HANGOSAN elhasal, nem csendben lefedetlenül hagy.
+ */
+function readHiddenLegacyWorlds() {
+  const source = readFileSync(new URL('../src/config/worldAccess.ts', import.meta.url), 'utf8')
+  const match = /HIDDEN_LEGACY_WORLDS[^=]*=\s*\[([\s\S]*?)\]/.exec(source)
+  if (!match) {
+    throw new Error('A HIDDEN_LEGACY_WORLDS nem olvasható ki a worldAccess.ts-ből — a kapu vak lenne.')
+  }
+  const worlds = match[1]
+    .split(',')
+    .map((entry) => entry.trim().replace(/^['"]|['"]$/g, ''))
+    .filter((entry) => entry && !entry.startsWith('//'))
+  if (worlds.length === 0) throw new Error('Üres HIDDEN_LEGACY_WORLDS — gyanús, nem fogadom el.')
+  return worlds
+}
+
+const HIDDEN_LEGACY_WORLDS = readHiddenLegacyWorlds()
 
 const PORT = Number(process.env.SMOKE_PORT ?? 5211)
 const BASE = `http://localhost:${PORT}`
@@ -228,6 +252,8 @@ try {
   {
     const ctx = await browser.newContext({ viewport: { width: 1440, height: 900 } })
     const page = await ctx.newPage()
+    // ELÉRHETŐ világ-route-ok: ezeken tényleg a világ-shell renderel, tehát
+    // számonkérhető a h1 + nav + aria-current hármas.
     const ROUTES = [
       '/w/production', '/w/production/cutting', '/w/production/machining',
       '/w/production/scheduling',
@@ -240,14 +266,15 @@ try {
       '/w/crm/leads', '/w/hr/people', '/w/kontrolling/portfolio',
       '/w/maintenance/assets', '/w/quality/tickets', '/w/ehs/incidents',
       '/w/docs/library',
-      // Legacy világok — ezeken a shell címe az EGYETLEN cím:
-      '/w/sales', '/w/design', '/w/warehouse', '/w/finance', '/w/masterdata',
-      '/w/interior', '/w/service', '/w/settings',
-      // Saját-címes legacy világok — a SHELL-H1 review P1-1 osztálya
-      // (sr-only shell-cím + saját h1 = mobil dupla-h1 volt; h2-söprés után őr):
-      '/w/tasks', '/w/attendance', '/w/ai', '/w/execbi', '/w/logistics',
-      '/w/mfgprep', '/w/projects', '/w/supervisor', '/w/shop',
+      // Megvásárolható kompozit + alap-világ: nem rejtett legacy.
+      '/w/warehouse', '/w/settings',
     ]
+
+    // GATELT legacy világok: a `RequireAuth` a tiltó oldalt adja rájuk, tehát
+    // NINCS naviguk — korábban ezért bukott a kapu 15 route-on, holott a gating
+    // helyesen működött. Itt ezt fordítva kérjük számon: a tiltás a bizonyítandó.
+    const GATED_ROUTES = HIDDEN_LEGACY_WORLDS.map((world) => `/w/${world}`)
+
     const wrongH1Count = []
     const mismatches = []
     const noActiveNav = []
@@ -279,6 +306,33 @@ try {
       'SHELL-H1: a nav aktív címkéje megjelenik az oldal címei között',
       mismatches.length === 0,
       mismatches.length ? JSON.stringify(mismatches.slice(0, 3)) : 'nincs eltérés',
+    )
+
+    // A gatelt világokon a TILTÁS a bizonyítandó. Korábban ezek a route-ok a
+    // `ROUTES`-ban ültek, és „hiányzó aria-current"-ként buktak — miközben a
+    // hiányzó nav épp a helyes viselkedés volt. Ráadásul a h1-ellenőrzésük
+    // üresen zöld volt: a tiltó oldal címét számolta, nem egy világ-shellét.
+    const gatingLeaks = []
+    for (const path of GATED_ROUTES) {
+      await page.goto(`${BASE}${path}`, { waitUntil: 'networkidle' })
+      await page.waitForTimeout(400)
+      const info = await page.evaluate(() => ({
+        blocked:
+          !!document.querySelector('[role="alert"]') &&
+          (document.querySelector('h1')?.textContent ?? '').includes('nincs engedélyezve'),
+        navItems: document.querySelectorAll('nav a, nav button').length,
+        h1Count: document.querySelectorAll('h1').length,
+      }))
+      // Szivárgás = bármi, ami nem a tiltó oldal: világ-nav, több cím, vagy
+      // egyszerűen renderelő képernyő.
+      if (!info.blocked || info.navItems > 0 || info.h1Count !== 1) {
+        gatingLeaks.push({ path, ...info })
+      }
+    }
+    check(
+      `GATING: a rejtett legacy világok a tiltó oldalt adják, nav nélkül (${GATED_ROUTES.length} route)`,
+      gatingLeaks.length === 0,
+      gatingLeaks.length ? JSON.stringify(gatingLeaks.slice(0, 3)) : 'mind fail-closed',
     )
     await ctx.close()
   }
