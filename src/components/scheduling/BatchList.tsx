@@ -22,8 +22,8 @@ export function BatchList({
 }: BatchListProps) {
   if (batches.length === 0) {
     return (
-      <div className="text-center py-6 text-stone-500">
-        <p className="text-sm">No unassigned batches</p>
+      <div className="text-center py-6 text-ink-muted">
+        <p className="text-sm">Nincs kiosztatlan köteg</p>
       </div>
     )
   }

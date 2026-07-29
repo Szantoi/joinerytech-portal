@@ -9,6 +9,7 @@
  */
 
 import { GanttChart, STATUS_TONES, type GanttLane, type GanttTick, type Tone } from '@spaceos/portal-ui'
+import { priorityTone } from '../../lib/scheduling/priority'
 import type { Execution, Machine } from '../../types/scheduling.types'
 
 interface ExecutionGanttProps {
@@ -22,16 +23,10 @@ const HOUR_MS = 60 * 60 * 1000
 
 /** Prioritás-sávok: 1-3 alacsony, 4-6 közepes, 7-10 magas. */
 const PRIORITY_LEGEND: readonly { tone: Tone; label: string }[] = [
-  { tone: 'success', label: 'Priority 1-3' },
-  { tone: 'warn', label: 'Priority 4-6' },
-  { tone: 'danger', label: 'Priority 7-10' },
+  { tone: 'success', label: 'Prioritás 1-3' },
+  { tone: 'warn', label: 'Prioritás 4-6' },
+  { tone: 'danger', label: 'Prioritás 7-10' },
 ]
-
-function priorityTone(priority: number): Tone {
-  if (priority <= 3) return 'success'
-  if (priority <= 6) return 'warn'
-  return 'danger'
-}
 
 /** A terv napjának helyi éjfele; érvénytelen dátumnál nincs rögzített tengely. */
 function dayStartMs(planDate: string): number | undefined {
@@ -55,7 +50,7 @@ export function ExecutionGantt({ machines, executions, planDate }: ExecutionGant
           start,
           end: start + execution.estimatedMinutes * 60 * 1000,
           tone: priorityTone(execution.priority),
-          title: `${execution.batchName} - Priority ${execution.priority}`,
+          title: `${execution.batchName} — prioritás ${execution.priority}`,
         }
       }),
   }))
@@ -73,16 +68,16 @@ export function ExecutionGantt({ machines, executions, planDate }: ExecutionGant
   return (
     <div className="border border-line rounded-lg bg-surface-card overflow-hidden">
       <div className="p-4 border-b border-line">
-        <h3 className="text-lg font-semibold text-ink">Execution Timeline</h3>
-        <p className="text-xs text-ink-soft mt-1">Plan date: {planDate}</p>
+        <h3 className="text-lg font-semibold text-ink">Végrehajtási idősáv</h3>
+        <p className="text-xs text-ink-soft mt-1">Terv napja: {planDate}</p>
       </div>
 
       <GanttChart
         lanes={lanes}
         domain={dayStart === undefined ? undefined : { start: dayStart, end: dayStart + 24 * HOUR_MS }}
         ticks={hourTicks ?? 6}
-        ariaLabel="Execution timeline by machine"
-        emptyLabel="No machines available"
+        ariaLabel="Végrehajtási idősáv gépenként"
+        emptyLabel="Nincs elérhető gép"
       />
 
       <div className="p-3 bg-surface-sunken border-t border-line flex gap-4 flex-wrap text-xs">

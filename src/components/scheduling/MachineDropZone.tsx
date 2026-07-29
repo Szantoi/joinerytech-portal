@@ -1,6 +1,23 @@
 import { useState } from 'react'
-import { Card } from '@spaceos/portal-ui'
+import { STATUS_TONES, type Tone } from '@spaceos/portal-ui'
 import type { Batch, Machine } from '../../types/scheduling.types'
+
+/**
+ * A gép állapota két külön dolgot hordoz: mit ÍR KI (magyar címke) és mit
+ * JELENT (tónus). A kettő szándékosan külön térkép — a tónus a design-system
+ * szemantikája, nem a szöveg fordítása.
+ */
+const STATUS_LABELS: Record<string, string> = {
+  Available: 'Szabad',
+  Busy: 'Foglalt',
+  Maintenance: 'Karbantartás alatt',
+}
+
+const STATUS_TONE: Record<string, Tone> = {
+  Available: 'success',
+  Busy: 'warn',
+  Maintenance: 'danger',
+}
 
 interface MachineDropZoneProps {
   machine: Machine
@@ -39,11 +56,8 @@ export function MachineDropZone({
     }
   }
 
-  const statusColor = {
-    Available: 'text-green-600',
-    Busy: 'text-amber-600',
-    Maintenance: 'text-red-600',
-  }[machine.status] || 'text-stone-600'
+  const tone = STATUS_TONE[machine.status] ?? 'neutral'
+  const statusLabel = STATUS_LABELS[machine.status] ?? machine.status
 
   return (
     <div
@@ -53,19 +67,20 @@ export function MachineDropZone({
       className={`
         border-2 border-dashed rounded-lg p-4 min-h-32
         transition-colors
-        ${isHovered ? 'border-teal-500 bg-teal-50' : 'border-stone-300 bg-white'}
+        ${isHovered ? 'border-line-strong bg-surface-2' : 'border-line bg-surface-card'}
       `}
     >
-      <h3 className="font-semibold text-sm text-stone-900">{machine.name}</h3>
-      <p className={`text-xs font-medium mt-1 ${statusColor}`}>
-        {machine.status}
+      <h3 className="font-semibold text-sm text-ink">{machine.name}</h3>
+      <p className={`text-xs font-medium mt-1 inline-flex items-center gap-1.5 ${STATUS_TONES[tone].fg}`}>
+        <span aria-hidden="true" className={`h-2 w-2 rounded-full ${STATUS_TONES[tone].dot}`} />
+        {statusLabel}
       </p>
-      <p className="text-xs text-stone-600 mt-1">Capacity: {machine.capacity} units</p>
+      <p className="text-xs text-ink-soft mt-1">Kapacitás: {machine.capacity} egység</p>
 
       {assignedBatches.length > 0 && (
-        <div className="mt-3 pt-3 border-t border-stone-200 space-y-1">
+        <div className="mt-3 pt-3 border-t border-line space-y-1">
           {assignedBatches.map((batch) => (
-            <div key={batch.id} className="text-xs text-stone-600">
+            <div key={batch.id} className="text-xs text-ink-soft">
               • {batch.name}
             </div>
           ))}
@@ -73,8 +88,8 @@ export function MachineDropZone({
       )}
 
       {assignedBatches.length === 0 && (
-        <p className="text-xs text-stone-400 mt-4 text-center">
-          Drag batches here to assign
+        <p className="text-xs text-ink-muted mt-4 text-center">
+          Húzd ide a köteget a kiosztáshoz
         </p>
       )}
     </div>

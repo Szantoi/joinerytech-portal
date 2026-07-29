@@ -37,14 +37,14 @@ export function BatchCard({
       onDragStart={handleDragStart}
       onDragEnd={handleDragEnd}
       className={`
-        border rounded-lg p-3 bg-white shadow-sm
-        ${isDragging ? 'opacity-50 border-amber-400' : 'border-stone-200'}
+        border rounded-lg p-3 bg-surface-card shadow-sm
+        ${isDragging ? 'opacity-50 border-line-strong' : 'border-line'}
         ${readOnly ? '' : 'cursor-move hover:shadow-md transition-shadow'}
       `}
     >
-      <h4 className="font-semibold text-sm text-stone-900">{batch.name}</h4>
-      <p className="text-xs text-stone-600 mt-1">Material: {batch.materialType}</p>
-      <p className="text-xs text-stone-600">Quantity: {batch.quantity}</p>
+      <h4 className="font-semibold text-sm text-ink">{batch.name}</h4>
+      <p className="text-xs text-ink-soft mt-1">Anyag: {batch.materialType}</p>
+      <p className="text-xs text-ink-soft">Mennyiség: {batch.quantity}</p>
 
       <PrioritySlider
         value={batch.priority}
@@ -54,8 +54,8 @@ export function BatchCard({
         showLabel={true}
       />
 
-      <div className="mt-2 pt-2 border-t border-stone-200">
-        <p className="text-xs text-stone-500">Est. time: {batch.estimatedMinutes} min</p>
+      <div className="mt-2 pt-2 border-t border-line">
+        <p className="text-xs text-ink-muted">Becsült idő: {batch.estimatedMinutes} perc</p>
       </div>
     </div>
   )

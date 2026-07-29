@@ -14,6 +14,7 @@ describe('OperatorAutocomplete', () => {
     vi.spyOn(useApiModule, 'useApi').mockReturnValue({
       data: mockOperators,
       isLoading: false,
+      isPending: false,
       error: null,
       refetch: vi.fn(),
     })
@@ -27,7 +28,7 @@ describe('OperatorAutocomplete', () => {
       />
     )
 
-    const input = screen.getByPlaceholderText('Select operator...')
+    const input = screen.getByPlaceholderText('Operátor keresése…')
     expect(input).toBeTruthy()
   })
 
@@ -39,7 +40,7 @@ describe('OperatorAutocomplete', () => {
       />
     )
 
-    const input = screen.getByPlaceholderText('Select operator...')
+    const input = screen.getByPlaceholderText('Operátor keresése…')
     fireEvent.change(input, { target: { value: 'John' } })
     fireEvent.focus(input)
 
@@ -57,7 +58,7 @@ describe('OperatorAutocomplete', () => {
       />
     )
 
-    const input = screen.getByPlaceholderText('Select operator...')
+    const input = screen.getByPlaceholderText('Operátor keresése…')
     fireEvent.change(input, { target: { value: 'jane@' } })
     fireEvent.focus(input)
 
@@ -76,7 +77,7 @@ describe('OperatorAutocomplete', () => {
       />
     )
 
-    const input = screen.getByPlaceholderText('Select operator...')
+    const input = screen.getByPlaceholderText('Operátor keresése…')
     fireEvent.focus(input)
     fireEvent.change(input, { target: { value: 'John' } })
 
@@ -98,12 +99,12 @@ describe('OperatorAutocomplete', () => {
       />
     )
 
-    const input = screen.getByPlaceholderText('Select operator...')
+    const input = screen.getByPlaceholderText('Operátor keresése…')
     fireEvent.focus(input)
     fireEvent.change(input, { target: { value: 'NonExistent' } })
 
     await waitFor(() => {
-      expect(screen.getByText('No operators found')).toBeTruthy()
+      expect(screen.getByText('Nincs találat')).toBeTruthy()
     })
   })
 
@@ -128,7 +129,7 @@ describe('OperatorAutocomplete', () => {
       />
     )
 
-    const input = screen.getByPlaceholderText('Select operator...') as HTMLInputElement
+    const input = screen.getByPlaceholderText('Operátor keresése…') as HTMLInputElement
     expect(input.disabled).toBe(true)
   })
 })

@@ -11,7 +11,7 @@ describe('PrioritySlider', () => {
         onChange={vi.fn()}
       />
     )
-    expect(screen.getByText(/Priority:/)).toBeTruthy()
+    expect(screen.getByText(/Prioritás:/)).toBeTruthy()
     expect(screen.getByText('3')).toBeTruthy()
   })
 

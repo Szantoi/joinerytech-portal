@@ -42,11 +42,11 @@ describe('ExecutionGantt', () => {
   it('renders timeline with title and legend', () => {
     render(<ExecutionGantt machines={mockMachines} executions={mockExecutions} planDate="2026-06-17" />)
 
-    expect(screen.getByText('Execution Timeline')).toBeTruthy()
-    expect(screen.getByText('Plan date: 2026-06-17')).toBeTruthy()
-    expect(screen.getByText('Priority 1-3')).toBeTruthy()
-    expect(screen.getByText('Priority 4-6')).toBeTruthy()
-    expect(screen.getByText('Priority 7-10')).toBeTruthy()
+    expect(screen.getByText('Végrehajtási idősáv')).toBeTruthy()
+    expect(screen.getByText('Terv napja: 2026-06-17')).toBeTruthy()
+    expect(screen.getByText('Prioritás 1-3')).toBeTruthy()
+    expect(screen.getByText('Prioritás 4-6')).toBeTruthy()
+    expect(screen.getByText('Prioritás 7-10')).toBeTruthy()
   })
 
   it('renders all machine rows', () => {
@@ -78,7 +78,7 @@ describe('ExecutionGantt', () => {
   it('handles empty machines list', () => {
     render(<ExecutionGantt machines={[]} executions={[]} planDate="2026-06-17" />)
 
-    expect(screen.getByText('No machines available')).toBeTruthy()
+    expect(screen.getByText('Nincs elérhető gép')).toBeTruthy()
   })
 
   it('handles empty executions list', () => {

@@ -24,9 +24,9 @@ describe('BatchCard', () => {
     )
 
     expect(screen.getByText('Frame Assembly')).toBeTruthy()
-    expect(screen.getByText('Material: Oak')).toBeTruthy()
-    expect(screen.getByText('Quantity: 50')).toBeTruthy()
-    expect(screen.getByText(/Priority:/)).toBeTruthy()
+    expect(screen.getByText('Anyag: Oak')).toBeTruthy()
+    expect(screen.getByText('Mennyiség: 50')).toBeTruthy()
+    expect(screen.getByText(/Prioritás:/)).toBeTruthy()
   })
 
   it('calls onPriorityChange when slider updated', () => {
@@ -102,7 +102,7 @@ describe('BatchCard', () => {
       />
     )
 
-    expect(screen.getByText('Est. time: 120 min')).toBeTruthy()
+    expect(screen.getByText('Becsült idő: 120 perc')).toBeTruthy()
   })
 
   it('respects maxPriority from RBAC', () => {

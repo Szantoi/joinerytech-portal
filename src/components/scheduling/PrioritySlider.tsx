@@ -13,15 +13,15 @@ export function PrioritySlider({
   disabled = false,
   showLabel = true,
 }: PrioritySliderProps) {
-  const percentage = (value / max) * 100
-
   return (
     <div className="mt-2">
       {showLabel && (
-        <label className="text-sm text-stone-600">
-          Priority: <span className="font-semibold">{value}</span>
+        <label className="text-sm text-ink-soft">
+          Prioritás: <span className="font-semibold">{value}</span>
         </label>
       )}
+      {/* A kitöltött sáv az `accent-color`-ból jön, nem inline gradiensből: a
+          korábbi beégetett hex-ek (#f59e0b/#e5e7eb) dark módban nem váltottak. */}
       <input
         type="range"
         min="1"
@@ -29,12 +29,9 @@ export function PrioritySlider({
         value={value}
         onChange={(e) => onChange(parseInt(e.target.value))}
         disabled={disabled}
-        className="w-full h-2 bg-stone-200 rounded-lg appearance-none cursor-pointer accent-amber-600"
-        style={{
-          background: `linear-gradient(to right, #f59e0b 0%, #f59e0b ${percentage}%, #e5e7eb ${percentage}%, #e5e7eb 100%)`,
-        }}
+        className="w-full h-2 bg-surface-2 rounded-lg appearance-none cursor-pointer accent-teal-600 dark:accent-teal-400"
       />
-      <div className="flex justify-between text-xs text-stone-400 font-mono mt-0.5">
+      <div className="flex justify-between text-xs text-ink-muted font-mono mt-0.5">
         <span>1</span>
         <span>{max}</span>
       </div>
