@@ -26,19 +26,20 @@ export function EditableCell({
   disabled = false,
 }: EditableCellProps) {
   const [isEditing, setIsEditing] = useState(false)
+  // A `tempValue`-t nem szinkronizáljuk effektből a `value` proppal: a
+  // szerkesztő módba lépéskor (`handleDoubleClick`) úgyis felveszi a friss
+  // értéket, megjelenítő módban pedig senki nem olvassa. A korábbi szinkron-
+  // effekt csak fölösleges setState-kaszkád volt.
   const [tempValue, setTempValue] = useState(String(value))
   const inputRef = useRef<HTMLInputElement>(null)
 
-  const { hasConflict, isLocked, acquireLock, releaseLock } = useEditLock(
-    isEditing ? rowId : null
-  )
-
-  // Sync tempValue when value prop changes
-  useEffect(() => {
-    if (!isEditing) {
-      setTempValue(String(value))
-    }
-  }, [value, isEditing])
+  // A zárat MINDIG erre a sorra kérjük, nem csak szerkesztés közben: az
+  // `acquireLock()` a dupla kattintáskor fut, amikor az `isEditing` még
+  // `false`. A korábbi `isEditing ? rowId : null` miatt a hook `rowId`-ja
+  // ilyenkor `null` volt, az `acquireLock` pedig az első sorában `false`-szal
+  // tért vissza → a szerkesztő mód SOHA nem nyílt meg. Ugyanez fojtotta el a
+  // „🔒 Locked" jelzést is, aminek épp szerkesztésen KÍVÜL kell látszania.
+  const { hasConflict, isLocked, acquireLock, releaseLock } = useEditLock(rowId)
 
   /**
    * Enter edit mode

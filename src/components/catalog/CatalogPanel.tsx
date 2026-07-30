@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { Card, useConfirm } from '@spaceos/portal-ui'
 import { EditableCell } from './EditableCell'
 import { ConflictWarning } from './ConflictWarning'
@@ -87,6 +87,32 @@ export function CatalogPanel() {
   }, [initializeFromStorage])
 
   /**
+   * Duplicate a product
+   *
+   * A billentyű-effekt ELŐTT kell állnia, és `useCallback`-ben: a `useEffect`
+   * korábban csak a `selectedRowId`-ra iratkozott fel újra, így az élő listener
+   * a kijelöléskori render `handleDuplicate`-jét tartotta meg. Az azon át elért
+   * `duplicateProduct` az AKKORI `products` tömbre zár, ezért a kijelölés óta
+   * történt törlés/szerkesztés a Cmd+D-től csendben visszaíródott az elavult
+   * listával (`setProducts` + localStorage).
+   */
+  const handleDuplicate = useCallback(
+    (productId: string) => {
+      const newId = duplicateProduct(productId)
+
+      // Show toast notification
+      setDuplicateToast(newId)
+      setTimeout(() => setDuplicateToast(null), 3000)
+
+      // Auto-focus on new row name cell
+      setTimeout(() => {
+        setEditingRowId(`${newId}-name`)
+      }, 100)
+    },
+    [duplicateProduct],
+  )
+
+  /**
    * Keyboard shortcuts
    */
   useEffect(() => {
@@ -105,23 +131,7 @@ export function CatalogPanel() {
 
     document.addEventListener('keydown', handleKeyDown)
     return () => document.removeEventListener('keydown', handleKeyDown)
-  }, [selectedRowId])
-
-  /**
-   * Duplicate a product
-   */
-  const handleDuplicate = (productId: string) => {
-    const newId = duplicateProduct(productId)
-
-    // Show toast notification
-    setDuplicateToast(newId)
-    setTimeout(() => setDuplicateToast(null), 3000)
-
-    // Auto-focus on new row name cell
-    setTimeout(() => {
-      setEditingRowId(`${newId}-name`)
-    }, 100)
-  }
+  }, [selectedRowId, handleDuplicate])
 
   /**
    * Delete a product — a portál megerősítő dialógusával (PLAN-05 F3+).
@@ -136,7 +146,14 @@ export function CatalogPanel() {
       cancelLabel: 'Mégse',
       tone: 'danger',
     })
-    if (confirmed) deleteProduct(productId)
+    if (!confirmed) return
+
+    deleteProduct(productId)
+    // A kijelölés nem maradhat a törölt soron: a Cmd+D azt az azonosítót adná
+    // tovább a `duplicateProduct`-nak, ami a `Product not found` kivétellel
+    // száll el egy billentyű-listenerben. Korábban a beragadt closure fedte el
+    // (az elavult lista még tartalmazta a törölt terméket).
+    if (selectedRowId === productId) setSelectedRowId(null)
   }
 
   /**
