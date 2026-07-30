@@ -83,7 +83,12 @@ export function SchedulingPage() {
       ? 'Kiosztatlan kötegek'
       : `Kiosztatlan kötegek (${(batches ?? []).length})`
 
-  const { assignBatch, isLoading: isAssigning, error: assignError } = useBatchAssignment(selectedDate)
+  // A hook `error` csatornáját szándékosan NEM kötjük be: a `useMutation`
+  // hibánál dob IS (useApi.ts:141), tehát a lenti try/catch minden bukást
+  // megfog és a lokális `assignmentError`-ba ír — azt jeleníti meg a
+  // role="alert" blokk, és arra van teszt. Két párhuzamos hiba-csatorna két
+  // igazság lenne ugyanarról.
+  const { assignBatch, isLoading: isAssigning } = useBatchAssignment(selectedDate)
 
   // Batch priority update (optimistic)
   const batchesWithUpdates = (batches ?? []).map(b => b)

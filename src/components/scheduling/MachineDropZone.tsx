@@ -59,6 +59,21 @@ export function MachineDropZone({
   const tone = STATUS_TONE[machine.status] ?? 'neutral'
   const statusLabel = STATUS_LABELS[machine.status] ?? machine.status
 
+  // Három vizuális állapot, két jelzéssel:
+  //  - nyugalom: halvány szaggatott keret;
+  //  - HÚZÁS FOLYAMATBAN (isDropTarget): erős keret MINDEN zónán — enélkül a
+  //    felhasználó csak akkor tudta meg, hogy ide ejthet, amikor már pont a
+  //    zóna fölött járt. A lap kezdettől átadta ezt a propot
+  //    (draggedBatchId !== null), a komponens viszont eldobta — a lint
+  //    „isDropTarget is assigned but never used" jelzése ezt az elmaradt
+  //    viselkedést takarta.
+  //  - a zóna fölött (isHovered): erős keret + kiemelt háttér.
+  const zoneClasses = isHovered
+    ? 'border-line-strong bg-surface-2'
+    : isDropTarget
+      ? 'border-line-strong bg-surface-card'
+      : 'border-line bg-surface-card'
+
   return (
     <div
       onDragOver={handleDragOver}
@@ -67,7 +82,7 @@ export function MachineDropZone({
       className={`
         border-2 border-dashed rounded-lg p-4 min-h-32
         transition-colors
-        ${isHovered ? 'border-line-strong bg-surface-2' : 'border-line bg-surface-card'}
+        ${zoneClasses}
       `}
     >
       <h3 className="font-semibold text-sm text-ink">{machine.name}</h3>
