@@ -195,38 +195,52 @@ describe('PublicQuoteRequestPage', () => {
     expect(screen.getByText(/Köszönjük! Árajánlatkérését megkaptuk/)).toBeInTheDocument();
   });
 
-  it('shows mock success when API fails', async () => {
-    const mockFetch = vi.fn(() =>
-      Promise.resolve({
-        ok: false,
-        json: async () => ({ message: 'API error' }),
-      } as Response)
-    );
-    globalThis.fetch = mockFetch;
-
-    render(<PublicQuoteRequestPage />);
-
-    // Fill in valid data
+  // A korábbi „shows mock success when API fails" teszt a HIBÁT égette be
+  // elvárt viselkedésként: azt állította, hogy API-hibánál a siker-képernyő
+  // jelenjen meg. Ez egy publikus ügyfél-űrlapon néma adatvesztést takart (az
+  // ügyfél „elküldve"-t lát, a kérés elveszik). Átírva a HELYES viselkedésre:
+  // a hiba LÁTSZÓDJON, és a siker-képernyő NE jöjjön elő.
+  async function fillValidForm() {
     fireEvent.change(screen.getByLabelText(/Név/), { target: { value: 'Test Customer' } });
     fireEvent.change(screen.getByLabelText(/Email/), { target: { value: 'test@example.com' } });
     fireEvent.change(screen.getByLabelText(/Telefon/), { target: { value: '+36301234567' } });
+    fireEvent.change(screen.getAllByLabelText(/Anyag/)[0], { target: { value: 'PAL-18-WHITE' } });
+    fireEvent.change(screen.getAllByLabelText(/Hossz \(mm\)/)[0], { target: { value: '1000' } });
+    fireEvent.change(screen.getAllByLabelText(/Szélesség \(mm\)/)[0], { target: { value: '600' } });
+    fireEvent.click(screen.getByText('Árajánlatkérés küldése'));
+  }
 
-    const materialSelects = screen.getAllByLabelText(/Anyag/);
-    fireEvent.change(materialSelects[0], { target: { value: 'PAL-18-WHITE' } });
+  it('API-hibánál a hibaüzenetet mutatja, NEM hamis sikert (a backend üzenetével)', async () => {
+    globalThis.fetch = vi.fn(() =>
+      Promise.resolve({
+        ok: false,
+        json: async () => ({ message: 'A megadott anyag nem elérhető' }),
+      } as Response)
+    );
 
-    const lengthInputs = screen.getAllByLabelText(/Hossz \(mm\)/);
-    fireEvent.change(lengthInputs[0], { target: { value: '1000' } });
+    render(<PublicQuoteRequestPage />);
+    await fillValidForm();
 
-    const widthInputs = screen.getAllByLabelText(/Szélesség \(mm\)/);
-    fireEvent.change(widthInputs[0], { target: { value: '600' } });
+    // a backend hibaüzenete láthatóvá válik
+    await waitFor(
+      () => expect(screen.getByText('A megadott anyag nem elérhető')).toBeInTheDocument(),
+      { timeout: 5000 },
+    );
+    // és a siker-képernyő semmiképp nem jön elő
+    expect(screen.queryByText('Árajánlatkérés elküldve!')).not.toBeInTheDocument();
+  });
 
-    const submitButton = screen.getByText('Árajánlatkérés küldése');
-    fireEvent.click(submitButton);
+  it('hálózati hibánál is a hiba látszik, nem siker (nincs elnyelés)', async () => {
+    globalThis.fetch = vi.fn(() => Promise.reject(new Error('Network down')));
 
-    // Mock fallback should still show success
-    await waitFor(() => {
-      expect(screen.getByText('Árajánlatkérés elküldve!')).toBeInTheDocument();
-    }, { timeout: 5000 });
+    render(<PublicQuoteRequestPage />);
+    await fillValidForm();
+
+    await waitFor(
+      () => expect(screen.getByText('Network down')).toBeInTheDocument(),
+      { timeout: 5000 },
+    );
+    expect(screen.queryByText('Árajánlatkérés elküldve!')).not.toBeInTheDocument();
   });
 
   // NOTE (STAB-FE-TEST-GATE): the exhaustive 49/50/51 boundary check for the

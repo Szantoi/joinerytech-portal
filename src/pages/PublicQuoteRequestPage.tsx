@@ -82,10 +82,19 @@ export default function PublicQuoteRequestPage() {
       }
 
       setSubmitted(true);
-    } catch (err: any) {
+    } catch (err) {
+      // A hibát LÁTHATÓVÁ tesszük — nem hamis sikert mutatunk. A korábbi
+      // `setSubmitted(true)` a catch-ben („Mock success for development") egy
+      // publikus ügyfél-űrlapon némán elnyelte a beküldési hibát: az ügyfél
+      // „elküldve"-t látott, miközben az árajánlatkérés (valódi backend:
+      // /cutting/api/public/quote-requests) elveszett. Soha nem szándékolt
+      // viselkedés — a hibás ág nem jelezhet sikert.
       console.error('Failed to submit quote request:', err);
-      // Mock success for development
-      setSubmitted(true);
+      setError(
+        err instanceof Error && err.message
+          ? err.message
+          : 'Az árajánlatkérés beküldése nem sikerült. Kérjük, próbálja újra.',
+      );
     } finally {
       setSubmitting(false);
     }

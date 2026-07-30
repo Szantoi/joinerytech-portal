@@ -288,25 +288,32 @@ interface DetailProps {
   onRefetch: () => void
 }
 
-function PriceListDetailSlideOver({ open, listId, supplierId, allItems, onClose, onRefetch }: DetailProps) {
+// Tesztből is elérhető: a rules-of-hooks crash reprodukciója a `listId` ''→id
+// átmenetét igényli, amit a `allItems` propon át MSW nélkül elő lehet állítani.
+export function PriceListDetailSlideOver({ open, listId, supplierId, allItems, onClose, onRefetch }: DetailProps) {
   const { data, refetch } = useApi<PriceListDto>(
     listId ? `${API_BASE.procurement}/api/procurement/suppliers/${supplierId}/price-list/${listId}` : null
   )
   useEffect(() => { if (open && listId) refetch() }, [open, listId]) // eslint-disable-line
 
   const pl: PriceListDto | null = data ?? allItems.find(p => p.id === listId) ?? null
-  if (!pl) return null
 
-  const tone = PL_STATUS_STYLE[pl.status]
-
-  const [localStatus, setLocalStatus] = useState<PriceListStatus>(pl.status)
+  // MINDEN hook a korai return ELŐTT fut, feltétel nélkül. A szülő ezt a
+  // komponenst mindig mountolja (`open={!!selectedId}`, `listId={… ?? ''}`),
+  // ezért üres listId-nél a `pl` null és a korai return üt — ha a hookok utána
+  // állnának, az első árlista-kattintáskor a hook-szám 2-ről 8-ra ugrana, és a
+  // React kifektetné az egész oldalt (rules-of-hooks). A `?? 'Draft'` csak a
+  // mount-pillanat kezdőértéke; a lenti effekt szinkronizálja, amint `pl` betölt.
+  const [localStatus, setLocalStatus] = useState<PriceListStatus>(pl?.status ?? 'Draft')
   const [actionLoading, setActionLoading] = useState(false)
   const [actionDone, setActionDone] = useState('')
   const [showActivateConfirm, setShowActivateConfirm] = useState(false)
-
-  useEffect(() => { setLocalStatus(pl.status) }, [pl.status])
-
   const { mutate } = useMutation<unknown>()
+
+  // A szerver-adat → lokális állapot szinkronja (optimista UI mellett): ha egy
+  // refetch új státuszt hoz, a lokális is kövesse. Szándékos sync-effekt, a
+  // fájl konvenciója szerint (ld. a fenti refetch-effektet) disable-line-nal.
+  useEffect(() => { if (pl) setLocalStatus(pl.status) }, [pl]) // eslint-disable-line react-hooks/set-state-in-effect
 
   async function handleActivate() {
     setActionLoading(true)
@@ -325,6 +332,10 @@ function PriceListDetailSlideOver({ open, listId, supplierId, allItems, onClose,
       setActionLoading(false)
     }
   }
+
+  // A korai return MINDEN hook után áll — üres/be-nem-töltött listánál a
+  // panel egyszerűen nem renderel, de a hook-sorrend rendernél állandó marad.
+  if (!pl) return null
 
   const localTone = PL_STATUS_STYLE[localStatus]
 
