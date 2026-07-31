@@ -62,7 +62,9 @@ export function ForecastScreen() {
 
         <Card className="p-5">
           <h2 className="mb-4 text-[13px] font-semibold text-ink">Súlyozott érték fázisonként</h2>
-          <div aria-hidden="true">
+          {/* inert az aria-hidden mellé: a recharts felülete fókuszálható, az
+              aria-hidden a fókuszt nem zárja ki (axe: aria-hidden-focus). */}
+          <div aria-hidden="true" inert>
             <ResponsiveContainer width="100%" height={240}>
               <BarChart data={chartData} margin={{ top: 5, right: 10, left: 0, bottom: 5 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" vertical={false} />

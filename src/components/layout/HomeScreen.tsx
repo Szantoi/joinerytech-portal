@@ -139,6 +139,9 @@ export function HomeScreen({ onEnter, lang = 'hu' }: HomeScreenProps) {
         </div>
       </header>
 
+      {/* Egyetlen main landmark (axe: landmark-one-main + region) — a tartalom
+          landmarkon kívül élt, a SR-felhasználó nem tudott ráugrani. */}
+      <main>
       <div className="max-w-[1200px] mx-auto px-4 md:px-8 pt-8 md:pt-12 pb-6">
         <div className="text-[12px] uppercase tracking-[0.2em] text-ink-soft font-medium mb-2">
           {new Date().toLocaleDateString(lang === 'en' ? 'en-US' : 'hu-HU', { weekday: 'long', month: 'long', day: 'numeric' })}
@@ -199,6 +202,7 @@ export function HomeScreen({ onEnter, lang = 'hu' }: HomeScreenProps) {
           </Card>
         </div>
       </div>
+      </main>
 
       <footer className="text-center py-6 text-[10.5px] text-ink-soft font-mono">v3.2.1 &middot; 2026</footer>
     </div>

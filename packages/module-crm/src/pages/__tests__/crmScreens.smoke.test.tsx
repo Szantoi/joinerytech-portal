@@ -76,4 +76,12 @@ describe('CRM képernyők — smoke render', () => {
     ).toBeInTheDocument()
     expect(screen.getByText('Valószínűség')).toBeInTheDocument()
   })
+
+  it('a dekoratív forecast-diagram inert — a fókusz is kizárva (axe: aria-hidden-focus)', async () => {
+    // A MarginTrendChart testvér-lelete: aria-hidden chart-wrapper, amibe a
+    // Tab beléphetett. Az inert a fókuszt IS kizárja.
+    const { container } = render(<ForecastScreen />, { wrapper: wrapper() })
+    await screen.findByRole('table', { name: /Forecast fázisonként/ })
+    expect(container.querySelector('[aria-hidden="true"][inert]')).not.toBeNull()
+  })
 })

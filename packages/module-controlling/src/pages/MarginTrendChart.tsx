@@ -20,7 +20,10 @@ export default function MarginTrendChart({ trend }: { trend: MarginTrendPoint[] 
 
   return (
     <>
-      <div aria-hidden="true">
+      {/* inert az aria-hidden mellé: a recharts felülete fókuszálható, és az
+          aria-hidden a fókuszt NEM zárja ki (axe: aria-hidden-focus) — a Tab
+          egy AT elől rejtett elemre lépett. Az F1-S1 drawer-lecke mintája. */}
+      <div aria-hidden="true" inert>
         <ResponsiveContainer width="100%" height={220}>
           <LineChart data={data} margin={{ top: 5, right: 10, left: 0, bottom: 5 }}>
             <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" vertical={false} />

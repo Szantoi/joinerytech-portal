@@ -1,5 +1,5 @@
 import { beforeEach, describe, it, expect, vi } from 'vitest'
-import { render, screen, fireEvent } from '@testing-library/react'
+import { render, screen, fireEvent, within } from '@testing-library/react'
 import { HomeScreen } from '../HomeScreen'
 import type { AuthContextValue } from '@spaceos/portal-core'
 
@@ -31,6 +31,15 @@ describe('HomeScreen', () => {
   it('renders greeting', () => {
     renderHome()
     expect(screen.getByText(/J\u00f3 reggelt/)).toBeTruthy()
+  })
+
+  it('pontosan egy main landmark van, és a tartalom benne él (axe: landmark-one-main + region)', () => {
+    renderHome()
+    const mains = screen.getAllByRole('main')
+    expect(mains).toHaveLength(1)
+    // A világ-rács a mainen BELÜL — korábban landmarkon kívül élt, a
+    // SR-felhasználó nem tudott ráugrani.
+    expect(within(mains[0]).getByText('CRM')).toBeTruthy()
   })
 
   it('renders world cards', () => {

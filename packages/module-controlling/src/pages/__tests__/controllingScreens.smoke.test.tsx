@@ -51,6 +51,18 @@ describe('Kontrolling képernyők — smoke render', () => {
     ).toBeInTheDocument()
   }, SMOKE_TIMEOUT)
 
+  it('a dekoratív trend-diagram inert — a fókusz is kizárva, nem csak az AT (axe: aria-hidden-focus)', async () => {
+    // A recharts felülete fókuszálható; az aria-hidden a fókuszt NEM zárja
+    // ki, tehát a Tab egy AT elől rejtett elemre lépett volna.
+    const { container } = render(<DashboardScreen onScreen={vi.fn()} />, { wrapper: wrapper() })
+    await screen.findByText(
+      'Fedezet-trend havi bontásban: terv- és tény-fedezet százalék',
+      undefined,
+      { timeout: 15_000 },
+    )
+    expect(container.querySelector('[aria-hidden="true"][inert]')).not.toBeNull()
+  }, SMOKE_TIMEOUT)
+
   it('Portfólió: DataTable kettős render + életciklus-pillek + szűrő', async () => {
     render(<PortfolioScreen />, { wrapper: wrapper() })
     expect((await screen.findAllByText('Novitech iroda — 40 munkaállomás')).length).toBeGreaterThan(0)
