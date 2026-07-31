@@ -6,6 +6,7 @@ import { OperatorAutocomplete } from '../components/scheduling/OperatorAutocompl
 import { BatchList } from '../components/scheduling/BatchList'
 import { MachineDropZone } from '../components/scheduling/MachineDropZone'
 import { ExecutionGantt } from '../components/scheduling/ExecutionGantt'
+import { machineStatusLabel, machineStatusTone } from '../lib/scheduling/machineStatus'
 import { priorityLabel, priorityTone } from '../lib/scheduling/priority'
 import { useApi, API_BASE } from '../hooks/useApi'
 import { useSchedulePermissions } from '../hooks/useSchedulePermissions'
@@ -126,6 +127,17 @@ export function SchedulingPage() {
           value: machine.name,
           hint: `Kapacitás: ${machine.capacity} egység`,
         },
+        // A gép állapota CSAK akkor tétel, ha nem szabad — a Szabad a normál
+        // eset, azt kiírni zaj lenne. Hogy a nem szabad gépre ejtés sorba
+        // állítás-e vagy tiltandó, nyitott termékdöntés: ezért a sor nem
+        // állít semmit a következményről, csak a csendet szünteti meg.
+        ...(machine.status !== 'Available'
+          ? [{
+              label: 'Gép állapota',
+              value: machineStatusLabel(machine.status),
+              tone: machineStatusTone(machine.status),
+            }]
+          : []),
         {
           label: 'Kijelölt operátor',
           value: selectedOperator.name,

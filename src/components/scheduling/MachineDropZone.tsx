@@ -1,23 +1,7 @@
 import { useState } from 'react'
-import { STATUS_TONES, type Tone } from '@spaceos/portal-ui'
+import { STATUS_TONES } from '@spaceos/portal-ui'
+import { machineStatusLabel, machineStatusTone } from '../../lib/scheduling/machineStatus'
 import type { Batch, Machine } from '../../types/scheduling.types'
-
-/**
- * A gép állapota két külön dolgot hordoz: mit ÍR KI (magyar címke) és mit
- * JELENT (tónus). A kettő szándékosan külön térkép — a tónus a design-system
- * szemantikája, nem a szöveg fordítása.
- */
-const STATUS_LABELS: Record<string, string> = {
-  Available: 'Szabad',
-  Busy: 'Foglalt',
-  Maintenance: 'Karbantartás alatt',
-}
-
-const STATUS_TONE: Record<string, Tone> = {
-  Available: 'success',
-  Busy: 'warn',
-  Maintenance: 'danger',
-}
 
 interface MachineDropZoneProps {
   machine: Machine
@@ -56,8 +40,8 @@ export function MachineDropZone({
     }
   }
 
-  const tone = STATUS_TONE[machine.status] ?? 'neutral'
-  const statusLabel = STATUS_LABELS[machine.status] ?? machine.status
+  const tone = machineStatusTone(machine.status)
+  const statusLabel = machineStatusLabel(machine.status)
 
   // Három vizuális állapot, két jelzéssel:
   //  - nyugalom: halvány szaggatott keret;

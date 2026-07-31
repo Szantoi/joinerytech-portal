@@ -29,6 +29,12 @@ const mockMachines: Machine[] = [
   { id: 'machine-1', name: 'Saw Station', type: 'Cutting', capacity: 100, status: 'Available' },
 ]
 
+/**
+ * A gép-lista tesztenként felülírható: a megerősítő „Gép állapota" sora a
+ * státusztól függ, és az alap-mock mindig `Available`-t ad.
+ */
+let machinesData: Machine[] = mockMachines
+
 const mockExecutions: Execution[] = [
   {
     id: 'exec-1', batchId: 'batch-0', batchName: 'Tegnapi hátlapok',
@@ -116,6 +122,7 @@ function dropBatchOnMachine(batchId = 'batch-1') {
 describe('SchedulingPage', () => {
   beforeEach(() => {
     overrides = {}
+    machinesData = mockMachines
     loadedExecutionsDate = null
     refetchSpy.mockClear()
     vi.spyOn(useAuthModule, 'useAuth')
@@ -136,7 +143,7 @@ describe('SchedulingPage', () => {
 
       const loaded =
         key === 'batches' ? mockBatches
-        : key === 'machines' ? mockMachines
+        : key === 'machines' ? machinesData
         : key === 'executions' ? mockExecutions
         : key === 'operators' ? mockOperators
         : null
@@ -387,6 +394,50 @@ describe('SchedulingPage', () => {
       expect(inDialog.getByText('Frame Assembly')).toBeTruthy()
       expect(inDialog.getByText('Anyag: Oak · Mennyiség: 50')).toBeTruthy()
       expect(inDialog.getByText('3 — alacsony')).toBeTruthy()
+    })
+
+    // A gép-zóna állapot-független: a Karbantartás alatt lévő gépre is ejthető
+    // köteg, és a megerősítő eddig HALLGATOTT erről — az operátor egy Szabad
+    // gép adataival megegyező dialógust látott. A státusz-sor a csendet
+    // szünteti meg; hogy az ilyen kiosztás sorba állítás-e vagy tiltandó, az
+    // nyitott termékdöntés, ezért a dialógus nem tilt és nem is magyaráz.
+
+    it('karbantartás alatt lévő gépnél a dialógus kimondja a gép állapotát', async () => {
+      machinesData = [{ ...mockMachines[0], status: 'Maintenance' }]
+
+      renderPage()
+      selectOperator()
+      dropBatchOnMachine()
+
+      const inDialog = within(await screen.findByRole('alertdialog'))
+      expect(inDialog.getByText('Gép állapota').tagName).toBe('DT')
+      expect(inDialog.getByText('Karbantartás alatt')).toBeTruthy()
+    })
+
+    it('foglalt gépnél is megjelenik az állapot, és a kiosztás NEM tiltott', async () => {
+      machinesData = [{ ...mockMachines[0], status: 'Busy' }]
+      const mutate = vi.fn().mockResolvedValue({ executionId: 'exec-1', status: 'Planned' })
+      vi.mocked(useApiModule.useMutation).mockReturnValue({ mutate, isLoading: false, error: null })
+
+      renderPage()
+      selectOperator()
+      dropBatchOnMachine()
+
+      const inDialog = within(await screen.findByRole('alertdialog'))
+      expect(inDialog.getByText('Foglalt')).toBeTruthy()
+
+      // „Nem tiltás, csak a csend kivétele": a megerősítés ugyanúgy végigmegy.
+      fireEvent.click(inDialog.getByRole('button', { name: 'Kiosztás megerősítése' }))
+      await waitFor(() => expect(mutate).toHaveBeenCalledTimes(1))
+    })
+
+    it('szabad gépnél NINCS állapot-sor — a normál eset kiírása zaj lenne', async () => {
+      renderPage()
+      selectOperator()
+      dropBatchOnMachine()
+
+      const inDialog = within(await screen.findByRole('alertdialog'))
+      expect(inDialog.queryByText('Gép állapota')).toBeNull()
     })
 
     it('Mégse esetén NEM történik kiosztás', async () => {
