@@ -1,3 +1,4 @@
+import { useId } from 'react';
 import { Input } from '@spaceos/portal-ui';
 import type { CutPieceInput, Material } from '../../types/quote';
 
@@ -10,8 +11,13 @@ interface PieceInputRowProps {
 }
 
 export function PieceInputRow({ piece, materials, onChange, onRemove, showRemove }: PieceInputRowProps) {
-  const materialId = `material-${piece.materialCode || Math.random()}`;
-  const edgeBandingId = `edgebanding-${piece.materialCode || Math.random()}`;
+  // Példány-stabil azonosító. A korábbi `material-${piece.materialCode ||
+  // Math.random()}` két hibát hordozott: azonos anyagú soroknál DUPLIKÁLT
+  // DOM-id-t adott (a címke mindig az ELSŐ sor mezőjét nyitotta és azt olvasta
+  // fel), üres anyagnál pedig renderenként új id-t sorsolt.
+  const uid = useId();
+  const materialId = `material-${uid}`;
+  const edgeBandingId = `edgebanding-${uid}`;
 
   return (
     <div className="flex items-end gap-3 p-4 bg-gray-50 rounded-lg">
