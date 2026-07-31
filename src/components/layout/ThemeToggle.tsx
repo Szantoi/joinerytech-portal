@@ -7,6 +7,7 @@
  * A gyors elérésű header-kapcsoló: ThemeQuickToggle (nap/hold/monitor ikon).
  */
 
+import { useRef } from 'react'
 import { useTheme, type ThemePreference } from '@spaceos/portal-ui'
 import { Icon } from '@spaceos/portal-ui'
 
@@ -24,21 +25,43 @@ const THEME_OPTIONS: readonly ThemeOption[] = [
 
 export function ThemeToggle({ lang = 'hu' }: { lang?: string }) {
   const { preference, setPreference } = useTheme()
+  const radioRefs = useRef<Array<HTMLButtonElement | null>>([])
+
+  // WAI-ARIA radiogroup (F1-REVIEW N1): egyetlen tab stop (roving tabindex —
+  // csak a kiválasztott radio tabbolható), a nyilak körbefordulva LÉPTETNEK
+  // és ki is választanak. Enélkül a SR „radio, 1/3"-at jelentett be, miközben
+  // a billentyűzet-viselkedés checkbox-szerű volt.
+  const activeIndex = Math.max(0, THEME_OPTIONS.findIndex((o) => o.value === preference))
+
+  function onKeyDown(event: React.KeyboardEvent) {
+    const delta =
+      event.key === 'ArrowRight' || event.key === 'ArrowDown' ? 1
+      : event.key === 'ArrowLeft' || event.key === 'ArrowUp' ? -1
+      : 0
+    if (delta === 0) return
+    event.preventDefault()
+    const next = (activeIndex + delta + THEME_OPTIONS.length) % THEME_OPTIONS.length
+    setPreference(THEME_OPTIONS[next].value)
+    radioRefs.current[next]?.focus()
+  }
 
   return (
     <div
       role="radiogroup"
       aria-label={lang === 'en' ? 'Theme' : 'Téma'}
+      onKeyDown={onKeyDown}
       className="flex items-center gap-0.5 p-0.5 rounded-lg bg-surface-2"
     >
-      {THEME_OPTIONS.map((opt) => {
+      {THEME_OPTIONS.map((opt, index) => {
         const active = preference === opt.value
         return (
           <button
             key={opt.value}
+            ref={(el) => { radioRefs.current[index] = el }}
             type="button"
             role="radio"
             aria-checked={active}
+            tabIndex={active ? 0 : -1}
             onClick={() => setPreference(opt.value)}
             className={`flex-1 h-7 px-2 rounded-md text-[11px] transition motion-reduce:transition-none
               focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-world-ring

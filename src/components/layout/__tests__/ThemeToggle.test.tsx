@@ -32,6 +32,47 @@ describe('ThemeToggle — háromállású választó', () => {
     expect(document.documentElement.getAttribute('data-theme')).toBe('light')
   })
 
+  // ── WAI-ARIA radiogroup minta (F1-A11Y-RESIDUALS / F1-REVIEW N1) ────────────
+
+  it('roving tabindex: csak a kiválasztott radio tabbolható', () => {
+    render(<ThemeToggle />)
+    // beforeEach: 'system' a kiválasztott.
+    expect(screen.getByRole('radio', { name: 'Rendszer' })).toHaveAttribute('tabindex', '0')
+    expect(screen.getByRole('radio', { name: 'Világos' })).toHaveAttribute('tabindex', '-1')
+    expect(screen.getByRole('radio', { name: 'Sötét' })).toHaveAttribute('tabindex', '-1')
+
+    fireEvent.click(screen.getByRole('radio', { name: 'Sötét' }))
+    expect(screen.getByRole('radio', { name: 'Sötét' })).toHaveAttribute('tabindex', '0')
+    expect(screen.getByRole('radio', { name: 'Rendszer' })).toHaveAttribute('tabindex', '-1')
+  })
+
+  it('a nyíl léptet ÉS kiválaszt, a fókusz a kiválasztottra kerül', () => {
+    render(<ThemeToggle />)
+    const system = screen.getByRole('radio', { name: 'Rendszer' })
+    system.focus()
+
+    // system (3.) → ArrowRight → körbefordul az 1.-re (Világos).
+    fireEvent.keyDown(system, { key: 'ArrowRight' })
+    expect(window.localStorage.getItem(THEME_STORAGE_KEY)).toBe('light')
+    expect(screen.getByRole('radio', { name: 'Világos' })).toHaveAttribute('aria-checked', 'true')
+    expect(document.activeElement).toBe(screen.getByRole('radio', { name: 'Világos' }))
+
+    // Világos → ArrowLeft → vissza a Rendszerre (körbe, visszafelé).
+    fireEvent.keyDown(screen.getByRole('radio', { name: 'Világos' }), { key: 'ArrowLeft' })
+    expect(window.localStorage.getItem(THEME_STORAGE_KEY)).toBe('system')
+    expect(document.activeElement).toBe(screen.getByRole('radio', { name: 'Rendszer' }))
+  })
+
+  it('a le/fel nyíl is léptet (WAI-ARIA: mind a négy nyíl él)', () => {
+    render(<ThemeToggle />)
+    const system = screen.getByRole('radio', { name: 'Rendszer' })
+    system.focus()
+
+    fireEvent.keyDown(system, { key: 'ArrowUp' })
+    expect(window.localStorage.getItem(THEME_STORAGE_KEY)).toBe('dark')
+    expect(document.activeElement).toBe(screen.getByRole('radio', { name: 'Sötét' }))
+  })
+
   it('Rendszer választásakor NINCS data-theme attribútum (a CSS media query dönt)', () => {
     render(<ThemeToggle />)
     fireEvent.click(screen.getByRole('radio', { name: 'Sötét' }))
