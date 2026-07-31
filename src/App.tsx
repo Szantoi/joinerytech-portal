@@ -53,10 +53,9 @@ const ShopWorldPage = lazyPage(() => import('./pages/ShopPage'), (m) => m.ShopWo
 const HrWorldPage = lazyPage(() => import('./pages/HrPage'), (m) => m.HrWorldPage)
 const ControllingWorldPage = lazyPage(() => import('./pages/ControllingPage'), (m) => m.ControllingWorldPage)
 const ServiceWorldPage = lazyPage(() => import('./pages/ServicePage'), (m) => m.ServiceWorldPage)
-// A legacy warehouse-oldalak (MovementsPage/InventoryPage/ProcurementPage/
-// LotsPage-csomag) lazy importjai innen kivezetve (WORLDS-WAREHOUSE-FIX P1-6):
-// nem voltak route-olva, csak halott chunk-ként terhelték a buildet — a
-// warehouse világot a modules/warehouse diszpécser (WarehousePage) szolgálja ki.
+// A warehouse világot a modules/warehouse diszpécser (WarehousePage) szolgálja
+// ki; a legacy lapok kivezetve (WORLDS-WAREHOUSE-FIX P1-6) és törölve
+// (PORTAL-DEADTREE-A).
 const ProductConfiguratorWizard = lazyPage(() => import('./pages/ProductConfiguratorWizard'), (m) => m.ProductConfiguratorWizard)
 const BOMPreviewPage = lazyPage(() => import('./pages/BOMPreviewPage'), (m) => m.BOMPreviewPage)
 const WorkOrderSummary = lazyPage(() => import('./pages/WorkOrderSummary'), (m) => m.WorkOrderSummary)

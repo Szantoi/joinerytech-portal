@@ -7,11 +7,9 @@ import { WAREHOUSE_SCREEN_COMPONENTS } from './warehouseScreenMap';
 
 /**
  * Warehouse világ-diszpécser — kizárólag a modules/warehouse képernyőit
- * route-olja. A régi stone-* oldalak (LotsPage/ZoneMapPage/MovementLogPage,
- * src/pages/warehouse/) ki vannak vezetve a diszpécserből: mögöttük nincs
- * backend (lots/zones a domainben nem létezik), a „Backend endpoint nem
- * elérhető" bannerük hamis ígéret volt. A fájlok külön takarítási körben
- * kerülnek törlésre. Ismeretlen screen-kulcs → áttekintés.
+ * route-olja. A régi stone-* lapok kivezetve, mert mögöttük nincs backend
+ * (lots/zones a domainben nem létezik), és törölve (PORTAL-DEADTREE-A).
+ * Ismeretlen screen-kulcs → áttekintés.
  */
 export function WarehouseWorldPage() {
   const navigate = useNavigate();
