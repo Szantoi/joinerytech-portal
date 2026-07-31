@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { Card, Icon, GhostBtn, PrimaryBtn } from '@spaceos/portal-ui'
+import { Icon, GhostBtn, PrimaryBtn } from '@spaceos/portal-ui'
 import { Avatar } from '@spaceos/portal-ui'
 import type { FlowEpic, FlowPriority, Stage } from '../types'
 
@@ -76,8 +76,14 @@ export function WorkflowPage() {
   const [orderDrawerOpen, setOrderDrawerOpen] = useState(false)
   const [epicForOrder, setEpicForOrder] = useState<FlowEpic | null>(null)
 
+  // (b) döntés (root, 2026-07-31): API-adatnál a tábla CSAK-OLVASHATÓ — nincs
+  // drag-affordancia, és ezt ki is mondjuk. A korábbi néma NO-OP setter húzást
+  // ígért, aztán elnyelte. A szabad drag ma nem definiálható: az 5 UI-stage ↔
+  // 3 kernel-fázis megfeleltetés lossy (apiEpicToFe), a húzások többségének
+  // nincs API-jelentése. Az advance/skip-re szűkített drag (a) irány a
+  // stage-térkép termékdöntésével EGYÜTT nyitható újra.
+  const isReadOnly = apiEpics !== null
   const displayEpics = apiEpics ?? epics
-  const setDisplayEpics = apiEpics ? (_fn: (prev: FlowEpic[]) => FlowEpic[]) => {} : setEpics
 
   const filtered = displayEpics.filter((e) => {
     if (filterAssignee !== 'all' && e.assignee !== filterAssignee) return false
@@ -88,10 +94,11 @@ export function WorkflowPage() {
     return true
   })
 
+  // Csak mock-módban létezik: API-adatnál a hívási helye sincs bekötve.
   const onDrop = (stageKey: string) => (ev: React.DragEvent) => {
     ev.preventDefault()
     const id = ev.dataTransfer.getData('text/plain')
-    setDisplayEpics((prev) => prev.map((ep) => ep.id === id ? { ...ep, stage: stageKey } : ep))
+    setEpics((prev) => prev.map((ep) => ep.id === id ? { ...ep, stage: stageKey } : ep))
     setDragOver(null)
   }
 
@@ -133,6 +140,12 @@ export function WorkflowPage() {
         <PrimaryBtn icon="plus">Új feladat</PrimaryBtn>
       </div>
 
+      {isReadOnly && (
+        <p className="mb-3 text-[11.5px] text-ink-muted">
+          A tábla csak olvasható: a fázist a folyamat vezeti, kártya-áthúzással itt nem módosítható.
+        </p>
+      )}
+
       <div
         className="flex md:grid gap-3 overflow-x-auto md:overflow-visible -mx-7 md:mx-0 px-7 md:px-0 pb-2 md:pb-0"
         style={{ gridTemplateColumns: `repeat(${STAGES.length}, minmax(0, 1fr))` }}
@@ -143,9 +156,9 @@ export function WorkflowPage() {
           return (
             <div
               key={s.key}
-              onDragOver={(e) => { e.preventDefault(); setDragOver(s.key) }}
-              onDragLeave={() => setDragOver(null)}
-              onDrop={onDrop(s.key)}
+              onDragOver={isReadOnly ? undefined : (e) => { e.preventDefault(); setDragOver(s.key) }}
+              onDragLeave={isReadOnly ? undefined : () => setDragOver(null)}
+              onDrop={isReadOnly ? undefined : onDrop(s.key)}
               className={`shrink-0 w-[260px] md:w-auto rounded-xl border-2 transition ${isOver ? 'border-teal-400 bg-teal-50/40' : 'border-transparent bg-surface-sunken'}`}
             >
               <div className="px-3 py-2.5 flex items-center justify-between">
@@ -159,7 +172,7 @@ export function WorkflowPage() {
               </div>
               <div className="px-2 pb-2 space-y-2 min-h-[200px]">
                 {colEpics.map((epic) => (
-                  <FlowCard key={epic.id} epic={epic} onOpen={setSelected} />
+                  <FlowCard key={epic.id} epic={epic} onOpen={setSelected} readOnly={isReadOnly} />
                 ))}
                 {colEpics.length === 0 && (
                   <div className="text-[11px] text-ink-muted text-center py-6 border-2 border-dashed border-line rounded-lg">
@@ -193,7 +206,7 @@ export function WorkflowPage() {
   )
 }
 
-function FlowCard({ epic, onOpen }: { epic: FlowEpic; onOpen: (e: FlowEpic) => void }) {
+function FlowCard({ epic, onOpen, readOnly }: { epic: FlowEpic; onOpen: (e: FlowEpic) => void; readOnly: boolean }) {
   const pri = PRIORITY_TONES[epic.priority]
   const due = new Date(epic.due)
   const days = Math.round((due.getTime() - TODAY.getTime()) / 86400000)
@@ -207,10 +220,10 @@ function FlowCard({ epic, onOpen }: { epic: FlowEpic; onOpen: (e: FlowEpic) => v
 
   return (
     <div
-      draggable
-      onDragStart={onDragStart}
+      draggable={!readOnly}
+      onDragStart={readOnly ? undefined : onDragStart}
       onClick={() => onOpen(epic)}
-      className="bg-surface-card border border-line rounded-lg p-3 cursor-pointer hover:border-line-strong hover:shadow-sm transition active:cursor-grabbing"
+      className={`bg-surface-card border border-line rounded-lg p-3 cursor-pointer hover:border-line-strong hover:shadow-sm transition ${readOnly ? '' : 'active:cursor-grabbing'}`}
     >
       <div className="flex items-start justify-between gap-2 mb-1.5">
         <div className="text-[10.5px] font-mono text-ink-muted">{epic.id}</div>
