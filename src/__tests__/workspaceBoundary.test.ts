@@ -23,7 +23,39 @@ import { readFileSync, readdirSync, statSync } from 'node:fs'
 import path from 'node:path'
 
 const ROOT = process.cwd()
-const PUBLIC_SUBPATHS = new Set(['mocks', 'wizard'])
+
+/**
+ * A publikus belépési pontok **csomagonként**, a `package.json` `exports`-ából.
+ *
+ * Korábban ez egy beégetett `{mocks, wizard}` halmaz volt — az uniója helyes, de
+ * per-csomag VAK: 2026-08-03-án mérve a `./wizard`-ot 12 csomagból egyedül a
+ * `module-ehs` exportálja, a `portal-core`/`portal-ui` pedig CSAK `.`-ot. Az őr
+ * tehát átengedte volna a `@spaceos/portal-ui/mocks`-ot és a
+ * `@spaceos/module-crm/wizard`-ot is. Emellett a beégetett lista egy MÁSODIK
+ * IGAZSÁG a manifest mellett: egy új publikus alút felvétele után hamis riasztást
+ * adott volna. Ezért a manifest az egyetlen forrás.
+ */
+function readPublicEntrypoints(): Map<string, Set<string>> {
+  const map = new Map<string, Set<string>>()
+  for (const dir of readdirSync(path.join(ROOT, 'packages'))) {
+    let manifest: { name?: string; exports?: Record<string, unknown> }
+    try {
+      manifest = JSON.parse(readFileSync(path.join(ROOT, 'packages', dir, 'package.json'), 'utf8'))
+    } catch {
+      continue // nem csomag-mappa (vagy olvashatatlan) — a lenti fedettségi teszt kifogja
+    }
+    if (!manifest.name) continue
+    const subpaths = new Set<string>()
+    // A `.` (gyökér) mindig publikus; minket az alutak érdekelnek.
+    for (const key of Object.keys(manifest.exports ?? { '.': {} })) {
+      if (key.startsWith('./')) subpaths.add(key.slice(2))
+    }
+    map.set(manifest.name, subpaths)
+  }
+  return map
+}
+
+const PUBLIC_ENTRYPOINTS = readPublicEntrypoints()
 
 /** Statikus (`from '…'`, `import '…'`, `export … from '…'`) ÉS dinamikus import. */
 const IMPORT_RE = /(?:\bfrom\s+|\bimport\s+|\bimport\s*\(\s*)['"]([^'"]+)['"]/g
@@ -44,12 +76,17 @@ export function boundaryViolation(file: string, spec: string): string | null {
   const layer = layerOf(file)
   if (layer.kind === 'other') return null
 
-  // 1. Csomag-alias: csak a publikus belépési pontok engedettek.
-  const alias = /^@(?:spaceos|joinerytech)\/([^/]+)(?:\/(.*))?$/.exec(spec)
+  // 1. Csomag-alias: csak az ADOTT csomag publikus belépési pontjai engedettek.
+  const alias = /^(@(?:spaceos|joinerytech)\/[^/]+)(?:\/(.*))?$/.exec(spec)
   if (alias) {
-    const sub = alias[2]
-    if (!sub || PUBLIC_SUBPATHS.has(sub)) return null
-    return `csomag-belsőbe importál: '${spec}' (publikus belépési pont: gyökér, /mocks, /wizard)`
+    const [, name, sub] = alias
+    const publicSubpaths = PUBLIC_ENTRYPOINTS.get(name)
+    // Nem workspace-csomag → külső függőség, nem a mi határunk (ilyen ma nincs;
+    // ezt a lenti fedettségi teszt méri, nehogy egy átnevezés némán elnémítsa az őrt).
+    if (!publicSubpaths) return null
+    if (!sub || publicSubpaths.has(sub) || publicSubpaths.has('*')) return null
+    const entrypoints = ['gyökér', ...[...publicSubpaths].sort().map((s) => `/${s}`)].join(', ')
+    return `csomag-belsőbe importál: '${spec}' (a ${name} publikus belépési pontjai: ${entrypoints})`
   }
   if (!spec.startsWith('.')) return null
 
@@ -124,6 +161,34 @@ describe('workspace boundary — szerkezeti őr', () => {
       .toMatch(/másik csomag/)
     expect(boundaryViolation('src/pages/X.tsx', '../../packages/module-crm/src/b'))
       .toMatch(/relatív benyúlás/)
+  })
+
+  // ── A publikus belépési pontok forrása ───────────────────────────────────
+  // Ha a manifest-olvasás üres térképet adna (átnevezett mappa, elrontott JSON),
+  // az őr MINDEN csomag-aliast némán átengedne. A zöld tehát csak akkor jelent
+  // valamit, ha előbb bizonyítjuk, hogy a térkép betöltött.
+
+  it('a publikus belépési pontok a manifestekből töltődtek (különben az őr néma)', () => {
+    const onDisk = readdirSync(path.join(ROOT, 'packages')).filter((d) =>
+      statSync(path.join(ROOT, 'packages', d)).isDirectory(),
+    )
+    expect(PUBLIC_ENTRYPOINTS.size).toBe(onDisk.length)
+    // A mai fa mért alakja: a /wizard EGYETLEN csomagé — pont ezt nem látta a
+    // korábbi, beégetett halmaz.
+    expect([...PUBLIC_ENTRYPOINTS].filter(([, s]) => s.has('wizard')).map(([n]) => n)).toEqual([
+      '@spaceos/module-ehs',
+    ])
+  })
+
+  it('elkapja az alutat olyan csomagon, amelyik NEM exportálja (a beégetett halmaz vak pontja)', () => {
+    // A portal-ui csak `.`-ot exportál — de a régi {mocks, wizard} halmaz átengedte.
+    expect(boundaryViolation('src/App.tsx', '@spaceos/portal-ui/mocks')).toMatch(/csomag-belsőbe/)
+    // A /wizard csak a module-ehs-é; a többi csomagon határsértés.
+    expect(boundaryViolation('src/App.tsx', '@spaceos/module-crm/wizard')).toMatch(/csomag-belsőbe/)
+    // A hibaüzenet az ADOTT csomag valódi belépési pontjait sorolja fel.
+    expect(boundaryViolation('src/App.tsx', '@spaceos/portal-ui/mocks')).toContain(
+      '@spaceos/portal-ui publikus belépési pontjai: gyökér',
+    )
   })
 
   it('NEM riaszt a legális importokra (zaj-kontroll)', () => {
