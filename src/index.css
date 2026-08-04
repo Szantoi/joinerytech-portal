@@ -37,20 +37,6 @@
   }
 }
 
-/* Custom animations for ProductCard shimmer effect */
-@keyframes shimmer {
-  0% {
-    background-position: -1000px 0;
-  }
-  100% {
-    background-position: 1000px 0;
-  }
-}
-
-@theme {
-  --animate-shimmer: shimmer 2s infinite;
-}
-
 /* ── Szemantikus tokenek → utility-k ─────────────────────────────── */
 @theme inline {
   /* Spec felület-tokenek (dark-mode.html) */
