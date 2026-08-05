@@ -1,0 +1,120 @@
+name: portal-gate
+
+# A portál ÁLTALÁNOS kapuja. Miért kellett:
+#
+# 2026-08-05-ig a repóban EGYETLEN workflow volt (portal-ui.yml), és annak
+# mindkét triggere `paths:`-szűrt a `packages/portal-ui/**`-ra. Következmény:
+# egy `src/auth/RequireAuth.tsx` módosítás NULLA CI-futást váltott ki. A teljes
+# suite szerepelt ugyan a portal-ui gate-jében, de csak akkor futott, ha éppen a
+# portal-ui változott — vagyis a lefedettség a változás HELYÉTŐL függött.
+#
+# Ez a workflow szándékosan NEM `paths:`-szűrt.
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: portal-gate-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  gate:
+    name: Suite + build + lint-racsni
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+
+      # A gyökér package.json-ban nincs @spaceos/@joinerytech függőség és nincs
+      # .npmrc — a workspace-csomagok lokálisak, tehát registry-auth NEM kell.
+      - run: npm ci
+
+      # A suite KÉT darabban. A pozicionális argumentum RÉSZLÁNC-szűrő, nem
+      # könyvtár — csak a `--dir` szűkít könyvtárra. A két darab uniója a teljes
+      # suite, átfedés és rés nélkül (mérve: 88 + 91 = 179 = a bare `vitest run`).
+      - name: Teszt — src (91 fájl)
+        run: npm run test:src
+      - name: Teszt — packages (88 fájl)
+        run: npm run test:packages
+
+      # A `build` script maga is `tsc -b && vite build`, tehát a típus-kapu benne van.
+      - name: Build (tsc -b + vite build)
+        run: npm run build
+
+      # LINT-RACSNI, nem `continue-on-error`.
+      #
+      # A 102 ismert probléma legacy adósság (93 hiba + 9 figyelmeztetés,
+      # csak-követett fán mérve 2026-08-05-én) — ezeket egy kapu bevezetése nem
+      # javítja meg. De a `continue-on-error` olyan kaput adna, amit senki nem
+      # olvas: nőhetne 500-ra anélkül, hogy bárki észrevenné.
+      #
+      # Ezért a küszöb NEM 0, hanem a mai szint: nem tiltja a meglévőt, de
+      # minden ÚJ lint-hibát elbuktat. A racsni csak szorulhat: ha a szám a
+      # küszöb alá megy, a lépés figyelmeztet, hogy a küszöböt le kell vinni —
+      # különben a racsni idővel meglazul.
+      - name: Lint-racsni (küszöb 102)
+        env:
+          LINT_CEILING: '102'
+        run: |
+          npx eslint . -f json -o eslint-report.json || true
+
+          # A racsni ELSO valtozata mind a harom kuszobnel atment -- 50-nel is --,
+          # mert a COUNT ures lett, es a bash az ures osszehasonlitast hamiskent
+          # kezeli: a lepes NEM mert semmit, es zolden atengedett. A negativ
+          # kontroll (szandekosan alacsony kuszob) fogta meg, a pozitiv nem.
+          # Ezert a meres ervenyesseget kulon kell allitani, mielott dontunk belole.
+          if [ ! -s eslint-report.json ]; then
+            echo "::error::Az eslint nem irt riportot — a racsni NEM mert. Ez bukas, nem atmenet."
+            exit 1
+          fi
+          COUNT=$(node -e "const fs=require('fs');const r=JSON.parse(fs.readFileSync('eslint-report.json','utf8'));console.log(r.reduce((a,f)=>a+f.errorCount+f.warningCount,0))")
+          case "$COUNT" in
+            ''|*[!0-9]*)
+              echo "::error::A lint-szam nem ertelmezheto szamkent: '$COUNT' — a racsni NEM mert."
+              exit 1
+              ;;
+          esac
+
+          echo "lint-problemak: $COUNT   kuszob: $LINT_CEILING"
+          if [ "$COUNT" -gt "$LINT_CEILING" ]; then
+            echo "::error::A lint-problemak szama $COUNT > $LINT_CEILING — uj lint-hiba keletkezett."
+            npx eslint . || true
+            exit 1
+          fi
+          if [ "$COUNT" -lt "$LINT_CEILING" ]; then
+            echo "::warning::A lint-problemak szama $COUNT < $LINT_CEILING — vidd le a LINT_CEILING-et $COUNT-ra, kulonben a racsni meglazul."
+          fi
+
+  smoke:
+    name: Böngésző-smoke (38 route H1-őr)
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    # Külön job, hogy egy környezet-függő smoke-bukás NE fedje el a suite/build
+    # eredményét — a két jelzés függetlenül olvasható.
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+      - run: npm ci
+
+      # A smoke `playwright-core`-ral indít, és beégetett útvonal-listából keres
+      # böngészőt. Ha egyet sem talál, `exit 2`-vel HANGOSAN bukik (nem néma
+      # zöld) — ezt a viselkedést szándékosan nem kerüljük meg. Ez a lépés csak
+      # diagnosztika: a runner-image változásakor ez mondja meg, mi tűnt el.
+      - name: Böngésző jelenlétének kiírása
+        run: |
+          for p in /usr/bin/google-chrome /usr/bin/chromium /usr/bin/chromium-browser; do
+            if [ -x "$p" ]; then echo "talalt: $p"; else echo "hianyzik: $p"; fi
+          done
+
+      - name: Keyboard-smoke
+        run: npm run test:smoke:keyboard
